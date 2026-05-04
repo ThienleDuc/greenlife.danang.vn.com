@@ -1,14 +1,22 @@
-import { useEffect } from "react";
-import api from "./services/api";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import TestUserRoutes from "./routes/TestUserRoutes";
 
-function App() {
-  useEffect(() => {
-    api.get("/")
-      .then(res => console.log(res.data))
-      .catch(err => console.error(err));
-  }, []);
+const App = () => {
+  return (
+    <Router>
+      <Routes>
 
-  return <h1>DAPM Website</h1>;
-}
+        {/* TestUser routes */}
+        {TestUserRoutes.map(({ path, element }) => (
+          <Route key={path} path={path} element={element} />
+        ))}
+
+        {/* 404 */}
+        <Route path="*" element={<div>404 Not Found</div>} />
+
+      </Routes>
+    </Router>
+  );
+};
 
 export default App;
