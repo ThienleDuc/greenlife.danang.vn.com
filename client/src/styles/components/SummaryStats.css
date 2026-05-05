@@ -1,0 +1,112 @@
+/* ============================================
+   SummaryStats Component Styles
+   ============================================ */
+.summary-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+  .summary-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.summary-stat-card {
+  padding: 1.25rem;
+  border-radius: var(--radius-xl);
+}
+
+.summary-stat-card.completed {
+  background-color: #ecfdf5;
+  border: 1px solid #d1fae5;
+}
+
+.summary-stat-card.processing {
+  background-color: #eff6ff;
+  border: 1px solid #dbeafe;
+}
+
+.summary-stat-card.pending-review {
+  background-color: #fff7ed;
+  border: 1px solid #ffedd5;
+}
+
+.summary-stat-card.total {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.summary-stat-title {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.summary-stat-card.completed .summary-stat-title {
+  color: #065f46;
+}
+
+.summary-stat-card.processing .summary-stat-title {
+  color: #1e3a5f;
+}
+
+.summary-stat-card.pending-review .summary-stat-title {
+  color: #7c2d12;
+}
+
+.summary-stat-card.total .summary-stat-title {
+  color: #334155;
+}
+
+.summary-stat-content {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: var(--spacing-xs);
+}
+
+.summary-stat-value {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-h3);
+}
+
+.summary-stat-card.completed .summary-stat-value {
+  color: #064e3b;
+}
+
+.summary-stat-card.processing .summary-stat-value {
+  color: #1e3a5f;
+}
+
+.summary-stat-card.pending-review .summary-stat-value {
+  color: #7c2d12;
+}
+
+.summary-stat-card.total .summary-stat-value {
+  color: #0f172a;
+}
+
+.summary-stat-extra {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+}
+
+.summary-stat-card.completed .summary-stat-extra {
+  color: #059669;
+}
+
+.summary-stat-card.processing .summary-stat-extra {
+  color: #93c5fd;
+}
+
+.summary-stat-card.pending-review .summary-stat-extra {
+  color: #fdba74;
+}
+
+.summary-stat-card.total .summary-stat-extra {
+  color: #cbd5e1;
+}
