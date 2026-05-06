@@ -10,7 +10,6 @@
 .main-layout-content {
   flex-grow: 1;
   padding: var(--spacing-md);
-  max-width: 100rem;
   margin: 0 auto;
   width: 100%;
   display: flex;

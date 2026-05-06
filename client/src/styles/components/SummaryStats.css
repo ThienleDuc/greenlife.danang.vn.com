@@ -5,108 +5,99 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .summary-stats-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .summary-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .summary-stats-grid {
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 
 .summary-stat-card {
   padding: 1.25rem;
   border-radius: var(--radius-xl);
+  border: 1px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.summary-stat-card.completed {
-  background-color: #ecfdf5;
-  border: 1px solid #d1fae5;
+.summary-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.summary-stat-card.processing {
+/* Specific Card Styles */
+.summary-stat-card.da-gui {
   background-color: #eff6ff;
-  border: 1px solid #dbeafe;
+  border-color: #dbeafe;
 }
 
-.summary-stat-card.pending-review {
+.summary-stat-card.dang-tham-dinh {
   background-color: #fff7ed;
-  border: 1px solid #ffedd5;
+  border-color: #ffedd5;
+}
+
+.summary-stat-card.duoc-duyet {
+  background-color: #ecfdf5;
+  border-color: #d1fae5;
+}
+
+.summary-stat-card.bi-tu-choi {
+  background-color: #fef2f2;
+  border-color: #fee2e2;
+}
+
+.summary-stat-card.da-huy {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .summary-stat-card.total {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: #e2e8f0;
+  border-color: #94a3b8;
 }
 
+/* Title Styling */
 .summary-stat-title {
-  font-size: var(--font-size-caption);
-  font-weight: var(--font-weight-semibold);
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
 }
 
-.summary-stat-card.completed .summary-stat-title {
-  color: #065f46;
-}
+.da-gui .summary-stat-title { color: #1e40af; }
+.dang-tham-dinh .summary-stat-title { color: #9a3412; }
+.duoc-duyet .summary-stat-title { color: #065f46; }
+.bi-tu-choi .summary-stat-title { color: #991b1b; }
+.da-huy .summary-stat-title { color: #475569; }
+.total .summary-stat-title { color: #1e293b; }
 
-.summary-stat-card.processing .summary-stat-title {
-  color: #1e3a5f;
-}
-
-.summary-stat-card.pending-review .summary-stat-title {
-  color: #7c2d12;
-}
-
-.summary-stat-card.total .summary-stat-title {
-  color: #334155;
-}
-
+/* Content Styling */
 .summary-stat-content {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  margin-top: var(--spacing-xs);
 }
 
 .summary-stat-value {
-  font-size: var(--font-size-h3);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-h3);
-}
-
-.summary-stat-card.completed .summary-stat-value {
-  color: #064e3b;
-}
-
-.summary-stat-card.processing .summary-stat-value {
-  color: #1e3a5f;
-}
-
-.summary-stat-card.pending-review .summary-stat-value {
-  color: #7c2d12;
-}
-
-.summary-stat-card.total .summary-stat-value {
-  color: #0f172a;
-}
-
-.summary-stat-extra {
-  font-size: var(--font-size-caption);
+  font-size: 1.75rem;
   font-weight: var(--font-weight-bold);
+  color: var(--color-on-surface);
 }
 
-.summary-stat-card.completed .summary-stat-extra {
-  color: #059669;
-}
-
-.summary-stat-card.processing .summary-stat-extra {
-  color: #93c5fd;
-}
-
-.summary-stat-card.pending-review .summary-stat-extra {
-  color: #fdba74;
-}
-
-.summary-stat-card.total .summary-stat-extra {
-  color: #cbd5e1;
+.summary-stat-extra .material-symbols-outlined {
+  font-size: 1.5rem;
 }

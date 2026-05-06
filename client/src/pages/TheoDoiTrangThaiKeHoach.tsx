@@ -1,75 +1,69 @@
-// src/pages/TheoDoiTrangThaiKeHoach.tsx
 import React, { useState, useEffect } from 'react';
 import FilterBar from '../components/FilterBar';
 import PlanTable from '../components/PlanTable';
 import SummaryStatsComponent from '../components/SummaryStats';
 import Pagination from '../components/Pagination';
-import { TheoDoiKeHoachService } from '../services/TheoDoiKeHoach';
+import { TheoDoiKeHoachService } from '../services/kehoachService';
 import type { KeHoachCongViec, FilterParams, SummaryStats } from '../types';
 
 const TheoDoiTrangThaiKeHoach: React.FC = () => {
   const [plans, setPlans] = useState<KeHoachCongViec[]>([]);
-  const [filteredPlans, setFilteredPlans] = useState<KeHoachCongViec[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [summaryStats, setSummaryStats] = useState<SummaryStats>({
-    completed: 0,
-    completedChange: 0,
-    processing: 0,
-    pending: 0,
+    daGui: 0,
+    dangThamDinh: 0,
+    duocDuyet: 0,
+    biTuChoi: 0,
+    daHuy: 0,
     total: 0,
   });
+  
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentFilters, setCurrentFilters] = useState<FilterParams | null>(null);
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await TheoDoiKeHoachService.getKeHoachList();
-      setPlans(data);
-      setFilteredPlans(data);
+  const fetchPlans = async (page: number, filters: FilterParams | null) => {
+    const offset = (page - 1) * itemsPerPage;
+    let result;
+    
+    if (filters) {
+      result = await TheoDoiKeHoachService.searchKeHoach(filters, itemsPerPage, offset);
+    } else {
+      result = await TheoDoiKeHoachService.getKeHoachList(itemsPerPage, offset);
+    }
 
+    if (result) {
+      setPlans(result.data || []);
+      setTotalItems(result.total || 0);
+    }
+  };
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      await fetchPlans(1, null);
       const stats = await TheoDoiKeHoachService.getSummaryStats();
       setSummaryStats(stats);
     };
     
-    fetchData();
+    fetchInitialData();
   }, []);
 
+  // Re-fetch when page or filters change
+  useEffect(() => {
+    fetchPlans(currentPage, currentFilters);
+  }, [currentPage, currentFilters]);
+
   const handleSearch = (params: FilterParams) => {
-    const filtered = TheoDoiKeHoachService.filterKeHoach(plans, params);
-    setFilteredPlans(filtered);
-    setCurrentPage(1);
+    setCurrentFilters(params);
+    setCurrentPage(1); // Reset to first page on new search
   };
 
   const handleReset = () => {
-    setFilteredPlans(plans);
+    setCurrentFilters(null);
     setCurrentPage(1);
   };
 
-  const handleViewDetail = (plan: KeHoachCongViec) => {
-    console.log('View detail:', plan);
-    alert(`Xem chi tiết kế hoạch: ${plan.TieuDe}`);
-  };
-
-  const handleEdit = (plan: KeHoachCongViec) => {
-    console.log('Edit plan:', plan);
-    alert(`Chỉnh sửa kế hoạch: ${plan.TieuDe}`);
-  };
-
-  const handleCancel = (plan: KeHoachCongViec) => {
-    console.log('Cancel plan:', plan);
-    if (confirm(`Bạn có chắc muốn hủy kế hoạch: ${plan.TieuDe}?`)) {
-      alert(`Đã hủy kế hoạch: ${plan.TieuDe}`);
-    }
-  };
-
-  const handleCreateNew = () => {
-    alert('Tạo kế hoạch mới');
-  };
-
-  // Pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentPlans = filteredPlans.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredPlans.length / itemsPerPage) || 1;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
 
   return (
     <div className="plan-tracking-page">
@@ -81,37 +75,32 @@ const TheoDoiTrangThaiKeHoach: React.FC = () => {
             Quản lý và cập nhật tiến độ các kế hoạch hạ tầng xanh tại khu vực Đà Nẵng.
           </p>
         </div>
-        <button
-          className="btn-create-plan"
-          onClick={handleCreateNew}
-        >
-          <span className="material-symbols-outlined">add</span>
-          Tạo kế hoạch mới
-        </button>
       </div>
 
-      {/* Filter Bar */}
-      <FilterBar onSearch={handleSearch} onReset={handleReset} />
-
-      {/* Plan Table */}
-      <PlanTable
-        plans={currentPlans}
-        onViewDetail={handleViewDetail}
-        onEdit={handleEdit}
-        onCancel={handleCancel}
-      />
-
-      {/* Pagination */}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={filteredPlans.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setCurrentPage}
-      />
-
-      {/* Summary Stats */}
+      {/* Summary Stats - Top */}
       <SummaryStatsComponent stats={summaryStats} />
+
+      <div className="page-content-grid">
+        {/* Left Sidebar - Filter */}
+        <aside className="page-sidebar">
+          <FilterBar onSearch={handleSearch} onReset={handleReset} />
+        </aside>
+
+        {/* Right Content - Table */}
+        <main className="page-main-content">
+          <PlanTable
+            plans={plans}
+          />
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
+        </main>
+      </div>
     </div>
   );
 };

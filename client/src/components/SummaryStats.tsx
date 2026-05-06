@@ -9,33 +9,45 @@ interface SummaryStatsProps {
 const SummaryStatsComponent: React.FC<SummaryStatsProps> = ({ stats }) => {
   const statItems = [
     {
-      id: 'completed',
-      title: 'Hoàn thành',
-      value: stats.completed,
-      extra: `+${stats.completedChange} tuần này`,
+      id: 'da-gui',
+      title: 'Đã gửi',
+      value: stats.daGui,
+      extra: <span className="material-symbols-outlined text-blue-300">send</span>,
     },
     {
-      id: 'processing',
-      title: 'Đang xử lý',
-      value: stats.processing,
-      extra: <span className="material-symbols-outlined text-blue-300">pending_actions</span>,
+      id: 'dang-tham-dinh',
+      title: 'Đang thẩm định',
+      value: stats.dangThamDinh,
+      extra: <span className="material-symbols-outlined text-orange-300">pending_actions</span>,
     },
     {
-      id: 'pending-review',
-      title: 'Cần thẩm định',
-      value: stats.pending,
-      extra: <span className="material-symbols-outlined text-orange-300" data-weight="fill">priority_high</span>,
+      id: 'duoc-duyet',
+      title: 'Được duyệt',
+      value: stats.duocDuyet,
+      extra: <span className="material-symbols-outlined text-green-300">check_circle</span>,
+    },
+    {
+      id: 'bi-tu-choi',
+      title: 'Bị từ chối',
+      value: stats.biTuChoi,
+      extra: <span className="material-symbols-outlined text-red-300">cancel</span>,
+    },
+    {
+      id: 'da-huy',
+      title: 'Đã hủy',
+      value: stats.daHuy,
+      extra: <span className="material-symbols-outlined text-gray-300">block</span>,
     },
     {
       id: 'total',
-      title: 'Tổng số kế hoạch',
+      title: 'Tổng số',
       value: stats.total,
       extra: <span className="material-symbols-outlined text-slate-300">inventory_2</span>,
     },
   ];
 
   return (
-    <div className="summary-stats-grid">
+    <div className="summary-stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
       {statItems.map((item, index) => (
         <div key={index} className={`summary-stat-card ${item.id}`}>
           <p className="summary-stat-title">

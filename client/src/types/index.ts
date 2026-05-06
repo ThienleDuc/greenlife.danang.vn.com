@@ -42,7 +42,6 @@ export interface NguoiDung {
   HoTen?: string;
   Email?: string;
   SDT?: string;
-  MaXaPhuong?: string;
   MaTuyenDuong?: string;
   DiaChi?: string;
   NgayTao?: string;
@@ -74,7 +73,48 @@ export interface KeHoachCongViec {
   NguoiXuLy?: string;
   NgayXuLy?: string;
   MaTuyenDuong?: string;
-  MaXaPhuong?: string;
+  TenCongViec?: string;
+  TenNguoiLap?: string;
+  TenNguoiXuLy?: string;
+  TenNguoiPheDuyet?: string;
+  TenTuyenDuong?: string;
+  TenXaPhuong?: string;
+}
+
+export interface DanhMucCayTrong {
+  MaDMCay: string;
+  TenCayTrong?: string;
+  ChieuCaoTruongThanh?: number;
+  DuongKinhTruongThanh?: number;
+  HinhThucTanCay?: string;
+  DangLa?: string;
+  MauLa?: string;
+  KyRungLa?: string;
+  KyNoHoa?: string;
+  MauHoa?: string;
+  LoaiCay?: string;
+  MoTa?: string;
+  TrangThai?: string;
+  NgayTao?: string;
+  NgayCapNhat?: string;
+}
+
+export interface CayXanh {
+  MaCay: string;
+  MaDMCay?: string;
+  NgayTrong?: string;
+  NguonGoc?: string;
+  ChieuCaoHienTai?: number;
+  DuongKinhThanHienTai?: number;
+  DuongKinhTanHienTai?: number;
+  TrangThaiSucKhoe?: string;
+  KinhDo?: string;
+  ViDo?: string;
+  GhiChu?: string;
+  NgayTao?: string;
+  NgayCapNhat?: string;
+  MaTuyenDuong?: string;
+  MaNguoiCapNhat?: string;
 }
 
 export interface FilterParams {
@@ -82,15 +122,18 @@ export interface FilterParams {
   status: string;
   startDate: string;
   endDate: string;
+  dateType: 'NgayTao' | 'NgayCapNhat' | 'NgayPheDuyet';
+  jobType: string;
   processor: string;
   xaPhuong: string;
   tuyenDuong: string;
 }
 
 export interface SummaryStats {
-  completed: number;
-  completedChange: number;
-  processing: number;
-  pending: number;
+  daGui: number;
+  dangThamDinh: number;
+  duocDuyet: number;
+  biTuChoi: number;
+  daHuy: number;
   total: number;
 }

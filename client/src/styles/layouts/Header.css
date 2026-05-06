@@ -79,7 +79,7 @@
   width: 100%;
   padding: 0.5rem 1rem 0.5rem 2.5rem;
   background: rgba(241, 245, 249, 0.5);
-  border: 1px solid transparent;
+  border: 1px solid #e2e8f0;
   border-radius: var(--radius-xl);
   font-size: var(--font-size-body-sm);
   transition: all 0.2s ease;

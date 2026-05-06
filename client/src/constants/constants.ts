@@ -8,10 +8,11 @@ export const PLAN_TYPES = {
 };
 
 export const PLAN_STATUS = {
-  approved: { label: 'Đã duyệt', color: 'bg-emerald-50 text-emerald-700', dotColor: 'bg-emerald-500' },
-  rejected: { label: 'Bị từ chối', color: 'bg-error-container text-on-error-container', dotColor: 'bg-error' },
-  pending: { label: 'Đang thẩm định', color: 'bg-orange-100 text-orange-700', dotColor: 'bg-orange-400' },
-  submitted: { label: 'Đã gửi', color: 'bg-blue-50 text-blue-700', dotColor: 'bg-blue-500' },
+  'Đã gửi': { label: 'Đã gửi', color: 'bg-blue-50 text-blue-700', dotColor: 'bg-blue-500' },
+  'Đang thẩm định': { label: 'Đang thẩm định', color: 'bg-orange-100 text-orange-700', dotColor: 'bg-orange-400' },
+  'Được duyệt': { label: 'Được duyệt', color: 'bg-emerald-50 text-emerald-700', dotColor: 'bg-emerald-500' },
+  'Bị từ chối': { label: 'Bị từ chối', color: 'bg-red-50 text-red-700', dotColor: 'bg-red-500' },
+  'Đã hủy': { label: 'Đã hủy', color: 'bg-slate-100 text-slate-700', dotColor: 'bg-slate-400' },
 };
 
 export const MOCK_XA_PHUONG = [
@@ -36,10 +37,9 @@ export const MOCK_KE_HOACH: KeHoachCongViec[] = [
     TieuDe: 'Cắt tỉa cây xanh Quận Hải Châu',
     MaLoaiCongViec: 'pruning',
     NguoiLap: 'Nguyễn Văn A',
-    NgayTao: '10/10/2024',
-    TrangThai: 'approved',
+    NgayTao: '2024-10-10',
+    TrangThai: 'Được duyệt',
     NguoiPheDuyet: 'Trần Thu Hà',
-    MaXaPhuong: 'XP001',
     MaTuyenDuong: 'TD001',
   },
   {
@@ -47,10 +47,9 @@ export const MOCK_KE_HOACH: KeHoachCongViec[] = [
     TieuDe: 'Trồng mới cây tại đường Bạch Đằng',
     MaLoaiCongViec: 'planting',
     NguoiLap: 'Nguyễn Văn A',
-    NgayTao: '12/10/2024',
-    TrangThai: 'rejected',
+    NgayTao: '2024-10-12',
+    TrangThai: 'Bị từ chối',
     NguoiPheDuyet: 'Lê Văn B',
-    MaXaPhuong: 'XP002',
     MaTuyenDuong: 'TD001',
   },
   {
@@ -58,9 +57,8 @@ export const MOCK_KE_HOACH: KeHoachCongViec[] = [
     TieuDe: 'Xử lý cây nghiêng sau bão',
     MaLoaiCongViec: 'emergency',
     NguoiLap: 'Nguyễn Văn A',
-    NgayTao: '14/10/2024',
-    TrangThai: 'pending',
-    MaXaPhuong: 'XP003',
+    NgayTao: '2024-10-14',
+    TrangThai: 'Đang thẩm định',
     MaTuyenDuong: 'TD002',
   },
   {
@@ -68,9 +66,8 @@ export const MOCK_KE_HOACH: KeHoachCongViec[] = [
     TieuDe: 'Bón phân định kỳ Công viên 29/3',
     MaLoaiCongViec: 'maintenance',
     NguoiLap: 'Nguyễn Văn A',
-    NgayTao: '15/10/2024',
-    TrangThai: 'submitted',
-    MaXaPhuong: 'XP004',
+    NgayTao: '2024-10-15',
+    TrangThai: 'Đã gửi',
     MaTuyenDuong: 'TD003',
   },
 ];
