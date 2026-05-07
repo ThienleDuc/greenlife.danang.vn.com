@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import loginBg from "../../assets/login-bg.png";
+import authService from "../../services/authService";
+import { storage } from "../../utils/storageUtils";
 
 const LoginPage: React.FC = () => {
   const [identifier, setIdentifier] = useState("");
@@ -16,25 +18,19 @@ const LoginPage: React.FC = () => {
     setErrorMsg("");
     
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, matKhau: password })
+      const data = await authService.login({ 
+        identifier, 
+        matKhau: password 
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Đăng nhập thất bại");
-      }
-
-      // Lưu token và thông tin người dùng
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // Sử dụng storage utility để lưu dữ liệu
+      storage.setToken(data.token);
+      storage.setUser(data.user);
 
       navigate("/theo-doi-ke-hoach");
     } catch (err: any) {
-      setErrorMsg(err.message);
+      const message = err.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+      setErrorMsg(message);
     } finally {
       setIsLoading(false);
     }
