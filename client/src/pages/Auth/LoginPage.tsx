@@ -3,21 +3,41 @@ import { useNavigate } from "react-router-dom";
 import loginBg from "../../assets/login-bg.png";
 
 const LoginPage: React.FC = () => {
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMsg("");
     
-    // Giả lập login
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier, matKhau: password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Đăng nhập thất bại");
+      }
+
+      // Lưu token và thông tin người dùng
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
       navigate("/theo-doi-ke-hoach");
-    }, 1500);
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -53,17 +73,24 @@ const LoginPage: React.FC = () => {
             <p className="login-subtitle">Hệ thống quản lý cây xanh Đà Nẵng</p>
           </div>
 
+          {/* Error Message */}
+          {errorMsg && (
+            <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm text-center animate-shake">
+              {errorMsg}
+            </div>
+          )}
+
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="form-group">
-              <label className="form-label">Tên đăng nhập</label>
+              <label className="form-label">Tên đăng nhập hoặc Email</label>
               <div className="input-wrapper">
                 <input
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   className="login-input"
-                  placeholder="admin_dn"
+                  placeholder="admin_dn hoặc email@example.com"
                   required
                 />
                 <div className="input-focus-dot"></div>
