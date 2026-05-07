@@ -1,8 +1,10 @@
 import KeHoachRoutes from "./features/TheoDoiTrangThaiKeHoach/KeHoachRoutes";
+import AuthRoutes from "./features/Auth/AuthRoutes";
 
 // Tổng hợp tất cả routes
 const allRoutes = [
   ...KeHoachRoutes,
+  ...AuthRoutes,
 ];
 
 // Public routes (không cần đăng nhập)
