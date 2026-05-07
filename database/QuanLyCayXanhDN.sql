@@ -1,4 +1,4 @@
-﻿USE master;
+USE master;
 
 GO
 -- ==========================================
@@ -168,7 +168,22 @@ CREATE TABLE KeHoachCongViec (
     NgayCapNhat DATETIME,
     NguoiXuLy VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
     NgayXuLy DATETIME,
-    MaTuyenDuong VARCHAR(20) FOREIGN KEY REFERENCES TuyenDuong (MaTuyenDuong),
+    MaTuyenDuong VARCHAR(20) FOREIGN KEY REFERENCES TuyenDuong (MaTuyenDuong)
+);
+
+-- Thêm ràng buộc và giá trị mặc định cho TrangThai của KeHoachCongViec
+ALTER TABLE KeHoachCongViec
+ADD CONSTRAINT DF_KeHoach_TrangThai DEFAULT N'Đã gửi' FOR TrangThai;
+
+ALTER TABLE KeHoachCongViec
+ADD CONSTRAINT CK_KeHoach_TrangThai CHECK (
+    TrangThai IN (
+        N'Đã gửi',
+        N'Đang thẩm định',
+        N'Đã phê duyệt',
+        N'Bị từ chối',
+        N'Đã hủy'
+    )
 );
 
 GO

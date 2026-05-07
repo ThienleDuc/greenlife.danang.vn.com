@@ -132,7 +132,7 @@ export interface FilterParams {
 export interface SummaryStats {
   daGui: number;
   dangThamDinh: number;
-  duocDuyet: number;
+  daPheDuyet: number;
   biTuChoi: number;
   daHuy: number;
   total: number;

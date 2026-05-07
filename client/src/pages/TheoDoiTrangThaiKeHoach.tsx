@@ -4,19 +4,11 @@ import PlanTable from '../components/PlanTable';
 import SummaryStatsComponent from '../components/SummaryStats';
 import Pagination from '../components/Pagination';
 import { TheoDoiKeHoachService } from '../services/kehoachService';
-import type { KeHoachCongViec, FilterParams, SummaryStats } from '../types';
+import type { KeHoachCongViec, FilterParams } from '../types';
 
 const TheoDoiTrangThaiKeHoach: React.FC = () => {
   const [plans, setPlans] = useState<KeHoachCongViec[]>([]);
   const [totalItems, setTotalItems] = useState(0);
-  const [summaryStats, setSummaryStats] = useState<SummaryStats>({
-    daGui: 0,
-    dangThamDinh: 0,
-    duocDuyet: 0,
-    biTuChoi: 0,
-    daHuy: 0,
-    total: 0,
-  });
   
   const [currentPage, setCurrentPage] = useState(1);
   const [currentFilters, setCurrentFilters] = useState<FilterParams | null>(null);
@@ -39,13 +31,7 @@ const TheoDoiTrangThaiKeHoach: React.FC = () => {
   };
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      await fetchPlans(1, null);
-      const stats = await TheoDoiKeHoachService.getSummaryStats();
-      setSummaryStats(stats);
-    };
-    
-    fetchInitialData();
+    fetchPlans(1, null);
   }, []);
 
   // Re-fetch when page or filters change
@@ -78,7 +64,7 @@ const TheoDoiTrangThaiKeHoach: React.FC = () => {
       </div>
 
       {/* Summary Stats - Top */}
-      <SummaryStatsComponent stats={summaryStats} />
+      <SummaryStatsComponent />
 
       <div className="page-content-grid">
         {/* Left Sidebar - Filter */}

@@ -10,7 +10,7 @@ export const PLAN_TYPES = {
 export const PLAN_STATUS = {
   'Đã gửi': { label: 'Đã gửi', color: 'bg-blue-50 text-blue-700', dotColor: 'bg-blue-500' },
   'Đang thẩm định': { label: 'Đang thẩm định', color: 'bg-orange-100 text-orange-700', dotColor: 'bg-orange-400' },
-  'Được duyệt': { label: 'Được duyệt', color: 'bg-emerald-50 text-emerald-700', dotColor: 'bg-emerald-500' },
+  'Đã phê duyệt': { label: 'Đã phê duyệt', color: 'bg-emerald-50 text-emerald-700', dotColor: 'bg-emerald-500' },
   'Bị từ chối': { label: 'Bị từ chối', color: 'bg-red-50 text-red-700', dotColor: 'bg-red-500' },
   'Đã hủy': { label: 'Đã hủy', color: 'bg-slate-100 text-slate-700', dotColor: 'bg-slate-400' },
 };
@@ -38,7 +38,7 @@ export const MOCK_KE_HOACH: KeHoachCongViec[] = [
     MaLoaiCongViec: 'pruning',
     NguoiLap: 'Nguyễn Văn A',
     NgayTao: '2024-10-10',
-    TrangThai: 'Được duyệt',
+    TrangThai: 'Đã phê duyệt',
     NguoiPheDuyet: 'Trần Thu Hà',
     MaTuyenDuong: 'TD001',
   },

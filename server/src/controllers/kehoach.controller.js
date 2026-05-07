@@ -22,7 +22,17 @@ const searchKeHoach = async (req, res) => {
   }
 };
 
+const getKeHoachStats = async (req, res) => {
+  try {
+    const data = await keHoachService.getKeHoachStats();
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi khi lấy thống kê kế hoạch công việc", error: error.message });
+  }
+};
+
 module.exports = {
   getAllKeHoach,
-  searchKeHoach
+  searchKeHoach,
+  getKeHoachStats
 };

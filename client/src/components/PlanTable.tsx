@@ -19,9 +19,14 @@ const formatDate = (dateString?: string) => {
 };
 
 const PlanTable: React.FC<PlanTableProps> = ({ plans }) => {
-  const openPdf = (fileUrl?: string) => {
-    if (fileUrl) {
-      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+  const openPdf = (fileName?: string) => {
+    if (fileName) {
+      // Đảm bảo đường dẫn chính xác từ gốc của trang web
+      const baseUrl = window.location.origin;
+      const filePath = `${baseUrl}/pdf/${fileName}`;
+      
+      console.log('Opening PDF:', filePath);
+      window.open(filePath, '_blank', 'noopener,noreferrer');
     }
   };
 

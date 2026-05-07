@@ -121,7 +121,58 @@ const searchKeHoach = async (filters) => {
   };
 };
 
+/**
+ * Lấy thống kê số lượng kế hoạch theo trạng thái
+ */
+const getKeHoachStats = async () => {
+  const connection = await pool;
+  const result = await connection.request().query(`
+    SELECT TrangThai, COUNT(*) as Count
+    FROM dbo.KeHoachCongViec
+    GROUP BY TrangThai
+  `);
+  
+  const stats = {
+    daGui: 0,
+    dangThamDinh: 0,
+    daPheDuyet: 0,
+    biTuChoi: 0,
+    daHuy: 0,
+    total: 0
+  };
+
+  result.recordset.forEach(row => {
+    const count = row.Count;
+    stats.total += count;
+    
+    switch (row.TrangThai) {
+      case 'Đã gửi':
+        stats.daGui = count;
+        break;
+      case 'Đang thẩm định':
+      case 'Đang chờ duyệt':
+        stats.dangThamDinh += count;
+        break;
+      case 'Đã phê duyệt':
+      case 'đã phê duyệt':
+      case 'Được duyệt':
+        stats.daPheDuyet += count;
+        break;
+      case 'Bị từ chối':
+      case 'bị từ chối':
+        stats.biTuChoi += count;
+        break;
+      case 'Đã hủy':
+        stats.daHuy = count;
+        break;
+    }
+  });
+
+  return stats;
+};
+
 module.exports = {
   getAllKeHoach,
-  searchKeHoach
+  searchKeHoach,
+  getKeHoachStats
 };

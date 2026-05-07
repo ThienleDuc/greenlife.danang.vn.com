@@ -8,7 +8,12 @@ const searchKeHoach = async (filters) => {
   return await keHoachRepo.searchKeHoach(filters);
 };
 
+const getKeHoachStats = async () => {
+  return await keHoachRepo.getKeHoachStats();
+};
+
 module.exports = {
   getAllKeHoach,
-  searchKeHoach
+  searchKeHoach,
+  getKeHoachStats
 };

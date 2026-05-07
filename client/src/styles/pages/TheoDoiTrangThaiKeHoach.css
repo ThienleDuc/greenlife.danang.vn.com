@@ -53,9 +53,9 @@
 /* New Layout Grid */
 .page-content-grid {
   display: grid;
-  grid-template-columns: 400px 1fr;
+  grid-template-columns: 350px 1fr;
   gap: var(--spacing-lg);
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .page-sidebar {

@@ -165,7 +165,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ onSearch, onReset }) => {
                     <option>Tất cả</option>
                     <option>Đã gửi</option>
                     <option>Đang thẩm định</option>
-                    <option>Được duyệt</option>
+                    <option>Đã phê duyệt</option>
                     <option>Bị từ chối</option>
                     <option>Đã hủy</option>
                   </select>

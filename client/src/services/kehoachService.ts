@@ -1,14 +1,6 @@
 import type { FilterParams, SummaryStats } from '../types';
 import api from './api';
 
-const MOCK_SUMMARY_STATS: SummaryStats = {
-  daGui: 5,
-  dangThamDinh: 3,
-  duocDuyet: 10,
-  biTuChoi: 1,
-  daHuy: 1,
-  total: 20,
-};
 
 export const TheoDoiKeHoachService = {
   // Gọi API lấy danh sách kế hoạch từ server
@@ -46,12 +38,21 @@ export const TheoDoiKeHoachService = {
     }
   },
 
-  // Giả lập API gọi lấy thống kê
+  // Gọi API lấy thống kê từ server
   getSummaryStats: async (): Promise<SummaryStats> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ ...MOCK_SUMMARY_STATS });
-      }, 300);
-    });
+    try {
+      const response = await api.get('/ke-hoach/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Lỗi khi lấy thống kê kế hoạch:', error);
+      return {
+        daGui: 0,
+        dangThamDinh: 0,
+        daPheDuyet: 0,
+        biTuChoi: 0,
+        daHuy: 0,
+        total: 0
+      };
+    }
   }
 };

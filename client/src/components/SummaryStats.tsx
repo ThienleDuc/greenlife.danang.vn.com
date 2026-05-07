@@ -1,12 +1,35 @@
 // src/components/SummaryStats.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { SummaryStats } from '../types';
+import { TheoDoiKeHoachService } from '../services/kehoachService';
 
-interface SummaryStatsProps {
-  stats: SummaryStats;
-}
+const SummaryStatsComponent: React.FC = () => {
+  const [stats, setStats] = useState<SummaryStats>({
+    daGui: 0,
+    dangThamDinh: 0,
+    daPheDuyet: 0,
+    biTuChoi: 0,
+    daHuy: 0,
+    total: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
-const SummaryStatsComponent: React.FC<SummaryStatsProps> = ({ stats }) => {
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoading(true);
+      try {
+        const data = await TheoDoiKeHoachService.getSummaryStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Lỗi khi tải thống kê:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const statItems = [
     {
       id: 'da-gui',
@@ -21,9 +44,9 @@ const SummaryStatsComponent: React.FC<SummaryStatsProps> = ({ stats }) => {
       extra: <span className="material-symbols-outlined text-orange-300">pending_actions</span>,
     },
     {
-      id: 'duoc-duyet',
-      title: 'Được duyệt',
-      value: stats.duocDuyet,
+      id: 'da-phe-duyet',
+      title: 'Đã phê duyệt',
+      value: stats.daPheDuyet,
       extra: <span className="material-symbols-outlined text-green-300">check_circle</span>,
     },
     {
@@ -45,6 +68,10 @@ const SummaryStatsComponent: React.FC<SummaryStatsProps> = ({ stats }) => {
       extra: <span className="material-symbols-outlined text-slate-300">inventory_2</span>,
     },
   ];
+
+  if (loading) {
+    return <div className="summary-stats-loading">Đang tải thống kê...</div>;
+  }
 
   return (
     <div className="summary-stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
