@@ -1,6 +1,9 @@
 /* styles/index.css - File CSS chính */
 @import "./variables.css";
 @import "./global.css";
+@import "./pages/LoginPage.css";
+@import "./pages/RegisterPage.css";
+@import "./pages/LandingPage.css";
 @import "./components/FilterBar.css";
 @import "./components/Pagination.css";
 @import "./components/PlanTable.css";
@@ -10,7 +13,5 @@
 @import "./layouts/Footer.css";
 @import "./layouts/MainLayout.css";
 @import "./pages/TheoDoiTrangThaiKeHoach.css";
-@import "./pages/LoginPage.css";
-@import "./pages/RegisterPage.css";
-@import "./pages/LandingPage.css";
+
 @import "tailwindcss";

@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '../../utils/pathUtils';
-import '../../styles/pages/LandingPage.css';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
