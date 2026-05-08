@@ -96,6 +96,10 @@ CREATE TABLE NguoiDung (
 );
 
 GO
+-- Bổ sung thuộc tính sau khi tạo bảng
+ALTER TABLE NguoiDung ADD AnhDaiDien VARCHAR(MAX);
+
+GO
 -- ==========================================
 -- 3. NHÓM QUẢN LÝ CÂY XANH
 -- ==========================================

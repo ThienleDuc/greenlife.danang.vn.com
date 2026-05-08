@@ -18,7 +18,8 @@ const login = async (identifier, matKhau) => {
     id: user.MaNguoiDung, 
     username: user.TenDangNhap, 
     role: user.MaVaiTro,
-    roleName: user.TenVaiTro
+    roleName: user.TenVaiTro,
+    avatar: user.AnhDaiDien
   });
 
   return {
@@ -27,7 +28,8 @@ const login = async (identifier, matKhau) => {
       tenDangNhap: user.TenDangNhap,
       hoTen: user.HoTen,
       role: user.MaVaiTro,
-      roleName: user.TenVaiTro
+      roleName: user.TenVaiTro,
+      anhDaiDien: user.AnhDaiDien
     },
     token
   };

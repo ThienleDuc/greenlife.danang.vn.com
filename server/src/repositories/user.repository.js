@@ -33,7 +33,7 @@ const findByUsernameOrEmail = async (identifier) => {
 };
 
 const createUser = async (userData) => {
-  const { maNguoiDung, tenDangNhap, matKhauHash, hoTen, email, sdt, maVaiTro } = userData;
+  const { maNguoiDung, tenDangNhap, matKhauHash, hoTen, email, sdt, maVaiTro, anhDaiDien } = userData;
   const connection = await pool;
   const result = await connection.request()
     .input("maNguoiDung", sql.VarChar, maNguoiDung)
@@ -43,9 +43,10 @@ const createUser = async (userData) => {
     .input("email", sql.VarChar, email)
     .input("sdt", sql.Char, sdt)
     .input("maVaiTro", sql.VarChar, maVaiTro)
+    .input("anhDaiDien", sql.VarChar, anhDaiDien || null)
     .query(`
-      INSERT INTO dbo.NguoiDung (MaNguoiDung, TenDangNhap, MatKhauHash, HoTen, Email, SDT, MaVaiTro, NgayTao)
-      VALUES (@maNguoiDung, @tenDangNhap, @matKhauHash, @hoTen, @email, @sdt, @maVaiTro, GETDATE());
+      INSERT INTO dbo.NguoiDung (MaNguoiDung, TenDangNhap, MatKhauHash, HoTen, Email, SDT, MaVaiTro, AnhDaiDien, NgayTao)
+      VALUES (@maNguoiDung, @tenDangNhap, @matKhauHash, @hoTen, @email, @sdt, @maVaiTro, @anhDaiDien, GETDATE());
       SELECT * FROM dbo.NguoiDung WHERE MaNguoiDung = @maNguoiDung;
     `);
   return result.recordset[0];
