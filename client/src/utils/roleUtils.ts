@@ -61,3 +61,21 @@ export const getUserFromStorage = (): User | null => {
     return null;
   }
 };
+
+/**
+ * Lấy đường dẫn trang chủ/dashboard tương ứng với vai trò
+ */
+export const getDashboardPath = (role: RoleCode | undefined): string => {
+  switch (role) {
+    case ROLE_CODES.ADMIN:
+      return "/admin/dashboard";
+    case ROLE_CODES.KY_THUAT:
+      return "/theo-doi-ke-hoach";
+    case ROLE_CODES.CONG_NHAN:
+      return "/cong-viec-cua-toi";
+    case ROLE_CODES.QUAN_LY:
+      return "/phe-duyet-ke-hoach";
+    default:
+      return "/theo-doi-ke-hoach";
+  }
+};

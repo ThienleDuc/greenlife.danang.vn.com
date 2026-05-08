@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const userRepository = require('../repositories/user.repository');
 const jwtUtils = require('../utils/jwt.utils');
+const crypto = require('crypto');
 
 const login = async (identifier, matKhau) => {
   const user = await userRepository.findByUsernameOrEmail(identifier);
@@ -41,9 +42,8 @@ const register = async (userData) => {
   const salt = await bcrypt.genSalt(10);
   const matKhauHash = await bcrypt.hash(userData.matKhau, salt);
 
-  // Sinh MaNguoiDung ngẫu nhiên (ví dụ ND001, ND002...)
-  // Thực tế nên có logic sinh mã chuyên nghiệp hơn
-  const maNguoiDung = 'ND' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  // Sinh MaNguoiDung ngẫu nhiên 20 kí tự
+  const maNguoiDung = crypto.randomBytes(10).toString('hex');
 
   const newUser = await userRepository.createUser({
     ...userData,

@@ -1,12 +1,13 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import TestUserRoutes from "./routes/TestUserRoutes";
 import MainLayout from "./layouts/MainLayout";
 import { publicRoutes, privateRoutes } from "./routes";
+import PublicRoute from "./routes/PublicRoute";
 import PrivateRoute from "./routes/PrivateRoute";
-import { Navigate } from "react-router-dom";
+import { storage } from "./utils/storageUtils";
 
 const App = () => {
-  const isAuthenticated = false; // Set to false to show login page
+  const isAuthenticated = !!storage.getToken();
   
   return (
     <Router>
@@ -16,7 +17,15 @@ const App = () => {
 
         {/* Public Routes */}
         {publicRoutes.map((route, index) => (
-          <Route key={`public-${index}`} path={route.path} element={route.element} />
+          <Route 
+            key={`public-${index}`} 
+            path={route.path} 
+            element={
+              <PublicRoute isAuthenticated={isAuthenticated}>
+                {route.element}
+              </PublicRoute>
+            } 
+          />
         ))}
 
         {/* TestUser routes */}

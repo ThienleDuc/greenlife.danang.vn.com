@@ -10,7 +10,10 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
   children, 
   isAuthenticated = true 
 }) => {
-  if (!isAuthenticated) {
+  // Nếu không truyền prop, tự kiểm tra từ storage
+  const isAuth = isAuthenticated !== undefined ? isAuthenticated : !!storage.getToken();
+
+  if (!isAuth) {
     return <Navigate to="/login" replace />;
   }
 

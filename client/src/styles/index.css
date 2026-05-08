@@ -11,5 +11,6 @@
 @import "./layouts/MainLayout.css";
 @import "./pages/TheoDoiTrangThaiKeHoach.css";
 @import "./pages/LoginPage.css";
+@import "./pages/RegisterPage.css";
 
 @import "tailwindcss";

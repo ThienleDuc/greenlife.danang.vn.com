@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import loginBg from "../../assets/login-bg.png";
 import authService from "../../services/authService";
 import { storage } from "../../utils/storageUtils";
+import { getDashboardPath } from "../../utils/roleUtils";
 
 const LoginPage: React.FC = () => {
   const [identifier, setIdentifier] = useState("");
@@ -10,7 +11,6 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +27,9 @@ const LoginPage: React.FC = () => {
       storage.setToken(data.token);
       storage.setUser(data.user);
 
-      navigate("/theo-doi-ke-hoach");
+      // Điều hướng dựa trên vai trò và force reload để cập nhật trạng thái isAuthenticated trong App
+      const dashboardPath = getDashboardPath(data.user.role);
+      window.location.href = dashboardPath;
     } catch (err: any) {
       const message = err.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
       setErrorMsg(message);
@@ -160,7 +162,7 @@ const LoginPage: React.FC = () => {
           <div className="login-footer">
             <p className="login-footer-text">
               Chưa có tài khoản?{" "}
-              <a href="#" className="login-footer-link font-bold">Đăng ký ngay</a>
+              <Link to="/register" className="login-footer-link font-bold">Đăng ký ngay</Link>
             </p>
           </div>
         </div>
