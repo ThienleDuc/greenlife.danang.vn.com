@@ -1,0 +1,103 @@
+/* ============================================
+   SummaryStats Component Styles
+   ============================================ */
+.summary-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+@media (min-width: 640px) {
+  .summary-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .summary-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .summary-stats-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.summary-stat-card {
+  padding: 1.25rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Specific Card Styles */
+.summary-stat-card.da-gui {
+  background-color: #eff6ff;
+  border-color: #dbeafe;
+}
+
+.summary-stat-card.dang-tham-dinh {
+  background-color: #fff7ed;
+  border-color: #ffedd5;
+}
+
+.summary-stat-card.duoc-duyet {
+  background-color: #ecfdf5;
+  border-color: #d1fae5;
+}
+
+.summary-stat-card.bi-tu-choi {
+  background-color: #fef2f2;
+  border-color: #fee2e2;
+}
+
+.summary-stat-card.da-huy {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.summary-stat-card.total {
+  background-color: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+/* Title Styling */
+.summary-stat-title {
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.da-gui .summary-stat-title { color: #1e40af; }
+.dang-tham-dinh .summary-stat-title { color: #9a3412; }
+.duoc-duyet .summary-stat-title { color: #065f46; }
+.bi-tu-choi .summary-stat-title { color: #991b1b; }
+.da-huy .summary-stat-title { color: #475569; }
+.total .summary-stat-title { color: #1e293b; }
+
+/* Content Styling */
+.summary-stat-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.summary-stat-value {
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-on-surface);
+}
+
+.summary-stat-extra .material-symbols-outlined {
+  font-size: 1.5rem;
+}

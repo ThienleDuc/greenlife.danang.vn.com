@@ -1,0 +1,289 @@
+/* ThongKeBaoCao.css */
+.tkbc-container {
+  padding: 24px;
+  background-color: var(--color-surface);
+  min-height: 100vh;
+}
+
+.tkbc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.tkbc-title {
+  font-size: 24px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-on-surface);
+  margin: 0;
+}
+
+.tkbc-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.tkbc-btn-export {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: var(--font-weight-medium);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tkbc-btn-export.excel {
+  background-color: #107c41;
+  color: white;
+}
+
+.tkbc-btn-export.pdf {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.tkbc-btn-export:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.tkbc-btn-export:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tkbc-filter-card {
+  background: var(--color-surface-container-lowest);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-outline-variant);
+}
+
+.tkbc-filter-title {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 16px;
+  color: var(--color-on-surface);
+}
+
+.tkbc-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.tkbc-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tkbc-filter-group label {
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-on-surface-variant);
+}
+
+.tkbc-input, .tkbc-select {
+  padding: 10px 12px;
+  border: 1px solid var(--color-outline);
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+}
+
+.tkbc-btn-filter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  border-radius: 8px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tkbc-btn-filter:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.tkbc-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.tkbc-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-outline-variant);
+}
+
+.tkbc-card-icon {
+  font-size: 32px;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.tkbc-card.primary .tkbc-card-icon {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.tkbc-card.success .tkbc-card-icon {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.tkbc-card.danger .tkbc-card-icon {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.tkbc-card-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
+  font-weight: var(--font-weight-medium);
+}
+
+.tkbc-card-info h2 {
+  margin: 0;
+  font-size: 28px;
+  color: var(--color-on-surface);
+  font-weight: var(--font-weight-bold);
+}
+
+.tkbc-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.tkbc-chart-wrapper {
+  background: var(--color-surface-container-lowest);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-outline-variant);
+}
+
+.tkbc-chart-title {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 16px;
+  color: var(--color-on-surface);
+}
+
+.tkbc-table-wrapper {
+  background: var(--color-surface-container-lowest);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-outline-variant);
+}
+
+.tkbc-table-title {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 16px;
+  color: var(--color-on-surface);
+}
+
+.tkbc-table-responsive {
+  overflow-x: auto;
+}
+
+.tkbc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tkbc-table th, .tkbc-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-outline-variant);
+  font-size: 14px;
+}
+
+.tkbc-table th {
+  background-color: var(--color-surface-container);
+  color: var(--color-on-surface-variant);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.tkbc-status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+}
+
+.tkbc-status-badge.duyet {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.tkbc-status-badge.tuchoi {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.tkbc-status-badge.default {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.tkbc-loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--color-on-surface-variant);
+  font-size: 16px;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1024px) {
+  .tkbc-charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .tkbc-summary-cards {
+    grid-template-columns: 1fr;
+  }
+  .tkbc-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
