@@ -42,7 +42,7 @@
   margin-bottom: 1.5rem;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  animation: landing-fadeInUp 0.8s ease-out;
+  animation: landingFadeInUp 0.8s ease-out;
 }
 
 .landing-hero-subtitle {
@@ -50,14 +50,14 @@
   margin-bottom: 2.5rem;
   opacity: 0.9;
   line-height: 1.6;
-  animation: landing-fadeInUp 0.8s ease-out 0.2s both;
+  animation: landingFadeInUp 0.8s ease-out 0.2s both;
 }
 
 .landing-hero-actions {
   display: flex;
   gap: 1rem;
   justify-content: center;
-  animation: landing-fadeInUp 0.8s ease-out 0.4s both;
+  animation: landingFadeInUp 0.8s ease-out 0.4s both;
 }
 
 /* Features Section */
@@ -195,7 +195,7 @@
 }
 
 /* Animations */
-@keyframes landing-fadeInUp {
+@keyframes landingFadeInUp {
   from {
     opacity: 0;
     transform: translateY(30px);
