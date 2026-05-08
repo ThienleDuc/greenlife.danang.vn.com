@@ -1,15 +1,14 @@
 // src/layouts/TopNavBar.tsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { PATHS } from '../utils/pathUtils';
+
+
+import { storage } from '../utils/storageUtils';
+import { getNavItemsByRole } from '../utils/navUtils';
 
 const TopNavBar: React.FC = () => {
-  const navItems = [
-    { path: PATHS.KY_THUAT.LAP_KE_HOACH, label: 'Lập kế hoạch', icon: 'edit_document' },
-    { path: PATHS.QUAN_LY.DASHBOARD, label: 'Phê duyệt kế hoạch', icon: 'checklist' },
-    { path: PATHS.KY_THUAT.DASHBOARD, label: 'Theo dõi kế hoạch', icon: 'work' },
-    { path: PATHS.QUAN_LY.THONG_KE, label: 'Báo cáo thống kê', icon: 'pie_chart' },
-  ];
+  const user = storage.getUser();
+  const navItems = getNavItemsByRole(user?.role);
 
   return (
     <nav className="top-nav">
