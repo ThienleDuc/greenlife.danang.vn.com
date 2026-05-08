@@ -1,19 +1,15 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import TestUserRoutes from "./routes/TestUserRoutes";
 import MainLayout from "./layouts/MainLayout";
 import { publicRoutes, privateRoutes } from "./routes";
 import PublicRoute from "./routes/PublicRoute";
 import PrivateRoute from "./routes/PrivateRoute";
-import { storage } from "./utils/storageUtils";
 
 const App = () => {
-  const isAuthenticated = !!storage.getToken();
-  
   return (
     <Router>
       <Routes>
-        {/* Redirect from root to login or dashboard */}
-        <Route path="/" element={<Navigate to={isAuthenticated ? "/theo-doi-ke-hoach" : "/login"} replace />} />
+        {/* Routes will be dynamically generated from publicRoutes and privateRoutes */}
 
         {/* Public Routes */}
         {publicRoutes.map((route, index) => (
@@ -21,7 +17,7 @@ const App = () => {
             key={`public-${index}`} 
             path={route.path} 
             element={
-              <PublicRoute isAuthenticated={isAuthenticated}>
+              <PublicRoute>
                 {route.element}
               </PublicRoute>
             } 
@@ -40,7 +36,7 @@ const App = () => {
               key={`private-${index}`}
               path={route.path}
               element={
-                <PrivateRoute isAuthenticated={isAuthenticated}>
+                <PrivateRoute>
                   {route.element}
                 </PrivateRoute>
               }

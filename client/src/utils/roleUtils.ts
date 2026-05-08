@@ -1,3 +1,5 @@
+import { PATHS } from './pathUtils';
+
 export const ROLE_CODES = {
   ADMIN: 'QTHT',         // Quản trị hệ thống
   QUAN_LY: 'CBQL',       // Cán bộ quản lý
@@ -62,20 +64,21 @@ export const getUserFromStorage = (): User | null => {
   }
 };
 
+
 /**
  * Lấy đường dẫn trang chủ/dashboard tương ứng với vai trò
  */
 export const getDashboardPath = (role: RoleCode | undefined): string => {
   switch (role) {
     case ROLE_CODES.ADMIN:
-      return "/admin/dashboard";
+      return PATHS.ADMIN.DASHBOARD;
     case ROLE_CODES.KY_THUAT:
-      return "/theo-doi-ke-hoach";
+      return PATHS.KY_THUAT.DASHBOARD;
     case ROLE_CODES.CONG_NHAN:
-      return "/cong-viec-cua-toi";
+      return PATHS.CONG_NHAN.DASHBOARD;
     case ROLE_CODES.QUAN_LY:
-      return "/phe-duyet-ke-hoach";
+      return PATHS.QUAN_LY.DASHBOARD;
     default:
-      return "/theo-doi-ke-hoach";
+      return PATHS.KY_THUAT.DASHBOARD;
   }
 };

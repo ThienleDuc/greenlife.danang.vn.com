@@ -1,13 +1,14 @@
 // src/layouts/TopNavBar.tsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { PATHS } from '../utils/pathUtils';
 
 const TopNavBar: React.FC = () => {
   const navItems = [
-    { path: '/lap-ke-hoach', label: 'Lập kế hoạch', icon: 'edit_document' },
-    { path: '/phe-duyet-ke-hoach', label: 'Phê duyệt kế hoạch', icon: 'checklist' },
-    { path: '/theo-doi-ke-hoach', label: 'Theo dõi kế hoạch', icon: 'work' },
-    { path: '/bao-cao-thong-ke', label: 'Báo cáo thống kê', icon: 'pie_chart' },
+    { path: PATHS.KY_THUAT.LAP_KE_HOACH, label: 'Lập kế hoạch', icon: 'edit_document' },
+    { path: PATHS.QUAN_LY.DASHBOARD, label: 'Phê duyệt kế hoạch', icon: 'checklist' },
+    { path: PATHS.KY_THUAT.DASHBOARD, label: 'Theo dõi kế hoạch', icon: 'work' },
+    { path: PATHS.QUAN_LY.THONG_KE, label: 'Báo cáo thống kê', icon: 'pie_chart' },
   ];
 
   return (

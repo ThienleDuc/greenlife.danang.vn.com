@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import FilterBar from '../components/FilterBar';
-import PlanTable from '../components/PlanTable';
-import SummaryStatsComponent from '../components/SummaryStats';
-import Pagination from '../components/Pagination';
-import { TheoDoiKeHoachService } from '../services/kehoachService';
-import type { KeHoachCongViec, FilterParams } from '../types';
+import FilterBar from '../../components/FilterBar';
+import PlanTable from '../../components/PlanTable';
+import SummaryStatsComponent from '../../components/SummaryStats';
+import Pagination from '../../components/Pagination';
+import { TheoDoiKeHoachService } from '../../services/kehoachService';
+import type { KeHoachCongViec, FilterParams } from '../../types';
 
 const TheoDoiTrangThaiKeHoach: React.FC = () => {
   const [plans, setPlans] = useState<KeHoachCongViec[]>([]);

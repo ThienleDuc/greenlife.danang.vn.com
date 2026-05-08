@@ -1,14 +1,15 @@
 import LoginPage from "../../../pages/Auth/LoginPage";
 import RegisterPage from "../../../pages/Auth/RegisterPage";
+import { PATHS } from "../../../utils/pathUtils";
 
 const AuthRoutes = [
   {
-    path: "/login",
+    path: PATHS.AUTH.LOGIN,
     element: <LoginPage />,
     isPublic: true,
   },
   {
-    path: "/register",
+    path: PATHS.AUTH.REGISTER,
     element: <RegisterPage />,
     isPublic: true,
   },

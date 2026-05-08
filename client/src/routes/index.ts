@@ -1,8 +1,10 @@
+import HomeRoutes from "./features/Home/HomeRoutes";
 import KeHoachRoutes from "./features/TheoDoiTrangThaiKeHoach/KeHoachRoutes";
 import AuthRoutes from "./features/Auth/AuthRoutes";
 
 // Tổng hợp tất cả routes
 const allRoutes = [
+  ...HomeRoutes,
   ...KeHoachRoutes,
   ...AuthRoutes,
 ];

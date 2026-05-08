@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { storage } from '../utils/storageUtils';
 import { authService } from '../services/authService';
+import { PATHS } from '../utils/pathUtils';
 
 const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,7 +26,7 @@ const Header: React.FC = () => {
 
   const handleLogout = () => {
     authService.logout();
-    window.location.href = '/login';
+    window.location.href = PATHS.AUTH.LOGIN;
   };
 
   return (
@@ -108,11 +109,11 @@ const Header: React.FC = () => {
                     </div>
                   </div>
                   <div className="dropdown-divider"></div>
-                  <Link to="/profile" className="dropdown-item">
+                  <Link to={PATHS.AUTH.PROFILE} className="dropdown-item">
                     <span className="material-symbols-outlined">person</span>
                     Trang cá nhân
                   </Link>
-                  <Link to="/settings" className="dropdown-item">
+                  <Link to={PATHS.AUTH.SETTINGS} className="dropdown-item">
                     <span className="material-symbols-outlined">settings</span>
                     Cài đặt
                   </Link>
@@ -127,8 +128,8 @@ const Header: React.FC = () => {
           </>
         ) : (
           <div className="header-guest-actions">
-            <Link to="/login" className="header-btn secondary">Đăng nhập</Link>
-            <Link to="/register" className="header-btn primary">Đăng ký</Link>
+            <Link to={PATHS.AUTH.LOGIN} className="header-btn secondary">Đăng nhập</Link>
+            <Link to={PATHS.AUTH.REGISTER} className="header-btn primary">Đăng ký</Link>
           </div>
         )}
       </div>
