@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import thongKeService, { type ThongKeTongQuanResponse } from '../../services/thongKeService';
 import locationService from '../../services/locationService';
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
-  LineChart, Line 
+  LineChart, Line
 } from 'recharts';
 import '../../styles/pages/ThongKeBaoCao.css';
 
 const ThongKeBaoCaoPage: React.FC = () => {
   const [data, setData] = useState<ThongKeTongQuanResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   const [tuNgay, setTuNgay] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
@@ -21,10 +21,13 @@ const ThongKeBaoCaoPage: React.FC = () => {
   });
   const [maXaPhuong, setMaXaPhuong] = useState<string>('');
   const [maTuyenDuong, setMaTuyenDuong] = useState<string>('');
-  
+
   const [xaPhuongs, setXaPhuongs] = useState<any[]>([]);
   const [tuyenDuongs, setTuyenDuongs] = useState<any[]>([]);
   const [allTuyenDuongs, setAllTuyenDuongs] = useState<any[]>([]);
+
+  const [errorMsg, setErrorMsg] = useState<string>('');
+  const [exportType, setExportType] = useState<string>('excel');
 
   useEffect(() => {
     loadLocations();
@@ -49,7 +52,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
     const val = e.target.value;
     setMaXaPhuong(val);
     setMaTuyenDuong(''); // reset tuyến đường khi đổi xã phường
-    
+
     if (val) {
       setTuyenDuongs(allTuyenDuongs.filter(td => td.MaXaPhuong === val));
     } else {
@@ -72,10 +75,19 @@ const ThongKeBaoCaoPage: React.FC = () => {
 
   const handleFilter = () => {
     if (tuNgay && denNgay && new Date(tuNgay) > new Date(denNgay)) {
-      alert("Từ ngày phải nhỏ hơn hoặc bằng Đến ngày");
+      setErrorMsg("Thời gian lọc không hợp lệ");
       return;
     }
+    setErrorMsg('');
     loadData(tuNgay, denNgay, maTuyenDuong, maXaPhuong);
+  };
+
+  const handleExport = async () => {
+    if (exportType === 'excel') {
+      await handleExportExcel();
+    } else {
+      await handleExportPDF();
+    }
   };
 
   const handleExportExcel = async () => {
@@ -113,19 +125,25 @@ const ThongKeBaoCaoPage: React.FC = () => {
       <div className="tkbc-header">
         <h1 className="tkbc-title">Thống kê & Xuất báo cáo</h1>
         <div className="tkbc-actions">
-          <button className="tkbc-btn-export excel" onClick={handleExportExcel} disabled={loading}>
-            <span className="material-symbols-outlined">table_view</span>
-            Xuất Excel
-          </button>
-          <button className="tkbc-btn-export pdf" onClick={handleExportPDF} disabled={loading}>
-            <span className="material-symbols-outlined">picture_as_pdf</span>
-            Xuất PDF
+          <select
+            className="tkbc-select"
+            style={{ fontWeight: 'var(--font-weight-medium)' }}
+            value={exportType}
+            onChange={(e) => setExportType(e.target.value)}
+          >
+            <option value="excel">File Excel</option>
+            <option value="pdf">File PDF</option>
+          </select>
+          <button className="tkbc-btn-export" onClick={handleExport} disabled={loading}>
+            <span className="material-symbols-outlined">download</span>
+            Xuất báo cáo
           </button>
         </div>
       </div>
 
       <div className="tkbc-filter-card">
         <h3 className="tkbc-filter-title">Bộ lọc thống kê</h3>
+        {errorMsg && <div className="tkbc-error-msg">{errorMsg}</div>}
         <div className="tkbc-filter-grid">
           <div className="tkbc-filter-group">
             <label>Từ ngày</label>
@@ -174,8 +192,8 @@ const ThongKeBaoCaoPage: React.FC = () => {
                 <h2>{data?.tongQuan?.tongTao || 0}</h2>
               </div>
             </div>
-            <div className="tkbc-card" style={{borderLeft: '4px solid #f59e0b'}}>
-              <span className="material-symbols-outlined tkbc-card-icon" style={{backgroundColor: '#fef3c7', color: '#92400e'}}>pending_actions</span>
+            <div className="tkbc-card" style={{ borderLeft: '4px solid #f59e0b' }}>
+              <span className="material-symbols-outlined tkbc-card-icon" style={{ backgroundColor: '#fef3c7', color: '#92400e' }}>pending_actions</span>
               <div className="tkbc-card-info">
                 <h4>Đang thẩm định</h4>
                 <h2>{data?.tongQuan?.tongThamDinh || 0}</h2>
@@ -195,8 +213,8 @@ const ThongKeBaoCaoPage: React.FC = () => {
                 <h2>{data?.tongQuan?.tongTuChoi || 0}</h2>
               </div>
             </div>
-            <div className="tkbc-card" style={{borderLeft: '4px solid #6b7280'}}>
-              <span className="material-symbols-outlined tkbc-card-icon" style={{backgroundColor: '#f3f4f6', color: '#374151'}}>block</span>
+            <div className="tkbc-card" style={{ borderLeft: '4px solid #6b7280' }}>
+              <span className="material-symbols-outlined tkbc-card-icon" style={{ backgroundColor: '#f3f4f6', color: '#374151' }}>block</span>
               <div className="tkbc-card-info">
                 <h4>Đã hủy</h4>
                 <h2>{data?.tongQuan?.tongHuy || 0}</h2>
@@ -208,15 +226,15 @@ const ThongKeBaoCaoPage: React.FC = () => {
             {/* Biểu đồ xu hướng (Line chart) */}
             <div className="tkbc-chart-wrapper">
               <h3 className="tkbc-chart-title">Xu hướng theo thời gian</h3>
-              <div style={{height: 300}}>
+              <div style={{ height: 300 }}>
                 {data && data.chartData && data.chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={data.chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline-variant)" />
-                      <XAxis dataKey="date" tick={{fontSize: 12, fill: 'var(--color-on-surface-variant)'}} axisLine={{stroke: 'var(--color-outline-variant)'}} />
-                      <YAxis allowDecimals={false} tick={{fill: 'var(--color-on-surface-variant)'}} axisLine={false} tickLine={false} />
-                      <RechartsTooltip contentStyle={{borderRadius: 8, border: '1px solid var(--color-outline-variant)'}} />
-                      <Legend wrapperStyle={{paddingTop: 10}} />
+                      <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--color-on-surface-variant)' }} axisLine={{ stroke: 'var(--color-outline-variant)' }} />
+                      <YAxis allowDecimals={false} tick={{ fill: 'var(--color-on-surface-variant)' }} axisLine={false} tickLine={false} />
+                      <RechartsTooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--color-outline-variant)' }} />
+                      <Legend wrapperStyle={{ paddingTop: 10 }} />
                       <Line type="monotone" name="Tạo mới/Đã gửi" dataKey="taoMoi" stroke="var(--color-primary)" strokeWidth={2} activeDot={{ r: 8 }} />
                       <Line type="monotone" name="Đang thẩm định" dataKey="dangThamDinh" stroke="#f59e0b" strokeWidth={2} />
                       <Line type="monotone" name="Đã duyệt" dataKey="daDuyet" stroke="var(--color-primary-container)" strokeWidth={2} />
@@ -225,7 +243,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div style={{display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'var(--color-on-surface-variant)'}}>Không có dữ liệu trong khoảng thời gian này</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-on-surface-variant)' }}>Không có dữ liệu trong khoảng thời gian này</div>
                 )}
               </div>
             </div>
@@ -233,15 +251,15 @@ const ThongKeBaoCaoPage: React.FC = () => {
             {/* Biểu đồ so sánh (Bar chart) */}
             <div className="tkbc-chart-wrapper">
               <h3 className="tkbc-chart-title">Tương quan trạng thái</h3>
-              <div style={{height: 300}}>
+              <div style={{ height: 300 }}>
                 {data && data.chartData && data.chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data.chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline-variant)" />
-                      <XAxis dataKey="date" tick={{fontSize: 12, fill: 'var(--color-on-surface-variant)'}} axisLine={{stroke: 'var(--color-outline-variant)'}} />
-                      <YAxis allowDecimals={false} tick={{fill: 'var(--color-on-surface-variant)'}} axisLine={false} tickLine={false} />
-                      <RechartsTooltip contentStyle={{borderRadius: 8, border: '1px solid var(--color-outline-variant)'}} />
-                      <Legend wrapperStyle={{paddingTop: 10}} />
+                      <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--color-on-surface-variant)' }} axisLine={{ stroke: 'var(--color-outline-variant)' }} />
+                      <YAxis allowDecimals={false} tick={{ fill: 'var(--color-on-surface-variant)' }} axisLine={false} tickLine={false} />
+                      <RechartsTooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--color-outline-variant)' }} />
+                      <Legend wrapperStyle={{ paddingTop: 10 }} />
                       <Bar name="Tạo mới/Đã gửi" dataKey="taoMoi" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
                       <Bar name="Đang thẩm định" dataKey="dangThamDinh" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                       <Bar name="Đã duyệt" dataKey="daDuyet" fill="var(--color-primary-container)" radius={[4, 4, 0, 0]} />
@@ -250,7 +268,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div style={{display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'var(--color-on-surface-variant)'}}>Không có dữ liệu trong khoảng thời gian này</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-on-surface-variant)' }}>Không có dữ liệu trong khoảng thời gian này</div>
                 )}
               </div>
             </div>
@@ -280,7 +298,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                     const isDaGui = trangThaiLC.includes('gửi') || trangThaiLC.includes('tạo');
                     const isDaHuy = trangThaiLC.includes('hủy');
                     const isThamDinh = trangThaiLC.includes('thẩm định');
-                    
+
                     let badgeClass = 'default';
                     if (isDuyet) badgeClass = 'duyet';
                     else if (isTuChoi) badgeClass = 'tuchoi';
@@ -290,7 +308,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
 
                     return (
                       <tr key={index}>
-                        <td style={{fontWeight: 'var(--font-weight-medium)', color: 'var(--color-primary)'}}>#{item.MaKeHoach}</td>
+                        <td style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-primary)' }}>#{item.MaKeHoach}</td>
                         <td>{item.TieuDe}</td>
                         <td>{item.TenTuyenDuong}</td>
                         <td>{item.TenCongViec}</td>
@@ -307,7 +325,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                   })}
                   {(!data?.rawData || data.rawData.length === 0) && (
                     <tr>
-                      <td colSpan={8} style={{textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)'}}>
+                      <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
                         Không có dữ liệu
                       </td>
                     </tr>
