@@ -39,7 +39,7 @@
 }
 
 .tkbc-btn-export:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
+  opacity: 0.9;
   transform: translateY(-1px);
 }
 
@@ -128,7 +128,7 @@
 }
 
 .tkbc-btn-filter:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
+  opacity: 0.9;
 }
 
 .tkbc-summary-cards {
