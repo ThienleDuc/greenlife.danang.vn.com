@@ -123,7 +123,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
   return (
     <div className="tkbc-container fade-in">
       <div className="tkbc-header">
-        <h1 className="tkbc-title">Thống kê & Xuất báo cáo</h1>
+        <h1 className="tkbc-title">Thống kê kế hoạch</h1>
         <div className="tkbc-actions">
           <select
             className="tkbc-select"
