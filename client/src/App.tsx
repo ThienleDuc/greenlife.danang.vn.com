@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import TestUserRoutes from "./routes/TestUserRoutes";
 import MainLayout from "./layouts/MainLayout";
 import { privateRoutes } from "./routes";
@@ -11,15 +11,15 @@ const App = () => {
     <Router>
       <Routes>
 
+        {/* Redirect "/" về trang chính */}
+        <Route path="/" element={<Navigate to="/theo-doi-ke-hoach" replace />} />
+
         {/* TestUser routes */}
         {TestUserRoutes.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
         ))}
 
-        {/* 404 */}
-        <Route path="*" element={<div>404 Not Found</div>} />
-
-                {/* Private Routes với MainLayout */}
+        {/* Private Routes với MainLayout */}
         <Route element={<MainLayout />}>
           {privateRoutes.map((route, index) => (
             <Route
@@ -33,6 +33,10 @@ const App = () => {
             />
           ))}
         </Route>
+
+        {/* 404 - phải để cuối cùng */}
+        <Route path="*" element={<div>404 Not Found</div>} />
+
       </Routes>
     </Router>
   );

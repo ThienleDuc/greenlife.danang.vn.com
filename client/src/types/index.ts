@@ -137,3 +137,41 @@ export interface SummaryStats {
   daHuy: number;
   total: number;
 }
+
+export interface ChiTietPhanCong {
+  MaChiTiet: string;
+  MaKHPC?: string;
+  MaCongNhan?: string;
+  CongViecCuThe?: string;
+  ThoiGianBatDau?: string;
+  ThoiGianKetThuc?: string;
+  XacNhanLam?: boolean;
+  LyDo?: string;
+  AnhTruocPhanCong?: string;
+  KhoiLuongHoanThanh?: string; // In DB it is NVARCHAR(100)
+  HoTenCongNhan?: string;
+}
+
+export interface KeHoachPhanCong {
+  MaKHPC: string;
+  MaKHCV?: string;
+  TieuDe?: string;
+  FilePDF?: string;
+  NguoiTao?: string;
+  TenNguoiTao?: string;
+  NgayTao?: string;
+  NguoiCapNhat?: string;
+  TenNguoiCapNhat?: string;
+  NgayCapNhat?: string;
+  TrangThaiNghiemThu?: string;
+  NgayNghiemThu?: string;
+  NguoiNghiemThu?: string;
+  YKienNghiemThu?: string;
+  chiTietList?: ChiTietPhanCong[];
+}
+
+
+export interface KeHoachChiTietResponse {
+  keHoach: KeHoachCongViec;
+  phanCongList: KeHoachPhanCong[];
+}
