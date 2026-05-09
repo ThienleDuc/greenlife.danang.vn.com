@@ -15,6 +15,8 @@ export interface ThongKeTongQuanResponse {
     tongTao: number;
     tongDuyet: number;
     tongTuChoi: number;
+    tongThamDinh: number;
+    tongHuy: number;
   };
   chartData: Array<{
     date: string;
@@ -22,6 +24,7 @@ export interface ThongKeTongQuanResponse {
     daDuyet: number;
     tuChoi: number;
     dangThamDinh: number;
+    daHuy: number;
   }>;
   rawData: any[];
 }

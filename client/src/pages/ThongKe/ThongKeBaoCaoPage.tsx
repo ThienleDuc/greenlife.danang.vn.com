@@ -97,7 +97,12 @@ const ThongKeBaoCaoPage: React.FC = () => {
     try {
       const blob = await thongKeService.downloadPDF(tuNgay, denNgay, maTuyenDuong, maXaPhuong);
       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-      window.open(url, '_blank');
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'BaoCaoThongKe.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
     } catch (error) {
       alert("Lỗi xuất PDF");
     }
@@ -165,8 +170,15 @@ const ThongKeBaoCaoPage: React.FC = () => {
             <div className="tkbc-card primary">
               <span className="material-symbols-outlined tkbc-card-icon">assignment</span>
               <div className="tkbc-card-info">
-                <h4>Tổng số kế hoạch</h4>
+                <h4>Tổng kế hoạch</h4>
                 <h2>{data?.tongQuan?.tongTao || 0}</h2>
+              </div>
+            </div>
+            <div className="tkbc-card" style={{borderLeft: '4px solid #f59e0b'}}>
+              <span className="material-symbols-outlined tkbc-card-icon" style={{backgroundColor: '#fef3c7', color: '#92400e'}}>pending_actions</span>
+              <div className="tkbc-card-info">
+                <h4>Đang thẩm định</h4>
+                <h2>{data?.tongQuan?.tongThamDinh || 0}</h2>
               </div>
             </div>
             <div className="tkbc-card success">
@@ -181,6 +193,13 @@ const ThongKeBaoCaoPage: React.FC = () => {
               <div className="tkbc-card-info">
                 <h4>Bị từ chối</h4>
                 <h2>{data?.tongQuan?.tongTuChoi || 0}</h2>
+              </div>
+            </div>
+            <div className="tkbc-card" style={{borderLeft: '4px solid #6b7280'}}>
+              <span className="material-symbols-outlined tkbc-card-icon" style={{backgroundColor: '#f3f4f6', color: '#374151'}}>block</span>
+              <div className="tkbc-card-info">
+                <h4>Đã hủy</h4>
+                <h2>{data?.tongQuan?.tongHuy || 0}</h2>
               </div>
             </div>
           </div>
@@ -198,10 +217,11 @@ const ThongKeBaoCaoPage: React.FC = () => {
                       <YAxis allowDecimals={false} tick={{fill: 'var(--color-on-surface-variant)'}} axisLine={false} tickLine={false} />
                       <RechartsTooltip contentStyle={{borderRadius: 8, border: '1px solid var(--color-outline-variant)'}} />
                       <Legend wrapperStyle={{paddingTop: 10}} />
-                      <Line type="monotone" name="Tạo mới" dataKey="taoMoi" stroke="var(--color-primary)" strokeWidth={2} activeDot={{ r: 8 }} />
+                      <Line type="monotone" name="Tạo mới/Đã gửi" dataKey="taoMoi" stroke="var(--color-primary)" strokeWidth={2} activeDot={{ r: 8 }} />
+                      <Line type="monotone" name="Đang thẩm định" dataKey="dangThamDinh" stroke="#f59e0b" strokeWidth={2} />
                       <Line type="monotone" name="Đã duyệt" dataKey="daDuyet" stroke="var(--color-primary-container)" strokeWidth={2} />
                       <Line type="monotone" name="Từ chối" dataKey="tuChoi" stroke="var(--color-error)" strokeWidth={2} />
-                      <Line type="monotone" name="Đang thẩm định" dataKey="dangThamDinh" stroke="#f59e0b" strokeWidth={2} />
+                      <Line type="monotone" name="Đã hủy" dataKey="daHuy" stroke="#6b7280" strokeWidth={2} />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
@@ -222,10 +242,11 @@ const ThongKeBaoCaoPage: React.FC = () => {
                       <YAxis allowDecimals={false} tick={{fill: 'var(--color-on-surface-variant)'}} axisLine={false} tickLine={false} />
                       <RechartsTooltip contentStyle={{borderRadius: 8, border: '1px solid var(--color-outline-variant)'}} />
                       <Legend wrapperStyle={{paddingTop: 10}} />
-                      <Bar name="Tạo mới" dataKey="taoMoi" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                      <Bar name="Tạo mới/Đã gửi" dataKey="taoMoi" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                      <Bar name="Đang thẩm định" dataKey="dangThamDinh" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                       <Bar name="Đã duyệt" dataKey="daDuyet" fill="var(--color-primary-container)" radius={[4, 4, 0, 0]} />
                       <Bar name="Từ chối" dataKey="tuChoi" fill="var(--color-error)" radius={[4, 4, 0, 0]} />
-                      <Bar name="Đang thẩm định" dataKey="dangThamDinh" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                      <Bar name="Đã hủy" dataKey="daHuy" fill="#6b7280" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -253,9 +274,19 @@ const ThongKeBaoCaoPage: React.FC = () => {
                 </thead>
                 <tbody>
                   {data?.rawData?.map((item: any, index: number) => {
-                    const isDuyet = item.TrangThai?.toLowerCase().includes('duyệt');
-                    const isTuChoi = item.TrangThai?.toLowerCase().includes('từ chối');
-                    const badgeClass = isDuyet ? 'duyet' : (isTuChoi ? 'tuchoi' : 'default');
+                    const trangThaiLC = item.TrangThai?.toLowerCase() || '';
+                    const isDuyet = trangThaiLC.includes('duyệt');
+                    const isTuChoi = trangThaiLC.includes('từ chối');
+                    const isDaGui = trangThaiLC.includes('gửi') || trangThaiLC.includes('tạo');
+                    const isDaHuy = trangThaiLC.includes('hủy');
+                    const isThamDinh = trangThaiLC.includes('thẩm định');
+                    
+                    let badgeClass = 'default';
+                    if (isDuyet) badgeClass = 'duyet';
+                    else if (isTuChoi) badgeClass = 'tuchoi';
+                    else if (isDaGui) badgeClass = 'dagui';
+                    else if (isDaHuy) badgeClass = 'dahuy';
+                    else if (isThamDinh) badgeClass = 'dangthamdinh';
 
                     return (
                       <tr key={index}>

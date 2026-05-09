@@ -121,7 +121,7 @@
 
 .tkbc-summary-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 24px;
   margin-bottom: 24px;
 }
@@ -250,9 +250,24 @@
   color: #991b1b;
 }
 
-.tkbc-status-badge.default {
+.tkbc-status-badge.dagui {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.tkbc-status-badge.dangthamdinh {
   background-color: #fef3c7;
   color: #92400e;
+}
+
+.tkbc-status-badge.dahuy {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.tkbc-status-badge.default {
+  background-color: #f3f4f6;
+  color: #374151;
 }
 
 .tkbc-loading {

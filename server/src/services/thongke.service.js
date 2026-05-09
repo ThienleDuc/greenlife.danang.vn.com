@@ -11,48 +11,70 @@ function removeAccents(str) {
 const getTongQuan = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong) => {
   const data = await thongKeRepository.getThongKeData(tuNgay, denNgay, maTuyenDuong, maXaPhuong);
   
-  // Tính tổng quan
-  let tongTao = data.length;
-  let tongDuyet = 0;
-  let tongTuChoi = 0;
-  
-  // Tính dữ liệu biểu đồ (nhóm theo ngày)
-  const chartDataMap = {};
-  
-  data.forEach(item => {
-    const trangThaiStr = (item.TrangThai || '').toLowerCase();
+  // Tính toán tổng quan và gom nhóm theo ngày
+  const summary = data.reduce((acc, row) => {
+    const trangThai = row.TrangThai ? row.TrangThai.toLowerCase() : '';
     
-    // Group by ngày cho biểu đồ
-    const dateStr = item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : 'N/A';
+    // Mọi kế hoạch đều được tính là 1 "Tạo mới"
+    acc.tongTao++;
     
-    if (!chartDataMap[dateStr]) {
-      chartDataMap[dateStr] = { date: dateStr, taoMoi: 0, daDuyet: 0, tuChoi: 0, dangThamDinh: 0 };
+    if (trangThai.includes('duyệt')) {
+      acc.tongDuyet++;
+    } else if (trangThai.includes('từ chối')) {
+      acc.tongTuChoi++;
+    } else if (trangThai.includes('hủy')) {
+      acc.tongHuy++;
+    } else if (!trangThai.includes('gửi') && !trangThai.includes('tạo')) {
+      // Nếu không phải 'đã gửi' và các trạng thái trên, thì là đang thẩm định
+      acc.tongThamDinh++;
+    }
+
+    // Format YYYY-MM-DD
+    const dateStr = row.NgayTao ? new Date(row.NgayTao).toISOString().split('T')[0] : 'N/A';
+    if (!acc.byDate[dateStr]) {
+      acc.byDate[dateStr] = { taoMoi: 0, daDuyet: 0, tuChoi: 0, dangThamDinh: 0, daHuy: 0 };
     }
     
-    chartDataMap[dateStr].taoMoi++;
+    // Luôn tính vào cột Tạo mới
+    acc.byDate[dateStr].taoMoi++;
     
-    if (trangThaiStr.includes('phê duyệt') || trangThaiStr.includes('được duyệt') || trangThaiStr.includes('đã duyệt')) {
-      chartDataMap[dateStr].daDuyet++;
-      tongDuyet++;
-    } else if (trangThaiStr.includes('từ chối') || trangThaiStr.includes('không duyệt')) {
-      chartDataMap[dateStr].tuChoi++;
-      tongTuChoi++;
-    } else {
-      chartDataMap[dateStr].dangThamDinh++;
+    if (trangThai.includes('duyệt')) {
+      acc.byDate[dateStr].daDuyet++;
+    } else if (trangThai.includes('từ chối')) {
+      acc.byDate[dateStr].tuChoi++;
+    } else if (trangThai.includes('hủy')) {
+      acc.byDate[dateStr].daHuy++;
+    } else if (!trangThai.includes('gửi') && !trangThai.includes('tạo')) {
+      acc.byDate[dateStr].dangThamDinh++;
     }
-  });
-  
-  // Sort chart data by date
-  const chartData = Object.values(chartDataMap).sort((a, b) => {
-    if (a.date === 'N/A') return -1;
-    if (b.date === 'N/A') return 1;
-    const [d1, m1, y1] = a.date.split('/');
-    const [d2, m2, y2] = b.date.split('/');
-    return new Date(`${y1}-${m1}-${d1}`) - new Date(`${y2}-${m2}-${d2}`);
+
+    return acc;
+  }, { 
+    tongTao: 0, 
+    tongDuyet: 0, 
+    tongTuChoi: 0, 
+    tongThamDinh: 0,
+    tongHuy: 0,
+    byDate: {} 
   });
 
+  const chartData = Object.keys(summary.byDate).sort().map(date => ({
+    date: date === 'N/A' ? 'N/A' : new Date(date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
+    taoMoi: summary.byDate[date].taoMoi,
+    daDuyet: summary.byDate[date].daDuyet,
+    tuChoi: summary.byDate[date].tuChoi,
+    dangThamDinh: summary.byDate[date].dangThamDinh,
+    daHuy: summary.byDate[date].daHuy
+  }));
+
   return {
-    tongQuan: { tongTao, tongDuyet, tongTuChoi },
+    tongQuan: { 
+        tongTao: summary.tongTao, 
+        tongDuyet: summary.tongDuyet, 
+        tongTuChoi: summary.tongTuChoi,
+        tongThamDinh: summary.tongThamDinh,
+        tongHuy: summary.tongHuy 
+    },
     chartData,
     rawData: data
   };
@@ -229,16 +251,16 @@ const exportPDF = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong) =
       
       // Box vẽ bằng line
       const boxY = doc.y;
-      doc.rect(30, boxY, 300, 70).strokeColor('#e5e7eb').stroke();
+      doc.rect(30, boxY, 350, 110).strokeColor('#e5e7eb').stroke();
       doc.fontSize(11);
       doc.text(`- Tổng số kế hoạch tạo mới: ${tongQuan.tongTao}`, 40, boxY + 10);
-      doc.text(`- Tổng số kế hoạch đã phê duyệt: ${tongQuan.tongDuyet}`, 40, boxY + 30);
-      doc.text(`- Tổng số kế hoạch bị từ chối: ${tongQuan.tongTuChoi}`, 40, boxY + 50);
-      
-      doc.moveDown(2);
+      doc.text(`- Tổng số kế hoạch đang thẩm định: ${tongQuan.tongThamDinh}`, 40, boxY + 30);
+      doc.text(`- Tổng số kế hoạch đã phê duyệt: ${tongQuan.tongDuyet}`, 40, boxY + 50);
+      doc.text(`- Tổng số kế hoạch bị từ chối: ${tongQuan.tongTuChoi}`, 40, boxY + 70);
+      doc.text(`- Tổng số kế hoạch đã hủy: ${tongQuan.tongHuy}`, 40, boxY + 90);
       
       // Table
-      doc.y = boxY + 90;
+      doc.y = boxY + 140;
       doc.fontSize(12).text('II. CHI TIẾT KẾ HOẠCH', 30, doc.y);
       doc.moveDown(0.5);
 
@@ -273,7 +295,13 @@ const exportPDF = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong) =
       });
       
       // Chữ ký
-      doc.moveDown(3);
+      // Kiểm tra xem trang hiện tại còn đủ chỗ trống cho phần chữ ký không (khoảng 100 points)
+      if (doc.y > doc.page.height - doc.page.margins.bottom - 100) {
+        doc.addPage();
+      } else {
+        doc.moveDown(3);
+      }
+      
       const signY = doc.y;
       
       // Trái
