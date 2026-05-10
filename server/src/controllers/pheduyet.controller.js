@@ -37,7 +37,18 @@ const getKeHoachChiTiet = async (req, res) => {
 const updateTrangThaiPheDuyet = async (req, res) => {
   try {
     const { maKeHoach } = req.params;
-    const { trangThai, yKienPheDuyet, nguoiPheDuyet } = req.body;
+    const { trangThai, yKienPheDuyet, nguoiPheDuyet, removeFiles } = req.body;
+    const filePDFBoSungKeHoach = req.file ? req.file.filename : null;
+
+    // Parse removeFiles if it's sent as a JSON string (common with FormData)
+    let parsedRemoveFiles = [];
+    if (removeFiles) {
+      try {
+        parsedRemoveFiles = typeof removeFiles === 'string' ? JSON.parse(removeFiles) : removeFiles;
+      } catch (e) {
+        parsedRemoveFiles = [removeFiles]; // fallback for single string
+      }
+    }
 
     if (!trangThai) {
       return res.status(400).json({ message: "Trạng thái không được để trống" });
@@ -47,11 +58,24 @@ const updateTrangThaiPheDuyet = async (req, res) => {
       maKeHoach,
       trangThai,
       yKienPheDuyet,
-      nguoiPheDuyet
+      nguoiPheDuyet,
+      filePDFBoSungKeHoach,
+      parsedRemoveFiles
     );
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "Lỗi khi cập nhật trạng thái", error: error.message });
+  }
+};
+
+const removeSpecificFile = async (req, res) => {
+  try {
+    const { maKeHoach, fileKey } = req.params;
+    const { fileName } = req.query; // Nhận tên file cần xóa từ query string
+    const result = await pheDuyetService.removeSpecificFile(maKeHoach, fileKey, fileName);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi khi gỡ file", error: error.message });
   }
 };
 
@@ -60,4 +84,5 @@ module.exports = {
   searchKeHoachPheDuyet,
   getKeHoachChiTiet,
   updateTrangThaiPheDuyet,
+  removeSpecificFile
 };

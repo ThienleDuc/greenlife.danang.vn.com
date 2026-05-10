@@ -212,9 +212,14 @@ const getKeHoachChiTiet = async (maKeHoach) => {
 /**
  * Cập nhật trạng thái và ý kiến phê duyệt
  */
-const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet) => {
+const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles = []) => {
   const connection = await pool;
   const now = new Date();
+
+  // Xử lý các cờ xóa file
+  const removeBoSung = removeFiles.includes('FilePDFBoSungKeHoach') ? 1 : 0;
+  const removeGoc = removeFiles.includes('FilePDFKeHoach') ? 1 : 0;
+  const removeDeNghi = removeFiles.includes('FilePDFDeNghiCapPhep') ? 1 : 0;
 
   await connection
     .request()
@@ -222,6 +227,7 @@ const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguo
     .input("trangThai", sql.NVarChar, trangThai)
     .input("yKienPheDuyet", sql.NVarChar, yKienPheDuyet || null)
     .input("nguoiPheDuyet", sql.NVarChar, nguoiPheDuyet || null)
+    .input("filePDFBoSungKeHoach", sql.NVarChar, filePDFBoSungKeHoach || null)
     .input("ngayCapNhat", sql.DateTime, now)
     .input("ngayPheDuyet", sql.DateTime, now)
     .query(`
@@ -230,8 +236,66 @@ const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguo
         TrangThai = @trangThai,
         YKienPheDuyet = @yKienPheDuyet,
         NguoiPheDuyet = @nguoiPheDuyet,
+        FilePDFBoSungKeHoach = CASE 
+          WHEN ${removeBoSung} = 1 THEN NULL 
+          ELSE 
+            CASE 
+              WHEN @filePDFBoSungKeHoach IS NOT NULL AND @filePDFBoSungKeHoach <> '' THEN 
+                CASE 
+                  WHEN FilePDFBoSungKeHoach IS NOT NULL AND FilePDFBoSungKeHoach <> '' THEN FilePDFBoSungKeHoach + ',' + @filePDFBoSungKeHoach
+                  ELSE @filePDFBoSungKeHoach 
+                END
+              ELSE FilePDFBoSungKeHoach 
+            END
+        END,
+        FilePDFKeHoach = CASE 
+          WHEN ${removeGoc} = 1 THEN NULL 
+          ELSE FilePDFKeHoach 
+        END,
+        FilePDFDeNghiCapPhep = CASE 
+          WHEN ${removeDeNghi} = 1 THEN NULL 
+          ELSE FilePDFDeNghiCapPhep 
+        END,
         NgayCapNhat = @ngayCapNhat,
         NgayPheDuyet = @ngayPheDuyet
+      WHERE MaKeHoach = @maKeHoach
+    `);
+
+  return { success: true };
+};
+
+const removeSpecificFile = async (maKeHoach, fileKey, fileName) => {
+  const connection = await pool;
+  const allowedKeys = ['FilePDFKeHoach', 'FilePDFDeNghiCapPhep', 'FilePDFBoSungKeHoach'];
+  
+  if (!allowedKeys.includes(fileKey)) {
+    throw new Error("Tên cột file không hợp lệ");
+  }
+
+  // Nếu không có fileName, xóa toàn bộ (cũ)
+  if (!fileName) {
+    await connection
+      .request()
+      .input("maKeHoach", sql.NVarChar, maKeHoach)
+      .query(`UPDATE dbo.KeHoachCongViec SET ${fileKey} = NULL, NgayCapNhat = GETDATE() WHERE MaKeHoach = @maKeHoach`);
+    return { success: true };
+  }
+
+  // Logic xóa 1 file khỏi chuỗi comma-separated
+  await connection
+    .request()
+    .input("maKeHoach", sql.NVarChar, maKeHoach)
+    .input("fileName", sql.NVarChar, fileName)
+    .query(`
+      UPDATE dbo.KeHoachCongViec
+      SET ${fileKey} = CASE 
+          WHEN ${fileKey} = @fileName THEN NULL
+          WHEN ${fileKey} LIKE @fileName + ',%' THEN REPLACE(${fileKey}, @fileName + ',', '')
+          WHEN ${fileKey} LIKE '%,' + @fileName THEN REPLACE(${fileKey}, ',' + @fileName, '')
+          WHEN ${fileKey} LIKE '%,' + @fileName + ',%' THEN REPLACE(${fileKey}, ',' + @fileName + ',', ',')
+          ELSE ${fileKey}
+      END,
+      NgayCapNhat = GETDATE()
       WHERE MaKeHoach = @maKeHoach
     `);
 
@@ -243,4 +307,5 @@ module.exports = {
   searchKeHoachPheDuyet,
   getKeHoachChiTiet,
   updateTrangThaiPheDuyet,
+  removeSpecificFile
 };

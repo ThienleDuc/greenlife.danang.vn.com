@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { KeHoachChiTietResponse, KeHoachPhanCong, ChiTietPhanCong } from '../types';
 import { PLAN_STATUS } from '../constants/constants';
+import { PheDuyetService } from '../services/pheDuyetService';
 
 interface ApprovalDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   data: KeHoachChiTietResponse | null;
-  onApprove: (status: string, feedback: string) => void;
+  onApprove: (status: string, feedback: string, file?: File, removeFiles?: string[]) => void;
 }
 
 const formatDate = (dateString?: string) => {
@@ -23,7 +24,17 @@ const formatDate = (dateString?: string) => {
 
 const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClose, data, onApprove }) => {
   const [feedback, setFeedback] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
+  const [removeFiles, setRemoveFiles] = useState<string[]>([]);
   const [expandedPC, setExpandedPC] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen && data) {
+      setFeedback(data.keHoach.YKienPheDuyet || '');
+      setSelectedFile(undefined); // Reset file selection for new action
+      setRemoveFiles([]); // Reset removal list
+    }
+  }, [isOpen, data]);
 
   if (!isOpen || !data) return null;
 
@@ -35,6 +46,78 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
 
   const togglePC = (id: string) => {
     setExpandedPC(expandedPC === id ? null : id);
+  };
+
+  const handleRemoveFile = async (fileKey: string, fileLabel: string, specificFilename?: string) => {
+    const displayName = specificFilename ? `${fileLabel} (${specificFilename})` : fileLabel;
+    if (!window.confirm(`Bạn có chắc chắn muốn gỡ bỏ "${displayName}" ngay lập tức không? Hành động này không thể hoàn tác.`)) {
+      return;
+    }
+
+    try {
+      await PheDuyetService.removeSpecificFile(keHoach.MaKeHoach, fileKey, specificFilename);
+      
+      // Update local data to reflect removal immediately
+      if (data && data.keHoach) {
+        if (specificFilename) {
+          const currentFiles = (data.keHoach as any)[fileKey]?.split(',') || [];
+          const updatedFiles = currentFiles.filter((f: string) => f !== specificFilename);
+          (data.keHoach as any)[fileKey] = updatedFiles.length > 0 ? updatedFiles.join(',') : null;
+        } else {
+          (data.keHoach as any)[fileKey] = null;
+        }
+        // Force re-render
+        setRemoveFiles(prev => [...prev, specificFilename || fileKey]);
+      }
+      alert('Đã gỡ tài liệu thành công!');
+    } catch (error) {
+      alert('Lỗi khi gỡ tài liệu. Vui lòng thử lại.');
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.type !== 'application/pdf') {
+        alert('Chỉ chấp nhận file PDF');
+        e.target.value = '';
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const renderFileLink = (file: { key: string, label: string, value: string, color: string }, index?: number) => {
+    const isRemoved = removeFiles.includes(file.value) || removeFiles.includes(file.key);
+    
+    return (
+      <div key={`${file.key}-${index || 0}`} className={`relative flex items-center transition-all duration-300 ${isRemoved ? 'opacity-30 grayscale pointer-events-none' : ''}`}>
+        <a 
+          href={`/pdf/${file.value}`} 
+          target="_blank" 
+          rel="noreferrer" 
+          className={`flex items-center gap-2 px-3 py-1.5 bg-${file.color}-50 text-${file.color}-700 hover:bg-${file.color}-100 border border-${file.color}-200 rounded-lg transition-all text-sm font-medium`}
+        >
+          <span className="material-symbols-outlined text-[18px]">{file.key === 'FilePDFBoSungKeHoach' ? 'description' : file.key === 'FilePDFDeNghiCapPhep' ? 'history_edu' : 'picture_as_pdf'}</span> 
+          {file.label} {index !== undefined ? `#${index + 1}` : ''}
+        </a>
+        {!isStatusDisabled && !isRemoved && (
+          <button 
+            onClick={() => handleRemoveFile(file.key, file.label, file.key === 'FilePDFBoSungKeHoach' ? file.value : undefined)}
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white hover:opacity-80 transition-all flex-shrink-0 shadow-sm z-10 border border-white"
+            style={{ backgroundColor: '#ef4444' }}
+            title="Gỡ file này"
+          >
+            <span className="material-symbols-outlined text-[12px] font-bold">close</span>
+          </button>
+        )}
+        {isRemoved && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="bg-slate-800/80 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm">Đã gỡ</span>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -159,22 +242,23 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
               <span className="material-symbols-outlined text-blue-500">folder_open</span>
               Tài liệu đính kèm
             </h3>
-            <div className="flex flex-wrap gap-3">
-              {keHoach.FilePDFKeHoach ? (
-                <a href={`/pdf/${keHoach.FilePDFKeHoach}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:shadow-sm border border-blue-200 rounded-lg transition-all text-sm font-medium">
-                  <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span> Kế hoạch gốc
-                </a>
-              ) : null}
-              {keHoach.FilePDFDeNghiCapPhep ? (
-                <a href={`/pdf/${keHoach.FilePDFDeNghiCapPhep}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:shadow-sm border border-amber-200 rounded-lg transition-all text-sm font-medium">
-                  <span className="material-symbols-outlined text-[20px]">history_edu</span> Đề nghị cấp phép
-                </a>
-              ) : null}
-              {keHoach.FilePDFBoSungKeHoach ? (
-                <a href={`/pdf/${keHoach.FilePDFBoSungKeHoach}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:shadow-sm border border-indigo-200 rounded-lg transition-all text-sm font-medium">
-                  <span className="material-symbols-outlined text-[20px]">note_add</span> Bổ sung kế hoạch
-                </a>
-              ) : null}
+            <div className="flex flex-wrap gap-4">
+              {/* Render regular files */}
+              {[
+                { key: 'FilePDFKeHoach', label: 'Kế hoạch gốc', value: keHoach.FilePDFKeHoach, color: 'blue' },
+                { key: 'FilePDFDeNghiCapPhep', label: 'Đề nghị cấp phép', value: keHoach.FilePDFDeNghiCapPhep, color: 'amber' },
+              ].map(file => file.value && renderFileLink(file as any))}
+
+              {/* Render supplementary files (multiple supported) */}
+              {keHoach.FilePDFBoSungKeHoach && keHoach.FilePDFBoSungKeHoach.split(',').map((fileName, idx) => (
+                renderFileLink({ 
+                  key: 'FilePDFBoSungKeHoach', 
+                  label: 'Kế hoạch bổ sung', 
+                  value: fileName, 
+                  color: 'indigo' 
+                }, idx)
+              ))}
+
               {(!keHoach.FilePDFKeHoach && !keHoach.FilePDFDeNghiCapPhep && !keHoach.FilePDFBoSungKeHoach) && (
                 <span className="text-sm text-slate-500 italic bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">Không có tài liệu đính kèm.</span>
               )}
@@ -334,31 +418,85 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
               </div>
             ) : (
               <div className="bg-slate-50 p-5 rounded-xl border border-slate-100">
-                <div className="mb-4 relative">
-                  <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[18px] text-slate-400">edit_note</span> Ý kiến phê duyệt / Lý do từ chối:
-                  </label>
-                  <textarea
-                    className="w-full py-4 px-5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all duration-300 resize-none text-slate-700 bg-white shadow-inner text-sm placeholder:text-slate-400"
-                    rows={3}
-                    style={{ padding: '16px 24px' }}
-                    placeholder="Nhập nhận xét, ý kiến chỉ đạo hoặc chi tiết lý do từ chối..."
-                    value={feedback}
-                    onChange={(e) => setFeedback(e.target.value)}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="relative">
+                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[18px] text-slate-400">edit_note</span> Ý kiến phê duyệt / Lý do từ chối:
+                    </label>
+                    <textarea
+                      className="w-full py-4 px-5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all duration-300 resize-none text-slate-700 bg-white shadow-inner text-sm placeholder:text-slate-400"
+                      rows={3}
+                      style={{ padding: '16px 24px' }}
+                      placeholder="Nhập nhận xét, ý kiến chỉ đạo hoặc chi tiết lý do từ chối..."
+                      value={feedback}
+                      onChange={(e) => setFeedback(e.target.value)}
+                    />
+                  </div>
+                  <div className="relative">
+                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[18px] text-slate-400">upload_file</span> Đính kèm File Pdf Bổ sung kế hoạch (Tùy chọn):
+                    </label>
+                    <div className="flex flex-col gap-2">
+                      {!selectedFile ? (
+                        <div className="relative group">
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            onChange={handleFileChange}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          />
+                          <div className="flex items-center gap-3 w-full py-3 px-4 border-2 border-dashed border-slate-200 rounded-xl bg-white group-hover:border-emerald-400 group-hover:bg-emerald-50/30 transition-all duration-300">
+                            <span className="material-symbols-outlined text-slate-400 group-hover:text-emerald-500 transition-colors">
+                              add_circle
+                            </span>
+                            <span className="text-sm text-slate-500 truncate font-medium group-hover:text-emerald-700 transition-colors">
+                              Chọn file PDF bổ sung...
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-3 w-full py-3 px-4 border-2 border-emerald-100 rounded-xl bg-emerald-50/30 animate-fade-in-up">
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <span className="material-symbols-outlined text-emerald-600">picture_as_pdf</span>
+                            <span className="text-sm text-emerald-800 truncate font-bold">
+                              {selectedFile.name}
+                            </span>
+                          </div>
+                          <button 
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setSelectedFile(undefined);
+                            }}
+                            className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-all shadow-sm group"
+                            title="Gỡ file đính kèm"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">close</span>
+                          </button>
+                        </div>
+                      )}
+                      <p className="text-[11px] text-slate-400 ml-1">Chỉ chấp nhận định dạng .pdf</p>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-2" style={{ marginTop: '4px' }}>
                   <button
                     className="flex items-center justify-center rounded-xl font-bold transition-all shadow-sm text-sm"
                     style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '10px 24px', cursor: 'pointer' }}
-                    onClick={() => onApprove('Bị từ chối', feedback)}
+                    onClick={() => {
+                      if (!feedback.trim()) {
+                        alert('Vui lòng nhập lý do từ chối vào ô "Ý kiến phê duyệt / Lý do từ chối".');
+                        return;
+                      }
+                      onApprove('Bị từ chối', feedback, selectedFile, removeFiles);
+                    }}
                   >
                     Từ chối
                   </button>
                   <button
                     className="flex items-center justify-center rounded-xl font-bold transition-all shadow-md text-sm"
                     style={{ backgroundColor: '#059669', color: '#ffffff', border: 'none', padding: '10px 24px', cursor: 'pointer' }}
-                    onClick={() => onApprove('Đã phê duyệt', feedback)}
+                    onClick={() => onApprove('Đã phê duyệt', feedback, selectedFile, removeFiles)}
                   >
                     Phê duyệt
                   </button>

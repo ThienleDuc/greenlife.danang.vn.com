@@ -12,8 +12,12 @@ const getKeHoachChiTiet = async (maKeHoach) => {
   return await pheDuyetRepo.getKeHoachChiTiet(maKeHoach);
 };
 
-const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet) => {
-  return await pheDuyetRepo.updateTrangThaiPheDuyet(maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet);
+const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles) => {
+  return await pheDuyetRepo.updateTrangThaiPheDuyet(maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles);
+};
+
+const removeSpecificFile = async (maKeHoach, fileKey, fileName) => {
+  return await pheDuyetRepo.removeSpecificFile(maKeHoach, fileKey, fileName);
 };
 
 module.exports = {
@@ -21,4 +25,5 @@ module.exports = {
   searchKeHoachPheDuyet,
   getKeHoachChiTiet,
   updateTrangThaiPheDuyet,
+  removeSpecificFile
 };

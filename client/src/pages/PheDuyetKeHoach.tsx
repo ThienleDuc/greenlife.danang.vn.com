@@ -64,7 +64,7 @@ const PheDuyetKeHoach: React.FC = () => {
     }
   };
 
-  const handleApprove = async (status: string, feedback: string) => {
+  const handleApprove = async (status: string, feedback: string, file?: File, removeFiles?: string[]) => {
     if (!selectedPlanDetail) return;
 
     try {
@@ -73,7 +73,9 @@ const PheDuyetKeHoach: React.FC = () => {
         selectedPlanDetail.keHoach.MaKeHoach,
         status,
         feedback,
-        'aB3kL9pQx2mV8nZ1cY5t' // Mock ID
+        'aB3kL9pQx2mV8nZ1cY5t', // Mock ID
+        file,
+        removeFiles
       );
 
       setIsModalOpen(false);

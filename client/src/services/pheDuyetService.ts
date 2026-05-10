@@ -42,17 +42,45 @@ export const PheDuyetService = {
     maKeHoach: string, 
     trangThai: string, 
     yKienPheDuyet: string, 
-    nguoiPheDuyet: string
+    nguoiPheDuyet: string,
+    file?: File,
+    removeFiles?: string[]
   ): Promise<any> => {
     try {
-      const response = await api.put(`/phe-duyet/ke-hoach/${maKeHoach}/trang-thai`, {
-        trangThai,
-        yKienPheDuyet,
-        nguoiPheDuyet
+      const formData = new FormData();
+      formData.append('trangThai', trangThai);
+      formData.append('yKienPheDuyet', yKienPheDuyet);
+      formData.append('nguoiPheDuyet', nguoiPheDuyet);
+      
+      if (file) {
+        formData.append('filePDFBoSungKeHoach', file);
+      }
+
+      if (removeFiles && removeFiles.length > 0) {
+        formData.append('removeFiles', JSON.stringify(removeFiles));
+      }
+
+      const response = await api.put(`/phe-duyet/ke-hoach/${maKeHoach}/trang-thai`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       return response.data;
     } catch (error) {
       console.error('Lỗi khi cập nhật trạng thái phê duyệt:', error);
+      throw error;
+    }
+  },
+
+  // Gỡ file đơn lẻ ngay lập tức
+  removeSpecificFile: async (maKeHoach: string, fileKey: string, fileName?: string): Promise<any> => {
+    try {
+      const response = await api.delete(`/phe-duyet/ke-hoach/${maKeHoach}/file/${fileKey}`, {
+        params: { fileName }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Lỗi khi gỡ file:', error);
       throw error;
     }
   }
