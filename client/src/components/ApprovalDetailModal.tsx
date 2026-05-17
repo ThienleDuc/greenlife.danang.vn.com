@@ -26,27 +26,28 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
   const [feedback, setFeedback] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
   const [removeFiles, setRemoveFiles] = useState<string[]>([]);
-  const [expandedPC, setExpandedPC] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'approve' | 'reject' | 'cancel_approval' | null }>({ type: null });
+  const [activeFileTab, setActiveFileTab] = useState<'all' | 'kehoach' | 'capphep' | 'bosung'>('all');
 
   useEffect(() => {
     if (isOpen && data) {
-      setFeedback(data.keHoach.YKienPheDuyet || '');
+      // Kế hoạch đang chờ duyệt luôn hiển thị ô ý kiến trống để điền mới
+      setFeedback(data.keHoach.TrangThai === 'Đang chờ duyệt' ? '' : (data.keHoach.YKienPheDuyet || ''));
       setSelectedFile(undefined); // Reset file selection for new action
       setRemoveFiles([]); // Reset removal list
+      setActiveFileTab('all');
     }
   }, [isOpen, data]);
 
   if (!isOpen || !data) return null;
 
-  const { keHoach, phanCongList } = data;
+  const { keHoach } = data;
   const statusInfo = PLAN_STATUS[keHoach.TrangThai as keyof typeof PLAN_STATUS] || { label: keHoach.TrangThai, color: 'bg-slate-100 text-slate-700' };
 
   // Logic: "đang chờ thẩm định" is disabled for manager approval
   const isStatusDisabled = keHoach.TrangThai === 'Đang thẩm định';
+  const isAlreadyProcessed = keHoach.TrangThai === 'Đã phê duyệt' || keHoach.TrangThai === 'Bị từ chối';
 
-  const togglePC = (id: string) => {
-    setExpandedPC(expandedPC === id ? null : id);
-  };
 
   const handleRemoveFile = async (fileKey: string, fileLabel: string, specificFilename?: string) => {
     const displayName = specificFilename ? `${fileLabel} (${specificFilename})` : fileLabel;
@@ -76,6 +77,13 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const existingBoSung = data?.keHoach.FilePDFBoSungKeHoach;
+    if (existingBoSung && existingBoSung.trim() !== '') {
+      alert('Kế hoạch bổ sung chỉ cho phép tối đa 1 file đính kèm. Vui lòng gỡ file hiện tại ở phần Tài liệu đính kèm trước khi đẩy lên file mới.');
+      e.target.value = '';
+      return;
+    }
+
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.type !== 'application/pdf') {
@@ -87,33 +95,55 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
     }
   };
 
-  const renderFileLink = (file: { key: string, label: string, value: string, color: string }, index?: number) => {
+  const getFileColors = (key: string) => {
+    switch (key) {
+      case 'FilePDFKeHoach':
+        return { bg: '#eff6ff', text: '#1e3a8a', border: '#bfdbfe', icon: 'description' };
+      case 'FilePDFDeNghiCapPhep':
+        return { bg: '#fffbeb', text: '#92400e', border: '#fde68a', icon: 'history_edu' };
+      case 'FilePDFBoSungKeHoach':
+        return { bg: '#eef2ff', text: '#3730a3', border: '#c7d2fe', icon: 'note_add' };
+      default:
+        return { bg: '#f8fafc', text: '#334155', border: '#e2e8f0', icon: 'picture_as_pdf' };
+    }
+  };
+
+  const openPdf = (fileName?: string) => {
+    if (fileName) {
+      const baseUrl = window.location.origin;
+      const filePath = `${baseUrl}/pdf/${fileName}`;
+      console.log('Opening PDF:', filePath);
+      window.open(filePath, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const renderFileLink = (file: { key: string, label: string, value: string, color?: string }, index?: number) => {
     const isRemoved = removeFiles.includes(file.value) || removeFiles.includes(file.key);
+    const colors = getFileColors(file.key);
     
     return (
-      <div key={`${file.key}-${index || 0}`} className={`relative flex items-center transition-all duration-300 ${isRemoved ? 'opacity-30 grayscale pointer-events-none' : ''}`}>
-        <a 
-          href={`/pdf/${file.value}`} 
-          target="_blank" 
-          rel="noreferrer" 
-          className={`flex items-center gap-2 px-3 py-1.5 bg-${file.color}-50 text-${file.color}-700 hover:bg-${file.color}-100 border border-${file.color}-200 rounded-lg transition-all text-sm font-medium`}
+      <div key={`${file.key}-${index || 0}`} className={`relative flex items-center transition-all duration-300 ${isRemoved ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+        <button 
+          onClick={() => openPdf(file.value)}
+          className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all hover:shadow-md cursor-pointer text-sm font-bold"
+          style={{ backgroundColor: colors.bg, color: colors.text, border: `1px solid ${colors.border}`, outline: 'none' }}
         >
-          <span className="material-symbols-outlined text-[18px]">{file.key === 'FilePDFBoSungKeHoach' ? 'description' : file.key === 'FilePDFDeNghiCapPhep' ? 'history_edu' : 'picture_as_pdf'}</span> 
+          <span className="material-symbols-outlined text-[20px]">{colors.icon}</span> 
           {file.label} {index !== undefined ? `#${index + 1}` : ''}
-        </a>
-        {!isStatusDisabled && !isRemoved && (
+        </button>
+        {!isStatusDisabled && !isAlreadyProcessed && !isRemoved && (
           <button 
             onClick={() => handleRemoveFile(file.key, file.label, file.key === 'FilePDFBoSungKeHoach' ? file.value : undefined)}
-            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white hover:opacity-80 transition-all flex-shrink-0 shadow-sm z-10 border border-white"
-            style={{ backgroundColor: '#ef4444' }}
+            className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform shadow-sm z-10 cursor-pointer"
+            style={{ backgroundColor: '#ef4444', border: '2px solid #ffffff' }}
             title="Gỡ file này"
           >
-            <span className="material-symbols-outlined text-[12px] font-bold">close</span>
+            <span className="material-symbols-outlined text-[14px] font-bold">close</span>
           </button>
         )}
         {isRemoved && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="bg-slate-800/80 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm">Đã gỡ</span>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}>
+            <span className="bg-slate-800 text-white text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wider shadow-sm">Đã gỡ</span>
           </div>
         )}
       </div>
@@ -126,22 +156,32 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-start bg-slate-50/80 sticky top-0 z-10" style={{ padding: '24px 36px' }}>
-          <div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight">
-              Chi tiết kế hoạch
-            </h2>
-            <p className="text-slate-500 font-medium mt-1 text-sm flex items-center gap-2">
+          <div className="flex-1 pr-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight">
+                Chi tiết kế hoạch
+              </h2>
+              <span className={`inline-flex items-center px-3.5 py-1.5 rounded-full text-[12px] font-bold border ${keHoach.TrangThai === 'Bị từ chối' ? 'bg-rose-50 text-rose-600 border-rose-200' : keHoach.TrangThai === 'Đã phê duyệt' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : keHoach.TrangThai === 'Đang thẩm định' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
+                {statusInfo.label}
+              </span>
+            </div>
+            <p className="text-slate-500 font-medium mt-1.5 text-sm flex items-center gap-2">
               <span className="material-symbols-outlined text-[16px]">article</span>
               {keHoach.TieuDe}
             </p>
           </div>
-          <button 
-            className="text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all p-2 rounded-full"
-            onClick={onClose}
-            title="Đóng"
-          >
-            <span className="material-symbols-outlined block text-[20px]">close</span>
-          </button>
+          <div className="flex items-center gap-6 shrink-0">
+            <span className="font-mono font-black text-slate-600 text-[20px] tracking-widest">
+              #{keHoach.MaKeHoach}
+            </span>
+            <button 
+              className="text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all p-2 rounded-full"
+              onClick={onClose}
+              title="Đóng"
+            >
+              <span className="material-symbols-outlined block text-[20px]">close</span>
+            </button>
+          </div>
         </div>
 
         {/* Body with custom scrollbar */}
@@ -149,82 +189,68 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
           
           {/* Main Info Section */}
           <div className="bg-white rounded-xl border shadow-sm" style={{ padding: '24px', borderColor: '#e2e8f0' }}>
-            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 flex items-center gap-2" style={{ paddingBottom: '12px', marginBottom: '20px' }}>
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 flex items-center gap-2" style={{ paddingBottom: '12px', marginBottom: '24px' }}>
               <span className="material-symbols-outlined text-emerald-500">info</span>
               Thông tin chung
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-              {/* Cột 1 */}
-              <div className="space-y-6">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Mã kế hoạch</span>
-                  <div className="font-mono font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded w-max border border-slate-200">#{keHoach.MaKeHoach}</div>
-                </div>
-                
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Trạng thái</span>
-                  <div>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${keHoach.TrangThai === 'Bị từ chối' ? 'bg-rose-50 text-rose-600 border-rose-200' : keHoach.TrangThai === 'Đã phê duyệt' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
-                      {statusInfo.label}
-                    </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                {/* Cột 1 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Người lập</span>
+                    <div className="font-medium text-slate-800 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-slate-400">person</span>
+                      {keHoach.TenNguoiLap || keHoach.NguoiLap}
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày tạo</span>
+                    <div className="font-medium text-slate-800 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-slate-400">calendar_today</span>
+                      {formatDate(keHoach.NgayTao)}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tuyến đường</span>
+                    <div className="font-medium text-slate-800 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-slate-400">route</span>
+                      {keHoach.TenTuyenDuong}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày tạo</span>
-                  <div className="font-medium text-slate-800 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-slate-400">calendar_today</span>
-                    {formatDate(keHoach.NgayTao)}
+                {/* Cột 2 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Người xử lý</span>
+                    <div className="font-medium text-slate-800 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-slate-400">manage_accounts</span>
+                      {keHoach.TenNguoiXuLy || keHoach.NguoiXuLy || '---'}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày cập nhật</span>
-                  <div className="font-medium text-slate-800 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-slate-400">update</span>
-                    {formatDate(keHoach.NgayCapNhat)}
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày cập nhật</span>
+                    <div className="font-medium text-slate-800 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-slate-400">update</span>
+                      {formatDate(keHoach.NgayCapNhat)}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Xã phường</span>
+                    <div className="font-medium text-slate-800 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-slate-400">location_city</span>
+                      {keHoach.TenXaPhuong}
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* Cột 2 */}
-              <div className="space-y-6">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Người lập</span>
-                  <div className="font-medium text-slate-800 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-slate-400">person</span>
-                    {keHoach.TenNguoiLap || keHoach.NguoiLap}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Người xử lý</span>
-                  <div className="font-medium text-slate-800 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-slate-400">manage_accounts</span>
-                    {keHoach.TenNguoiXuLy || keHoach.NguoiXuLy || '---'}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tuyến đường</span>
-                  <div className="font-medium text-slate-800 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-slate-400">route</span>
-                    {keHoach.TenTuyenDuong}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Xã phường</span>
-                  <div className="font-medium text-slate-800 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-slate-400">location_city</span>
-                    {keHoach.TenXaPhuong}
-                  </div>
-                </div>
-              </div>
-            </div>
             
-            <div className="mt-8 pt-5 border-t border-slate-100">
+            <div className="border-t border-slate-100" style={{ marginTop: '24px', paddingTop: '16px' }}>
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
                 <span className="material-symbols-outlined text-[16px]">description</span> Mô tả chi tiết
               </span>
@@ -238,176 +264,141 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
 
           {/* Files Section */}
           <div className="bg-white rounded-xl border shadow-sm" style={{ padding: '24px', borderColor: '#e2e8f0' }}>
-            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 flex items-center gap-2" style={{ paddingBottom: '12px', marginBottom: '20px' }}>
-              <span className="material-symbols-outlined text-blue-500">folder_open</span>
-              Tài liệu đính kèm
-            </h3>
-            <div className="flex flex-wrap gap-4">
-              {/* Render regular files */}
-              {[
-                { key: 'FilePDFKeHoach', label: 'Kế hoạch gốc', value: keHoach.FilePDFKeHoach, color: 'blue' },
-                { key: 'FilePDFDeNghiCapPhep', label: 'Đề nghị cấp phép', value: keHoach.FilePDFDeNghiCapPhep, color: 'amber' },
-              ].map(file => file.value && renderFileLink(file as any))}
-
-              {/* Render supplementary files (multiple supported) */}
-              {keHoach.FilePDFBoSungKeHoach && keHoach.FilePDFBoSungKeHoach.split(',').map((fileName, idx) => (
-                renderFileLink({ 
-                  key: 'FilePDFBoSungKeHoach', 
-                  label: 'Kế hoạch bổ sung', 
-                  value: fileName, 
-                  color: 'indigo' 
-                }, idx)
-              ))}
-
-              {(!keHoach.FilePDFKeHoach && !keHoach.FilePDFDeNghiCapPhep && !keHoach.FilePDFBoSungKeHoach) && (
-                <span className="text-sm text-slate-500 italic bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">Không có tài liệu đính kèm.</span>
-              )}
-            </div>
-          </div>
-
-          {/* Assignment Section */}
-          <div className="bg-white rounded-xl border shadow-sm" style={{ padding: '24px', borderColor: '#e2e8f0' }}>
-            <div className="flex items-center justify-between border-b border-slate-100" style={{ paddingBottom: '12px', marginBottom: '20px' }}>
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                <span className="material-symbols-outlined text-purple-500">assignment</span>
-                Kế hoạch phân công
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 gap-4" style={{ paddingBottom: '16px', marginBottom: '20px' }}>
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2 m-0">
+                <span className="material-symbols-outlined text-blue-500">folder_open</span>
+                Tài liệu đính kèm
               </h3>
-              <span className="bg-purple-100 text-purple-700 py-1 px-3 rounded-full text-xs font-bold shadow-sm">
-                {phanCongList.length} phân công
-              </span>
+              <div className="flex flex-wrap gap-3">
+                <button 
+                  onClick={() => setActiveFileTab('all')}
+                  className="text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-slate-50"
+                  style={{
+                    backgroundColor: activeFileTab === 'all' ? '#1e293b' : 'transparent',
+                    color: activeFileTab === 'all' ? '#ffffff' : '#64748b',
+                    border: 'none',
+                    padding: '6px 12px'
+                  }}
+                >
+                  Tất cả
+                </button>
+                <button 
+                  onClick={() => setActiveFileTab('kehoach')}
+                  className="text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-blue-50"
+                  style={{
+                    backgroundColor: activeFileTab === 'kehoach' ? '#2563eb' : 'transparent',
+                    color: activeFileTab === 'kehoach' ? '#ffffff' : '#3b82f6',
+                    border: 'none',
+                    padding: '6px 12px'
+                  }}
+                >
+                  Kế hoạch
+                </button>
+                <button 
+                  onClick={() => setActiveFileTab('capphep')}
+                  className="text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-amber-50"
+                  style={{
+                    backgroundColor: activeFileTab === 'capphep' ? '#f59e0b' : 'transparent',
+                    color: activeFileTab === 'capphep' ? '#ffffff' : '#f59e0b',
+                    border: 'none',
+                    padding: '6px 12px'
+                  }}
+                >
+                  Cấp phép
+                </button>
+                <button 
+                  onClick={() => setActiveFileTab('bosung')}
+                  className="text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-indigo-50"
+                  style={{
+                    backgroundColor: activeFileTab === 'bosung' ? '#4f46e5' : 'transparent',
+                    color: activeFileTab === 'bosung' ? '#ffffff' : '#4f46e5',
+                    border: 'none',
+                    padding: '6px 12px'
+                  }}
+                >
+                  Bổ sung
+                </button>
+              </div>
             </div>
-            
-            <div className="space-y-4">
-              {phanCongList.length === 0 ? (
-                <div className="text-center py-8 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                  <span className="material-symbols-outlined text-slate-300 text-4xl mb-2 block">assignment_late</span>
-                  <p className="text-slate-500 text-sm">Chưa có thông tin phân công cho kế hoạch này.</p>
-                </div>
-              ) : (
-                phanCongList.map((pc) => (
-                  <div key={pc.MaKHPC} className="border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:border-slate-300 transition-all">
-                    <div
-                      className={`p-4 flex justify-between items-center cursor-pointer transition-colors ${expandedPC === pc.MaKHPC ? 'bg-slate-50 border-b border-slate-200' : 'bg-white hover:bg-slate-50'}`}
-                      onClick={() => togglePC(pc.MaKHPC)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={`material-symbols-outlined transition-transform duration-300 text-slate-400 ${expandedPC === pc.MaKHPC ? 'rotate-90 text-emerald-600' : ''}`}>
-                          chevron_right
-                        </span>
-                        <span className="font-bold text-slate-800 text-sm">{pc.TieuDe}</span>
-                      </div>
-                      <div className="flex items-center gap-5 text-xs font-medium text-slate-500 hidden sm:flex">
-                        <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[16px]">person</span> {pc.TenNguoiTao || '---'}</span>
-                        <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[16px]">calendar_today</span> {formatDate(pc.NgayTao)}</span>
-                      </div>
-                    </div>
+            <div className="flex flex-wrap gap-4">
+              {activeFileTab === 'all' && (
+                <>
+                  {[
+                    { key: 'FilePDFKeHoach', label: 'Kế hoạch gốc', value: keHoach.FilePDFKeHoach, color: 'blue' },
+                    { key: 'FilePDFDeNghiCapPhep', label: 'Đề nghị cấp phép', value: keHoach.FilePDFDeNghiCapPhep, color: 'amber' },
+                  ].map(file => file.value && renderFileLink(file as any))}
 
-                    {expandedPC === pc.MaKHPC && (
-                      <div className="p-6 bg-white animate-fade-in-up">
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 text-sm">
-                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                            <span className="text-xs text-slate-400 block mb-1 font-medium">Người cập nhật</span> 
-                            <span className="font-semibold text-slate-700">{pc.TenNguoiCapNhat || '---'}</span>
-                          </div>
-                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                            <span className="text-xs text-slate-400 block mb-1 font-medium">Ngày cập nhật</span> 
-                            <span className="font-semibold text-slate-700">{formatDate(pc.NgayCapNhat)}</span>
-                          </div>
-                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                            <span className="text-xs text-slate-400 block mb-1 font-medium">Trạng thái NT</span> 
-                            <span className="font-semibold text-slate-700">{pc.TrangThaiNghiemThu || '---'}</span>
-                          </div>
-                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                            <span className="text-xs text-slate-400 block mb-1 font-medium">Người nghiệm thu</span> 
-                            <span className="font-semibold text-slate-700">{pc.NguoiNghiemThu || '---'}</span>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-4 mb-6">
-                          {pc.YKienNghiemThu && (
-                            <div className="flex-1 min-w-[250px] bg-amber-50 p-4 rounded-xl border border-amber-100 text-sm shadow-inner">
-                              <span className="font-bold text-amber-800 block mb-1.5 flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[16px]">rate_review</span> Ý kiến nghiệm thu:
-                              </span> 
-                              <span className="text-amber-900 leading-relaxed">{pc.YKienNghiemThu}</span>
-                            </div>
-                          )}
-                          {pc.FilePDF && (
-                            <div className="flex-shrink-0 flex items-center">
-                              <a href={`/pdf/${pc.FilePDF}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 hover:shadow-sm text-slate-700 rounded-xl transition-all text-sm font-semibold border border-slate-200">
-                                <span className="material-symbols-outlined text-[20px]">attachment</span> Xem File Phân Công
-                              </a>
-                            </div>
-                          )}
-                        </div>
+                  {keHoach.FilePDFBoSungKeHoach && keHoach.FilePDFBoSungKeHoach.split(',').map((fileName, idx) => (
+                    renderFileLink({ key: 'FilePDFBoSungKeHoach', label: 'Kế hoạch bổ sung', value: fileName, color: 'indigo' }, idx)
+                  ))}
 
-                        <div className="mt-2">
-                          <h4 className="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[18px] text-emerald-600">checklist</span>
-                            Chi tiết công việc
-                          </h4>
-                          <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-sm">
-                            <table className="w-full text-sm text-left">
-                              <thead>
-                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
-                                  <th className="p-3.5 font-bold uppercase tracking-wider text-xs">Công việc cụ thể</th>
-                                  <th className="p-3.5 font-bold uppercase tracking-wider text-xs">Thời gian</th>
-                                  <th className="p-3.5 font-bold uppercase tracking-wider text-xs">Công nhân</th>
-                                  <th className="p-3.5 font-bold uppercase tracking-wider text-xs text-center">Tiến độ</th>
-                                  <th className="p-3.5 font-bold uppercase tracking-wider text-xs text-right">Khối lượng</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-100">
-                                {pc.chiTietList?.map((ct) => (
-                                  <tr key={ct.MaChiTiet} className="hover:bg-slate-50/80 transition-colors">
-                                    <td className="p-3.5 font-medium text-slate-800">{ct.CongViecCuThe}</td>
-                                    <td className="p-3.5 text-slate-600">
-                                      <div className="flex flex-col text-xs gap-1.5">
-                                        <span className="flex items-center gap-1.5 bg-slate-100/50 px-2 py-0.5 rounded w-max"><span className="material-symbols-outlined text-[14px] text-slate-400">play_circle</span> {formatDate(ct.ThoiGianBatDau)}</span>
-                                        <span className="flex items-center gap-1.5 bg-slate-100/50 px-2 py-0.5 rounded w-max"><span className="material-symbols-outlined text-[14px] text-slate-400">stop_circle</span> {formatDate(ct.ThoiGianKetThuc)}</span>
-                                      </div>
-                                    </td>
-                                    <td className="p-3.5 text-slate-700 font-medium">{ct.HoTenCongNhan}</td>
-                                    <td className="p-3.5 text-center">
-                                      {ct.XacNhanLam ? (
-                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md text-xs font-bold shadow-sm">
-                                          <span className="material-symbols-outlined text-[14px]">check_circle</span> Đã làm
-                                        </span>
-                                      ) : (
-                                        <div className="flex flex-col items-center gap-1.5">
-                                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-md text-xs font-bold shadow-sm">
-                                            <span className="material-symbols-outlined text-[14px]">pending</span> Chưa làm
-                                          </span>
-                                          {ct.LyDo && <span className="text-[11px] text-rose-500 truncate max-w-[140px] font-medium" title={ct.LyDo}>Lý do: {ct.LyDo}</span>}
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="p-3.5 text-right font-mono font-bold text-slate-700 bg-slate-50/50">{ct.KhoiLuongHoanThanh}</td>
-                                  </tr>
-                                ))}
-                                {(!pc.chiTietList || pc.chiTietList.length === 0) && (
-                                  <tr>
-                                    <td colSpan={5} className="p-6 text-center text-slate-500 italic">Không có công việc chi tiết.</td>
-                                  </tr>
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))
+                  {(!keHoach.FilePDFKeHoach && !keHoach.FilePDFDeNghiCapPhep && !keHoach.FilePDFBoSungKeHoach) && (
+                    <span className="text-sm text-slate-500 italic bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">Không có tài liệu đính kèm.</span>
+                  )}
+                </>
+              )}
+
+              {activeFileTab === 'kehoach' && (
+                <>
+                  {keHoach.FilePDFKeHoach ? (
+                    renderFileLink({ key: 'FilePDFKeHoach', label: 'Kế hoạch gốc', value: keHoach.FilePDFKeHoach, color: 'blue' })
+                  ) : (
+                    <span className="text-sm text-slate-500 italic bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">Không có tài liệu Kế hoạch.</span>
+                  )}
+                </>
+              )}
+
+              {activeFileTab === 'capphep' && (
+                <>
+                  {keHoach.FilePDFDeNghiCapPhep ? (
+                    renderFileLink({ key: 'FilePDFDeNghiCapPhep', label: 'Đề nghị cấp phép', value: keHoach.FilePDFDeNghiCapPhep, color: 'amber' })
+                  ) : (
+                    <span className="text-sm text-slate-500 italic bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">Không có tài liệu Cấp phép.</span>
+                  )}
+                </>
+              )}
+
+              {activeFileTab === 'bosung' && (
+                <>
+                  {keHoach.FilePDFBoSungKeHoach ? (
+                    keHoach.FilePDFBoSungKeHoach.split(',').map((fileName, idx) => (
+                      renderFileLink({ key: 'FilePDFBoSungKeHoach', label: 'Kế hoạch bổ sung', value: fileName, color: 'indigo' }, idx)
+                    ))
+                  ) : (
+                    <span className="text-sm text-slate-500 italic bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">Không có tài liệu Bổ sung.</span>
+                  )}
+                </>
               )}
             </div>
           </div>
+
 
           {/* Approval Action Section */}
-          <div className="bg-white rounded-xl border shadow-sm sticky bottom-0 z-10" style={{ padding: '8px', borderColor: '#e2e8f0', marginTop: 'auto' }}>
-            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 flex items-center gap-2" style={{ paddingBottom: '8px', marginBottom: '12px' }}>
-              <span className="material-symbols-outlined text-rose-500">fact_check</span>
-              Xử lý phê duyệt
-            </h3>
+          <div 
+            className={isAlreadyProcessed 
+              ? "sticky bottom-0 z-10 flex justify-end" 
+              : "bg-white rounded-xl border shadow-sm sticky bottom-0 z-10"
+            } 
+            style={isAlreadyProcessed 
+              ? { marginTop: 'auto', paddingTop: '16px' } 
+              : { padding: '8px', borderColor: '#e2e8f0', marginTop: 'auto' }
+            }
+          >
+            {isAlreadyProcessed ? (
+              <button
+                className="flex items-center justify-center rounded-xl font-bold transition-all shadow-sm text-sm hover:opacity-90"
+                style={{ backgroundColor: '#f59e0b', color: '#ffffff', border: 'none', padding: '10px 24px', cursor: 'pointer' }}
+                onClick={() => setConfirmAction({ type: 'cancel_approval' })}
+              >
+                <span className="material-symbols-outlined text-[18px] mr-2">undo</span>
+                Hủy phê duyệt
+              </button>
+            ) : (
+              <>
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 flex items-center gap-2" style={{ paddingBottom: '8px', marginBottom: '12px' }}>
+                  <span className="material-symbols-outlined text-rose-500">fact_check</span>
+                  Xử lý phê duyệt
+                </h3>
             {isStatusDisabled ? (
               <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 shadow-inner">
                 <span className="material-symbols-outlined mt-0.5 text-amber-600 text-[24px]">warning</span>
@@ -479,34 +470,99 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 pt-2" style={{ marginTop: '4px' }}>
-                  <button
-                    className="flex items-center justify-center rounded-xl font-bold transition-all shadow-sm text-sm"
-                    style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '10px 24px', cursor: 'pointer' }}
-                    onClick={() => {
-                      if (!feedback.trim()) {
-                        alert('Vui lòng nhập lý do từ chối vào ô "Ý kiến phê duyệt / Lý do từ chối".');
-                        return;
-                      }
-                      onApprove('Bị từ chối', feedback, selectedFile, removeFiles);
-                    }}
-                  >
-                    Từ chối
-                  </button>
-                  <button
-                    className="flex items-center justify-center rounded-xl font-bold transition-all shadow-md text-sm"
-                    style={{ backgroundColor: '#059669', color: '#ffffff', border: 'none', padding: '10px 24px', cursor: 'pointer' }}
-                    onClick={() => onApprove('Đã phê duyệt', feedback, selectedFile, removeFiles)}
-                  >
-                    Phê duyệt
-                  </button>
-                </div>
-              </div>
+                    <div className="flex justify-end gap-3 pt-2" style={{ marginTop: '4px' }}>
+                      <button
+                        className="flex items-center justify-center rounded-xl font-bold transition-all shadow-sm text-sm hover:opacity-90"
+                        style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '10px 24px', cursor: 'pointer' }}
+                        onClick={() => {
+                          if (!feedback.trim()) {
+                            alert('Vui lòng nhập lý do từ chối vào ô "Ý kiến phê duyệt / Lý do từ chối".');
+                            return;
+                          }
+                          setConfirmAction({ type: 'reject' });
+                        }}
+                      >
+                        Từ chối
+                      </button>
+                      <button
+                        className="flex items-center justify-center rounded-xl font-bold transition-all shadow-md text-sm hover:opacity-90"
+                        style={{ backgroundColor: '#059669', color: '#ffffff', border: 'none', padding: '10px 24px', cursor: 'pointer' }}
+                        onClick={() => setConfirmAction({ type: 'approve' })}
+                      >
+                        Phê duyệt
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
           
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmAction.type && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[400px] overflow-hidden transform transition-all m-4 border border-slate-100 animate-fade-in-up">
+            <div className="p-6" style={{ padding: '24px' }}>
+              <div className="flex items-center gap-4 mb-5" style={{ marginBottom: '20px' }}>
+                <div className="flex items-center justify-center w-12 h-12 rounded-full flex-shrink-0" 
+                     style={{ backgroundColor: confirmAction.type === 'approve' ? '#d1fae5' : confirmAction.type === 'reject' ? '#ffe4e6' : '#fef3c7' }}>
+                  <span className="material-symbols-outlined text-[28px]" 
+                        style={{ color: confirmAction.type === 'approve' ? '#059669' : confirmAction.type === 'reject' ? '#e11d48' : '#d97706' }}>
+                    {confirmAction.type === 'approve' ? 'check_circle' : confirmAction.type === 'reject' ? 'warning' : 'undo'}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 m-0 leading-tight">
+                  {confirmAction.type === 'approve' ? 'Xác nhận phê duyệt' : confirmAction.type === 'reject' ? 'Xác nhận từ chối' : 'Hủy phê duyệt'}
+                </h3>
+              </div>
+              <p className="text-slate-600 text-sm mb-6" style={{ marginBottom: '24px' }}>
+                {confirmAction.type === 'cancel_approval' ? (
+                  <span>Bạn có chắc chắn muốn <strong>hủy kết quả</strong> của kế hoạch này không? Trạng thái sẽ được chuyển về "Đang chờ duyệt".</span>
+                ) : (
+                  <span>Bạn có chắc chắn muốn <span className="font-bold">{confirmAction.type === 'approve' ? 'phê duyệt' : 'từ chối'}</span> kế hoạch này không? Hành động này sẽ gửi kết quả cho người lập kế hoạch.</span>
+                )}
+              </p>
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100" style={{ paddingTop: '16px', marginTop: '16px' }}>
+                <button
+                  className="rounded-xl font-semibold text-sm transition-all cursor-pointer hover:opacity-80"
+                  style={{ backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', padding: '8px 20px' }}
+                  onClick={() => setConfirmAction({ type: null })}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="rounded-xl text-white font-semibold text-sm transition-all shadow-sm cursor-pointer hover:opacity-90 flex items-center justify-center gap-2"
+                  style={{ 
+                    backgroundColor: confirmAction.type === 'approve' ? '#059669' : confirmAction.type === 'reject' ? '#e11d48' : '#d97706',
+                    border: 'none',
+                    padding: '8px 20px'
+                  }}
+                  onClick={() => {
+                    const newStatus = confirmAction.type === 'approve' ? 'Đã phê duyệt' 
+                                    : confirmAction.type === 'reject' ? 'Bị từ chối' 
+                                    : 'Đang chờ duyệt';
+                    onApprove(
+                      newStatus,
+                      newStatus === 'Đang chờ duyệt' ? '' : feedback,
+                      selectedFile,
+                      removeFiles
+                    );
+                    if (newStatus === 'Đang chờ duyệt') {
+                      setFeedback('');
+                    }
+                    setConfirmAction({ type: null });
+                  }}
+                >
+                  Xác nhận
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
