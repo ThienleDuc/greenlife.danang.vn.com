@@ -57,7 +57,7 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
 
     try {
       await PheDuyetService.removeSpecificFile(keHoach.MaKeHoach, fileKey, specificFilename);
-      
+
       // Update local data to reflect removal immediately
       if (data && data.keHoach) {
         if (specificFilename) {
@@ -117,22 +117,27 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
     }
   };
 
+  const openLocalPdf = (file: File) => {
+    const fileURL = URL.createObjectURL(file);
+    window.open(fileURL, '_blank', 'noopener,noreferrer');
+  };
+
   const renderFileLink = (file: { key: string, label: string, value: string, color?: string }, index?: number) => {
     const isRemoved = removeFiles.includes(file.value) || removeFiles.includes(file.key);
     const colors = getFileColors(file.key);
-    
+
     return (
       <div key={`${file.key}-${index || 0}`} className={`relative flex items-center transition-all duration-300 ${isRemoved ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
-        <button 
+        <button
           onClick={() => openPdf(file.value)}
           className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all hover:shadow-md cursor-pointer text-sm font-bold"
           style={{ backgroundColor: colors.bg, color: colors.text, border: `1px solid ${colors.border}`, outline: 'none' }}
         >
-          <span className="material-symbols-outlined text-[20px]">{colors.icon}</span> 
+          <span className="material-symbols-outlined text-[20px]">{colors.icon}</span>
           {file.label} {index !== undefined ? `#${index + 1}` : ''}
         </button>
         {!isStatusDisabled && !isAlreadyProcessed && !isRemoved && (
-          <button 
+          <button
             onClick={() => handleRemoveFile(file.key, file.label, file.key === 'FilePDFBoSungKeHoach' ? file.value : undefined)}
             className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform shadow-sm z-10 cursor-pointer"
             style={{ backgroundColor: '#ef4444', border: '2px solid #ffffff' }}
@@ -153,7 +158,7 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 md:p-6 transition-all duration-300">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col max-h-[95vh] overflow-hidden transform transition-all border border-slate-100">
-        
+
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-start bg-slate-50/80 sticky top-0 z-10" style={{ padding: '24px 36px' }}>
           <div className="flex-1 pr-6">
@@ -174,7 +179,7 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
             <span className="font-mono font-black text-slate-600 text-[20px] tracking-widest">
               #{keHoach.MaKeHoach}
             </span>
-            <button 
+            <button
               className="text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all p-2 rounded-full"
               onClick={onClose}
               title="Đóng"
@@ -186,70 +191,70 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
 
         {/* Body with custom scrollbar */}
         <div className="overflow-y-auto bg-slate-50/50 flex-1 custom-scrollbar" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
+
           {/* Main Info Section */}
           <div className="bg-white rounded-xl border shadow-sm" style={{ padding: '24px', borderColor: '#e2e8f0' }}>
             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 flex items-center gap-2" style={{ paddingBottom: '12px', marginBottom: '24px' }}>
               <span className="material-symbols-outlined text-emerald-500">info</span>
               Thông tin chung
             </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                {/* Cột 1 */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Người lập</span>
-                    <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">person</span>
-                      {keHoach.TenNguoiLap || keHoach.NguoiLap}
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày tạo</span>
-                    <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">calendar_today</span>
-                      {formatDate(keHoach.NgayTao)}
-                    </div>
-                  </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tuyến đường</span>
-                    <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">route</span>
-                      {keHoach.TenTuyenDuong}
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+              {/* Cột 1 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Người lập</span>
+                  <div className="font-medium text-slate-800 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">person</span>
+                    {keHoach.TenNguoiLap || keHoach.NguoiLap}
                   </div>
                 </div>
 
-                {/* Cột 2 */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Người xử lý</span>
-                    <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">manage_accounts</span>
-                      {keHoach.TenNguoiXuLy || keHoach.NguoiXuLy || '---'}
-                    </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày tạo</span>
+                  <div className="font-medium text-slate-800 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">calendar_today</span>
+                    {formatDate(keHoach.NgayTao)}
                   </div>
+                </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày cập nhật</span>
-                    <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">update</span>
-                      {formatDate(keHoach.NgayCapNhat)}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Xã phường</span>
-                    <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">location_city</span>
-                      {keHoach.TenXaPhuong}
-                    </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tuyến đường</span>
+                  <div className="font-medium text-slate-800 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">route</span>
+                    {keHoach.TenTuyenDuong}
                   </div>
                 </div>
               </div>
-            
+
+              {/* Cột 2 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Người xử lý</span>
+                  <div className="font-medium text-slate-800 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">manage_accounts</span>
+                    {keHoach.TenNguoiXuLy || keHoach.NguoiXuLy || '---'}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày cập nhật</span>
+                  <div className="font-medium text-slate-800 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">update</span>
+                    {formatDate(keHoach.NgayCapNhat)}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Xã phường</span>
+                  <div className="font-medium text-slate-800 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-slate-400">location_city</span>
+                    {keHoach.TenXaPhuong}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="border-t border-slate-100" style={{ marginTop: '24px', paddingTop: '16px' }}>
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
                 <span className="material-symbols-outlined text-[16px]">description</span> Mô tả chi tiết
@@ -270,7 +275,7 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
                 Tài liệu đính kèm
               </h3>
               <div className="flex flex-wrap gap-3">
-                <button 
+                <button
                   onClick={() => setActiveFileTab('all')}
                   className="text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-slate-50"
                   style={{
@@ -282,7 +287,7 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
                 >
                   Tất cả
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveFileTab('kehoach')}
                   className="text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-blue-50"
                   style={{
@@ -294,7 +299,7 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
                 >
                   Kế hoạch
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveFileTab('capphep')}
                   className="text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-amber-50"
                   style={{
@@ -306,7 +311,7 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
                 >
                   Cấp phép
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveFileTab('bosung')}
                   className="text-xs font-bold rounded-lg transition-all cursor-pointer hover:bg-indigo-50"
                   style={{
@@ -374,13 +379,13 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
 
 
           {/* Approval Action Section */}
-          <div 
-            className={isAlreadyProcessed 
-              ? "sticky bottom-0 z-10 flex justify-end" 
+          <div
+            className={isAlreadyProcessed
+              ? "sticky bottom-0 z-10 flex justify-end"
               : "bg-white rounded-xl border shadow-sm sticky bottom-0 z-10"
-            } 
-            style={isAlreadyProcessed 
-              ? { marginTop: 'auto', paddingTop: '16px' } 
+            }
+            style={isAlreadyProcessed
+              ? { marginTop: 'auto', paddingTop: '16px' }
               : { padding: '8px', borderColor: '#e2e8f0', marginTop: 'auto' }
             }
           >
@@ -399,77 +404,84 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
                   <span className="material-symbols-outlined text-rose-500">fact_check</span>
                   Xử lý phê duyệt
                 </h3>
-            {isStatusDisabled ? (
-              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 shadow-inner">
-                <span className="material-symbols-outlined mt-0.5 text-amber-600 text-[24px]">warning</span>
-                <div>
-                  <p className="font-bold mb-1 text-sm">Kế hoạch đang ở trạng thái Đang thẩm định</p>
-                  <p className="text-sm leading-relaxed">Hành động phê duyệt tạm thời bị vô hiệu hóa cho đến khi nhân viên kỹ thuật hoàn tất và gửi yêu cầu duyệt kế hoạch này.</p>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-slate-50 p-5 rounded-xl border border-slate-100">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="relative">
-                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">edit_note</span> Ý kiến phê duyệt / Lý do từ chối:
-                    </label>
-                    <textarea
-                      className="w-full py-4 px-5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all duration-300 resize-none text-slate-700 bg-white shadow-inner text-sm placeholder:text-slate-400"
-                      rows={3}
-                      style={{ padding: '16px 24px' }}
-                      placeholder="Nhập nhận xét, ý kiến chỉ đạo hoặc chi tiết lý do từ chối..."
-                      value={feedback}
-                      onChange={(e) => setFeedback(e.target.value)}
-                    />
-                  </div>
-                  <div className="relative">
-                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">upload_file</span> Đính kèm File Pdf Bổ sung kế hoạch (Tùy chọn):
-                    </label>
-                    <div className="flex flex-col gap-2">
-                      {!selectedFile ? (
-                        <div className="relative group">
-                          <input
-                            type="file"
-                            accept=".pdf"
-                            onChange={handleFileChange}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                          />
-                          <div className="flex items-center gap-3 w-full py-3 px-4 border-2 border-dashed border-slate-200 rounded-xl bg-white group-hover:border-emerald-400 group-hover:bg-emerald-50/30 transition-all duration-300">
-                            <span className="material-symbols-outlined text-slate-400 group-hover:text-emerald-500 transition-colors">
-                              add_circle
-                            </span>
-                            <span className="text-sm text-slate-500 truncate font-medium group-hover:text-emerald-700 transition-colors">
-                              Chọn file PDF bổ sung...
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between gap-3 w-full py-3 px-4 border-2 border-emerald-100 rounded-xl bg-emerald-50/30 animate-fade-in-up">
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <span className="material-symbols-outlined text-emerald-600">picture_as_pdf</span>
-                            <span className="text-sm text-emerald-800 truncate font-bold">
-                              {selectedFile.name}
-                            </span>
-                          </div>
-                          <button 
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setSelectedFile(undefined);
-                            }}
-                            className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-all shadow-sm group"
-                            title="Gỡ file đính kèm"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">close</span>
-                          </button>
-                        </div>
-                      )}
-                      <p className="text-[11px] text-slate-400 ml-1">Chỉ chấp nhận định dạng .pdf</p>
+                {isStatusDisabled ? (
+                  <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 shadow-inner">
+                    <span className="material-symbols-outlined mt-0.5 text-amber-600 text-[24px]">warning</span>
+                    <div>
+                      <p className="font-bold mb-1 text-sm">Kế hoạch đang ở trạng thái Đang thẩm định</p>
+                      <p className="text-sm leading-relaxed">Hành động phê duyệt tạm thời bị vô hiệu hóa cho đến khi nhân viên kỹ thuật hoàn tất và gửi yêu cầu duyệt kế hoạch này.</p>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="relative">
+                        <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[18px] text-slate-400">edit_note</span> Ý kiến phê duyệt / Lý do từ chối:
+                        </label>
+                        <textarea
+                          className="w-full py-4 px-5 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all duration-300 resize-none text-slate-700 bg-white shadow-inner text-sm placeholder:text-slate-400"
+                          rows={3}
+                          style={{ padding: '16px 24px' }}
+                          placeholder="Nhập nhận xét, ý kiến chỉ đạo hoặc chi tiết lý do từ chối..."
+                          value={feedback}
+                          onChange={(e) => setFeedback(e.target.value)}
+                        />
+                      </div>
+                      <div className="relative">
+                        <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[18px] text-slate-400">upload_file</span> Đính kèm File Pdf Bổ sung kế hoạch (Tùy chọn):
+                        </label>
+                        <div className="flex flex-col gap-2">
+                          {!selectedFile ? (
+                            <div className="relative group">
+                              <input
+                                type="file"
+                                accept=".pdf"
+                                onChange={handleFileChange}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                              />
+                              <div className="flex items-center gap-3 w-full py-3 px-4 border-2 border-dashed border-slate-200 rounded-xl bg-white group-hover:border-emerald-400 group-hover:bg-emerald-50/30 transition-all duration-300">
+                                <span className="material-symbols-outlined text-slate-400 group-hover:text-emerald-500 transition-colors">
+                                  add_circle
+                                </span>
+                                <span className="text-sm text-slate-500 truncate font-medium group-hover:text-emerald-700 transition-colors">
+                                  Chọn file PDF bổ sung...
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between gap-3 w-full py-3 px-4 border-2 border-emerald-100 rounded-xl bg-emerald-50/30 animate-fade-in-up">
+                              <div 
+                                onClick={() => openLocalPdf(selectedFile)}
+                                className="flex items-center gap-3 overflow-hidden cursor-pointer hover:underline group/file"
+                                title="Click để xem trước file PDF"
+                              >
+                                <span className="material-symbols-outlined text-emerald-600 group-hover/file:text-emerald-700 transition-colors">picture_as_pdf</span>
+                                <span className="text-sm text-emerald-800 truncate font-bold group-hover/file:text-emerald-950 transition-colors">
+                                  {selectedFile.name}
+                                </span>
+                                <span className="material-symbols-outlined text-[16px] text-emerald-500 opacity-0 group-hover/file:opacity-100 transition-all duration-200">
+                                  open_in_new
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setSelectedFile(undefined);
+                                }}
+                                className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-all shadow-sm group"
+                                title="Gỡ file đính kèm"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">close</span>
+                              </button>
+                            </div>
+                          )}
+                          <p className="text-[11px] text-slate-400 ml-1">Chỉ chấp nhận định dạng .pdf</p>
+                        </div>
+                      </div>
+                    </div>
                     <div className="flex justify-end gap-3 pt-2" style={{ marginTop: '4px' }}>
                       <button
                         className="flex items-center justify-center rounded-xl font-bold transition-all shadow-sm text-sm hover:opacity-90"
@@ -497,7 +509,7 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
               </>
             )}
           </div>
-          
+
         </div>
       </div>
 
@@ -507,10 +519,10 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-[400px] overflow-hidden transform transition-all m-4 border border-slate-100 animate-fade-in-up">
             <div className="p-6" style={{ padding: '24px' }}>
               <div className="flex items-center gap-4 mb-5" style={{ marginBottom: '20px' }}>
-                <div className="flex items-center justify-center w-12 h-12 rounded-full flex-shrink-0" 
-                     style={{ backgroundColor: confirmAction.type === 'approve' ? '#d1fae5' : confirmAction.type === 'reject' ? '#ffe4e6' : '#fef3c7' }}>
-                  <span className="material-symbols-outlined text-[28px]" 
-                        style={{ color: confirmAction.type === 'approve' ? '#059669' : confirmAction.type === 'reject' ? '#e11d48' : '#d97706' }}>
+                <div className="flex items-center justify-center w-12 h-12 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: confirmAction.type === 'approve' ? '#d1fae5' : confirmAction.type === 'reject' ? '#ffe4e6' : '#fef3c7' }}>
+                  <span className="material-symbols-outlined text-[28px]"
+                    style={{ color: confirmAction.type === 'approve' ? '#059669' : confirmAction.type === 'reject' ? '#e11d48' : '#d97706' }}>
                     {confirmAction.type === 'approve' ? 'check_circle' : confirmAction.type === 'reject' ? 'warning' : 'undo'}
                   </span>
                 </div>
@@ -525,6 +537,12 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
                   <span>Bạn có chắc chắn muốn <span className="font-bold">{confirmAction.type === 'approve' ? 'phê duyệt' : 'từ chối'}</span> kế hoạch này không? Hành động này sẽ gửi kết quả cho người lập kế hoạch.</span>
                 )}
               </p>
+              {confirmAction.type === 'approve' && !selectedFile && (
+                <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs mb-5 shadow-sm animate-pulse" style={{ marginBottom: '20px' }}>
+                  <span className="material-symbols-outlined text-[18px] text-amber-600 flex-shrink-0 mt-0.5">warning</span>
+                  <span className="font-semibold leading-relaxed">Cảnh báo: Bạn chưa đính kèm file PDF bổ sung</span>
+                </div>
+              )}
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100" style={{ paddingTop: '16px', marginTop: '16px' }}>
                 <button
                   className="rounded-xl font-semibold text-sm transition-all cursor-pointer hover:opacity-80"
@@ -535,15 +553,15 @@ const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen, onClo
                 </button>
                 <button
                   className="rounded-xl text-white font-semibold text-sm transition-all shadow-sm cursor-pointer hover:opacity-90 flex items-center justify-center gap-2"
-                  style={{ 
+                  style={{
                     backgroundColor: confirmAction.type === 'approve' ? '#059669' : confirmAction.type === 'reject' ? '#e11d48' : '#d97706',
                     border: 'none',
                     padding: '8px 20px'
                   }}
                   onClick={() => {
-                    const newStatus = confirmAction.type === 'approve' ? 'Đã phê duyệt' 
-                                    : confirmAction.type === 'reject' ? 'Bị từ chối' 
-                                    : 'Đang chờ duyệt';
+                    const newStatus = confirmAction.type === 'approve' ? 'Đã phê duyệt'
+                      : confirmAction.type === 'reject' ? 'Bị từ chối'
+                        : 'Đang chờ duyệt';
                     onApprove(
                       newStatus,
                       newStatus === 'Đang chờ duyệt' ? '' : feedback,
