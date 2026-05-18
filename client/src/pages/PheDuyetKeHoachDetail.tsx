@@ -597,7 +597,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                   <span>Bạn có chắc chắn muốn <span className="font-bold">{confirmAction.type === 'approve' ? 'phê duyệt' : 'từ chối'}</span> kế hoạch này không? Hành động này sẽ gửi kết quả cho người lập kế hoạch.</span>
                 )}
               </p>
-              {confirmAction.type === 'approve' && !selectedFile && (
+              {confirmAction.type === 'approve' && !selectedFile && (!keHoach.FilePDFBoSungKeHoach || !keHoach.FilePDFBoSungKeHoach.trim()) && (
                 <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs mb-5 shadow-sm animate-pulse" style={{ marginBottom: '20px' }}>
                   <span className="material-symbols-outlined text-[18px] text-amber-600 flex-shrink-0 mt-0.5">warning</span>
                   <span className="font-semibold leading-relaxed">Cảnh báo: Bạn chưa đính kèm file PDF bổ sung</span>
