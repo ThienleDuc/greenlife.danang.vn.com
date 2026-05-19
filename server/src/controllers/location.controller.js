@@ -43,7 +43,25 @@ const getTuyenDuong = async (req, res) => {
   }
 };
 
+const getAllTuyenDuong = async (req, res) => {
+  try {
+    const tuyenDuong = await locationRepository.getAllTuyenDuong();
+    res.status(200).json({
+      success: true,
+      data: tuyenDuong
+    });
+  } catch (error) {
+    console.error("Error in getAllTuyenDuong:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy tất cả tuyến đường",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getXaPhuong,
-  getTuyenDuong
+  getTuyenDuong,
+  getAllTuyenDuong
 };

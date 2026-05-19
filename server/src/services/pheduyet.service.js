@@ -1,6 +1,22 @@
 const pheDuyetRepo = require("../repositories/pheduyet.repository");
 const fs = require("fs");
 const path = require("path");
+const { isQuanLy } = require("../utils/role.utils");
+
+const createHttpError = (message, statusCode = 400) => {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+};
+
+const assertQuanLy = (user) => {
+  if (!user) {
+    throw createHttpError("Bạn chưa đăng nhập hoặc phiên làm việc đã hết hạn", 401);
+  }
+  if (!isQuanLy(user)) {
+    throw createHttpError("Bạn không có quyền quản lý để thực hiện thao tác này", 403);
+  }
+};
 
 const checkAndCleanPlanFiles = (keHoach) => {
   if (!keHoach) return keHoach;
@@ -31,7 +47,8 @@ const checkAndCleanPlanFiles = (keHoach) => {
   return keHoach;
 };
 
-const getAllKeHoachPheDuyet = async (limit, offset) => {
+const getAllKeHoachPheDuyet = async (limit, offset, user) => {
+  assertQuanLy(user);
   const result = await pheDuyetRepo.getAllKeHoachPheDuyet(limit, offset);
   if (result && result.data) {
     result.data = result.data.map(p => checkAndCleanPlanFiles(p));
@@ -39,7 +56,8 @@ const getAllKeHoachPheDuyet = async (limit, offset) => {
   return result;
 };
 
-const searchKeHoachPheDuyet = async (filters) => {
+const searchKeHoachPheDuyet = async (filters, user) => {
+  assertQuanLy(user);
   const result = await pheDuyetRepo.searchKeHoachPheDuyet(filters);
   if (result && result.data) {
     result.data = result.data.map(p => checkAndCleanPlanFiles(p));
@@ -47,7 +65,8 @@ const searchKeHoachPheDuyet = async (filters) => {
   return result;
 };
 
-const getKeHoachChiTiet = async (maKeHoach) => {
+const getKeHoachChiTiet = async (maKeHoach, user) => {
+  assertQuanLy(user);
   const result = await pheDuyetRepo.getKeHoachChiTiet(maKeHoach);
   if (result && result.keHoach) {
     result.keHoach = checkAndCleanPlanFiles(result.keHoach);
@@ -55,11 +74,13 @@ const getKeHoachChiTiet = async (maKeHoach) => {
   return result;
 };
 
-const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles) => {
+const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles, user) => {
+  assertQuanLy(user);
   return await pheDuyetRepo.updateTrangThaiPheDuyet(maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles);
 };
 
-const removeSpecificFile = async (maKeHoach, fileKey, fileName) => {
+const removeSpecificFile = async (maKeHoach, fileKey, fileName, user) => {
+  assertQuanLy(user);
   return await pheDuyetRepo.removeSpecificFile(maKeHoach, fileKey, fileName);
 };
 

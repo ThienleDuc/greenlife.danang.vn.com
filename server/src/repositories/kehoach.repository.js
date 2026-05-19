@@ -297,7 +297,6 @@ const searchKeHoach = async (filters) => {
     const colName = dateType || "NgayTao";
     query += ` AND kh.${colName} BETWEEN @startDate AND @endDate`;
     request.input("startDate", sql.DateTime, new Date(startDate));
-
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
     request.input("endDate", sql.DateTime, end);
@@ -308,7 +307,8 @@ const searchKeHoach = async (filters) => {
   const countResult = await request.query(countQuery);
 
   // Data query
-  query += ` ORDER BY kh.NgayTao DESC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
+  const sortCol = dateType || "NgayTao";
+  query += ` ORDER BY kh.${sortCol} DESC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
   request.input("limit", sql.Int, parseInt(limit, 10));
   request.input("offset", sql.Int, parseInt(offset, 10));
 
@@ -332,7 +332,6 @@ const getKeHoachStats = async () => {
     FROM dbo.KeHoachCongViec
     GROUP BY TrangThai
   `);
-
   const stats = {
     daGui: 0,
     dangThamDinh: 0,
@@ -381,5 +380,5 @@ module.exports = {
   getKeHoachCuaToi,
   createKeHoach,
   updateKeHoach,
-  huyKeHoach,
+  huyKeHoach
 };

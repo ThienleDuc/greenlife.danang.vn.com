@@ -30,7 +30,21 @@ const getTuyenDuongByXaPhuong = async (maXaPhuong) => {
   return result.recordset;
 };
 
+/**
+ * Lấy tất cả tuyến đường
+ */
+const getAllTuyenDuong = async () => {
+  const connection = await poolPromise;
+  const result = await connection.request().query(`
+    SELECT MaTuyenDuong, TenTuyenDuong, TenVietTat, LoaiDuong, MaXaPhuong
+    FROM dbo.TuyenDuong
+    ORDER BY TenTuyenDuong ASC
+  `);
+  return result.recordset;
+};
+
 module.exports = {
   getAllXaPhuong,
-  getTuyenDuongByXaPhuong
+  getTuyenDuongByXaPhuong,
+  getAllTuyenDuong
 };

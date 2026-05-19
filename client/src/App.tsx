@@ -50,6 +50,7 @@ const App = () => {
 
         {/* 404 */}
         <Route path={PATHS.AUTH.NOT_FOUND} element={<div>404 Not Found</div>} />
+
       </Routes>
     </Router>
   );

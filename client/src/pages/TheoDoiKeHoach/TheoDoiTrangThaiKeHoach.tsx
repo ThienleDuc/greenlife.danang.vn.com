@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FilterBar from '../../components/FilterBar';
 import PlanTable from '../../components/PlanTable';
-import SummaryStatsComponent from '../../components/SummaryStats';
 import Pagination from '../../components/Pagination';
 import { TheoDoiKeHoachService } from '../../services/kehoachService';
 import type { KeHoachCongViec, FilterParams } from '../../types';
@@ -11,9 +10,10 @@ import { PATHS } from '../../utils/pathUtils';
 
 const TheoDoiTrangThaiKeHoach: React.FC = () => {
   const navigate = useNavigate();
+
   const [plans, setPlans] = useState<KeHoachCongViec[]>([]);
   const [totalItems, setTotalItems] = useState(0);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [currentFilters, setCurrentFilters] = useState<FilterParams | null>(null);
   const itemsPerPage = 10;
@@ -39,6 +39,7 @@ const TheoDoiTrangThaiKeHoach: React.FC = () => {
     return () => {
       isActive = false;
     };
+
   }, [currentPage, currentFilters]);
 
   const handleSearch = (params: FilterParams) => {
@@ -75,9 +76,6 @@ const TheoDoiTrangThaiKeHoach: React.FC = () => {
           </p>
         </div>
       </div>
-
-      {/* Summary Stats - Top */}
-      <SummaryStatsComponent />
 
       <div className="page-content-grid">
         {/* Left Sidebar - Filter */}

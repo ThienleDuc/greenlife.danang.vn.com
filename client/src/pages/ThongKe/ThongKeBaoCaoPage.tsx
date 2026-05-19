@@ -1,0 +1,595 @@
+import React, { useEffect, useState } from 'react';
+import thongKeService, { type ThongKeTongQuanResponse } from '../../services/thongKeService';
+import locationService from '../../services/locationService';
+import { TheoDoiKeHoachService } from '../../services/kehoachService';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
+  LineChart, Line
+} from 'recharts';
+import '../../styles/pages/ThongKeBaoCao.css';
+
+const ThongKeBaoCaoPage: React.FC = () => {
+  const [data, setData] = useState<ThongKeTongQuanResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Bộ lọc thời gian
+  const [tuNgay, setTuNgay] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [denNgay, setDenNgay] = useState<string>(() => {
+    return new Date().toISOString().split('T')[0];
+  });
+
+  // Bộ lọc địa điểm
+  const [maXaPhuong, setMaXaPhuong] = useState<string>('');
+  const [maTuyenDuong, setMaTuyenDuong] = useState<string>('');
+  const [xaPhuongs, setXaPhuongs] = useState<any[]>([]);
+  const [tuyenDuongs, setTuyenDuongs] = useState<any[]>([]);
+  const [allTuyenDuongs, setAllTuyenDuongs] = useState<any[]>([]);
+
+  // Bộ lọc loại công việc, loại ngày, trạng thái
+  const [loaiNgay, setLoaiNgay] = useState<string>('NgayTao');
+  const [maLoaiCongViec, setMaLoaiCongViec] = useState<string>('');
+  const [trangThai, setTrangThai] = useState<string>('');
+  const [danhMucCongViecs, setDanhMucCongViecs] = useState<any[]>([]);
+
+  // Trạng thái modal xem chi tiết theo ngày
+  const [selectedDateForModal, setSelectedDateForModal] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState<boolean>(false);
+
+  // Trạng thái dialog chọn thời gian
+  const [showDateDialog, setShowDateDialog] = useState<boolean>(false);
+  const [tempLoaiNgay, setTempLoaiNgay] = useState<string>('NgayTao');
+  const [tempTuNgay, setTempTuNgay] = useState<string>('');
+  const [tempDenNgay, setTempDenNgay] = useState<string>('');
+
+  const [errorMsg, setErrorMsg] = useState<string>('');
+  const [exportType, setExportType] = useState<string>('excel');
+
+  useEffect(() => {
+    loadLocationsAndCategories();
+    loadData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+  }, []);
+
+  const loadLocationsAndCategories = async () => {
+    try {
+      const [xpRes, tdRes, dmRes] = await Promise.all([
+        locationService.getXaPhuong(),
+        locationService.getAllTuyenDuong(),
+        TheoDoiKeHoachService.getDanhMucCongViec()
+      ]);
+      setXaPhuongs(xpRes.data || []);
+      setAllTuyenDuongs(tdRes.data || []);
+      setTuyenDuongs(tdRes.data || []);
+      setDanhMucCongViecs(dmRes || []);
+    } catch (error) {
+      console.error("Lỗi lấy danh sách địa điểm/danh mục:", error);
+    }
+  };
+
+  const handleXaPhuongChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setMaXaPhuong(val);
+    setMaTuyenDuong(''); // reset tuyến đường khi đổi xã phường
+
+    if (val) {
+      setTuyenDuongs(allTuyenDuongs.filter(td => td.MaXaPhuong === val));
+    } else {
+      setTuyenDuongs(allTuyenDuongs);
+    }
+  };
+
+  const loadData = async (
+    tu?: string,
+    den?: string,
+    maTd?: string,
+    maXp?: string,
+    ln?: string,
+    maCv?: string,
+    tt?: string
+  ) => {
+    setLoading(true);
+    try {
+      const res = await thongKeService.getThongKeTongQuan(tu, den, maTd, maXp, ln, maCv, tt);
+      setData(res);
+    } catch (error) {
+      console.error('Lỗi lấy thống kê', error);
+      alert('Không thể tải dữ liệu thống kê');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFilter = () => {
+    if (tuNgay && denNgay && new Date(tuNgay) > new Date(denNgay)) {
+      setErrorMsg("Thời gian lọc không hợp lệ");
+      return;
+    }
+    setErrorMsg('');
+    loadData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+  };
+
+  const handleExport = async () => {
+    if (exportType === 'excel') {
+      await handleExportExcel();
+    } else {
+      await handleExportPDF();
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const blob = await thongKeService.downloadExcel(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'BaoCaoThongKe.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (error) {
+      alert("Lỗi xuất Excel");
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      const blob = await thongKeService.downloadPDF(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'BaoCaoThongKe.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (error) {
+      alert("Lỗi xuất PDF");
+    }
+  };
+
+  // Nhấp chuột vào biểu đồ để mở Modal danh sách theo ngày
+  const handleChartClick = (state: any) => {
+    if (state && state.activePayload && state.activePayload.length > 0) {
+      const payload = state.activePayload[0].payload;
+      const clickedFullDate = payload.fullDate;
+      setSelectedDateForModal(clickedFullDate);
+      setShowModal(true);
+    }
+  };
+
+  // Lọc kế hoạch thuộc ngày được click dựa trên loại ngày lọc
+  const getPlansForSelectedDate = () => {
+    if (!selectedDateForModal || !data?.rawData) return [];
+    return data.rawData.filter(item => {
+      let itemDate = item.NgayTao;
+      if (loaiNgay === 'NgayPheDuyet') {
+        itemDate = item.NgayPheDuyet;
+      } else if (loaiNgay === 'NgayXuLy') {
+        itemDate = item.NgayXuLy;
+      }
+      if (!itemDate) return selectedDateForModal === 'N/A';
+      const formattedItemDate = new Date(itemDate).toISOString().split('T')[0];
+      return formattedItemDate === selectedDateForModal;
+    });
+  };
+
+  // Lấy nhãn hiển thị cho nút lọc thời gian
+  const getDateFilterLabel = () => {
+    const loaiNgayText = loaiNgay === 'NgayPheDuyet' ? 'Ngày duyệt' : loaiNgay === 'NgayXuLy' ? 'Ngày xử lý' : 'Ngày tạo';
+    const tu = tuNgay ? new Date(tuNgay).toLocaleDateString('vi-VN') : '...';
+    const den = denNgay ? new Date(denNgay).toLocaleDateString('vi-VN') : '...';
+    return `${loaiNgayText}: ${tu} - ${den}`;
+  };
+
+  return (
+    <div className="tkbc-container fade-in">
+      <div className="tkbc-header">
+        <h1 className="tkbc-title">Thống kê kế hoạch</h1>
+        <div className="tkbc-actions">
+          <select
+            className="tkbc-select"
+            style={{ fontWeight: 'var(--font-weight-medium)' }}
+            value={exportType}
+            onChange={(e) => setExportType(e.target.value)}
+          >
+            <option value="excel">File Excel</option>
+            <option value="pdf">File PDF</option>
+          </select>
+          <button className="tkbc-btn-export" onClick={handleExport} disabled={loading}>
+            <span className="material-symbols-outlined">download</span>
+            Xuất báo cáo
+          </button>
+        </div>
+      </div>
+
+      <div className="tkbc-filter-card">
+        <h3 className="tkbc-filter-title">Bộ lọc thống kê</h3>
+        {errorMsg && <div className="tkbc-error-msg">{errorMsg}</div>}
+        <div className="tkbc-filter-grid">
+          <div className="tkbc-filter-group">
+            <label>Thời gian thống kê</label>
+            <button
+              type="button"
+              className="tkbc-btn-date-trigger"
+              onClick={() => {
+                setTempLoaiNgay(loaiNgay);
+                setTempTuNgay(tuNgay);
+                setTempDenNgay(denNgay);
+                setShowDateDialog(true);
+              }}
+            >
+              <span className="material-symbols-outlined">calendar_today</span>
+              <span>{getDateFilterLabel()}</span>
+            </button>
+          </div>
+          <div className="tkbc-filter-group">
+            <label>Xã phường</label>
+            <select className="tkbc-select" value={maXaPhuong} onChange={handleXaPhuongChange}>
+              <option value="">-- Tất cả --</option>
+              {xaPhuongs.map(xp => (
+                <option key={xp.MaXaPhuong} value={xp.MaXaPhuong}>{xp.TenXaPhuong}</option>
+              ))}
+            </select>
+          </div>
+          <div className="tkbc-filter-group">
+            <label>Tuyến đường</label>
+            <select className="tkbc-select" value={maTuyenDuong} onChange={e => setMaTuyenDuong(e.target.value)}>
+              <option value="">-- Tất cả --</option>
+              {tuyenDuongs.map(td => (
+                <option key={td.MaTuyenDuong} value={td.MaTuyenDuong}>{td.TenTuyenDuong}</option>
+              ))}
+            </select>
+          </div>
+          <div className="tkbc-filter-group">
+            <label>Loại công việc</label>
+            <select className="tkbc-select" value={maLoaiCongViec} onChange={e => setMaLoaiCongViec(e.target.value)}>
+              <option value="">-- Tất cả --</option>
+              {danhMucCongViecs.map(dm => (
+                <option key={dm.MaLoaiCongViec} value={dm.MaLoaiCongViec}>{dm.TenCongViec}</option>
+              ))}
+            </select>
+          </div>
+          <div className="tkbc-filter-group">
+            <label>Trạng thái</label>
+            <select className="tkbc-select" value={trangThai} onChange={e => setTrangThai(e.target.value)}>
+              <option value="">-- Tất cả --</option>
+              <option value="Đã gửi">Đã gửi</option>
+              <option value="Đang thẩm định">Đang thẩm định</option>
+              <option value="Đã phê duyệt">Đã phê duyệt</option>
+              <option value="Bị từ chối">Bị từ chối</option>
+              <option value="Đã hủy">Đã hủy</option>
+            </select>
+          </div>
+          <div className="tkbc-filter-group button-group">
+            <button className="tkbc-btn-filter" onClick={handleFilter} disabled={loading}>
+              <span className="material-symbols-outlined">filter_alt</span>
+              Lọc dữ liệu
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="tkbc-loading">Đang tải dữ liệu...</div>
+      ) : (
+        <div className="tkbc-content">
+          <div className="tkbc-summary-cards">
+            <div className="tkbc-card primary">
+              <span className="material-symbols-outlined tkbc-card-icon">assignment</span>
+              <div className="tkbc-card-info">
+                <h4>Tổng kế hoạch</h4>
+                <h2>{data?.tongQuan?.tongTao || 0}</h2>
+              </div>
+            </div>
+            <div className="tkbc-card" style={{ borderLeft: '4px solid #f59e0b' }}>
+              <span className="material-symbols-outlined tkbc-card-icon" style={{ backgroundColor: '#fef3c7', color: '#92400e' }}>pending_actions</span>
+              <div className="tkbc-card-info">
+                <h4>Đang thẩm định</h4>
+                <h2>{data?.tongQuan?.tongThamDinh || 0}</h2>
+              </div>
+            </div>
+            <div className="tkbc-card success">
+              <span className="material-symbols-outlined tkbc-card-icon">check_circle</span>
+              <div className="tkbc-card-info">
+                <h4>Đã phê duyệt</h4>
+                <h2>{data?.tongQuan?.tongDuyet || 0}</h2>
+              </div>
+            </div>
+            <div className="tkbc-card danger">
+              <span className="material-symbols-outlined tkbc-card-icon">cancel</span>
+              <div className="tkbc-card-info">
+                <h4>Bị từ chối</h4>
+                <h2>{data?.tongQuan?.tongTuChoi || 0}</h2>
+              </div>
+            </div>
+            <div className="tkbc-card" style={{ borderLeft: '4px solid #6b7280' }}>
+              <span className="material-symbols-outlined tkbc-card-icon" style={{ backgroundColor: '#f3f4f6', color: '#374151' }}>block</span>
+              <div className="tkbc-card-info">
+                <h4>Đã hủy</h4>
+                <h2>{data?.tongQuan?.tongHuy || 0}</h2>
+              </div>
+            </div>
+          </div>
+
+          <div className="tkbc-charts">
+            {/* Biểu đồ xu hướng (Line chart) */}
+            <div className="tkbc-chart-wrapper">
+              <h3 className="tkbc-chart-title">Xu hướng theo thời gian (Nhấp mốc để xem chi tiết)</h3>
+              <div style={{ height: 300 }}>
+                {data && data.chartData && data.chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart 
+                      data={data.chartData} 
+                      margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                      onClick={handleChartClick}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline-variant)" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--color-on-surface-variant)' }} axisLine={{ stroke: 'var(--color-outline-variant)' }} />
+                      <YAxis allowDecimals={false} tick={{ fill: 'var(--color-on-surface-variant)' }} axisLine={false} tickLine={false} />
+                      <RechartsTooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--color-outline-variant)' }} />
+                      <Legend wrapperStyle={{ paddingTop: 10 }} />
+                      <Line type="monotone" name="Tạo mới/Đã gửi" dataKey="taoMoi" stroke="var(--color-primary)" strokeWidth={2} activeDot={{ r: 8 }} />
+                      <Line type="monotone" name="Đang thẩm định" dataKey="dangThamDinh" stroke="#f59e0b" strokeWidth={2} />
+                      <Line type="monotone" name="Đã duyệt" dataKey="daDuyet" stroke="var(--color-primary-container)" strokeWidth={2} />
+                      <Line type="monotone" name="Từ chối" dataKey="tuChoi" stroke="var(--color-error)" strokeWidth={2} />
+                      <Line type="monotone" name="Đã hủy" dataKey="daHuy" stroke="#6b7280" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-on-surface-variant)' }}>Không có dữ liệu trong khoảng thời gian này</div>
+                )}
+              </div>
+            </div>
+
+            {/* Biểu đồ so sánh (Bar chart) */}
+            <div className="tkbc-chart-wrapper">
+              <h3 className="tkbc-chart-title">Tương quan trạng thái (Nhấp cột để xem chi tiết)</h3>
+              <div style={{ height: 300 }}>
+                {data && data.chartData && data.chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart 
+                      data={data.chartData} 
+                      margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                      onClick={handleChartClick}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline-variant)" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--color-on-surface-variant)' }} axisLine={{ stroke: 'var(--color-outline-variant)' }} />
+                      <YAxis allowDecimals={false} tick={{ fill: 'var(--color-on-surface-variant)' }} axisLine={false} tickLine={false} />
+                      <RechartsTooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--color-outline-variant)' }} />
+                      <Legend wrapperStyle={{ paddingTop: 10 }} />
+                      <Bar name="Tạo mới/Đã gửi" dataKey="taoMoi" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                      <Bar name="Đang thẩm định" dataKey="dangThamDinh" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                      <Bar name="Đã duyệt" dataKey="daDuyet" fill="var(--color-primary-container)" radius={[4, 4, 0, 0]} />
+                      <Bar name="Từ chối" dataKey="tuChoi" fill="var(--color-error)" radius={[4, 4, 0, 0]} />
+                      <Bar name="Đã hủy" dataKey="daHuy" fill="#6b7280" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-on-surface-variant)' }}>Không có dữ liệu trong khoảng thời gian này</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="tkbc-table-wrapper">
+            <h3 className="tkbc-table-title">Danh sách kế hoạch chi tiết</h3>
+            <div className="tkbc-table-responsive">
+              <table className="tkbc-table">
+                <thead>
+                  <tr>
+                    <th>Mã KH</th>
+                    <th>Tiêu đề</th>
+                    <th>Tuyến đường</th>
+                    <th>Loại CV</th>
+                    <th>Ngày tạo</th>
+                    <th>Ngày Phê Duyệt</th>
+                    <th>Ngày Xử Lý</th>
+                    <th>Trạng thái</th>
+                    <th>Người lập</th>
+                    <th>Người phê duyệt</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data?.rawData?.map((item: any, index: number) => {
+                    const trangThaiLC = item.TrangThai?.toLowerCase() || '';
+                    const isDuyet = trangThaiLC.includes('duyệt');
+                    const isTuChoi = trangThaiLC.includes('từ chối');
+                    const isDaGui = trangThaiLC.includes('gửi') || trangThaiLC.includes('tạo');
+                    const isDaHuy = trangThaiLC.includes('hủy');
+                    const isThamDinh = trangThaiLC.includes('thẩm định');
+
+                    let badgeClass = 'default';
+                    if (isDuyet) badgeClass = 'duyet';
+                    else if (isTuChoi) badgeClass = 'tuchoi';
+                    else if (isDaGui) badgeClass = 'dagui';
+                    else if (isDaHuy) badgeClass = 'dahuy';
+                    else if (isThamDinh) badgeClass = 'dangthamdinh';
+
+                    return (
+                      <tr key={index}>
+                        <td style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-primary)' }}>#{item.MaKeHoach}</td>
+                        <td>{item.TieuDe}</td>
+                        <td>{item.TenTuyenDuong}</td>
+                        <td>{item.TenCongViec}</td>
+                        <td>{item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : ''}</td>
+                        <td>{item.NgayPheDuyet ? new Date(item.NgayPheDuyet).toLocaleDateString('vi-VN') : '-'}</td>
+                        <td>{item.NgayXuLy ? new Date(item.NgayXuLy).toLocaleDateString('vi-VN') : '-'}</td>
+                        <td>
+                          <span className={`tkbc-status-badge ${badgeClass}`}>
+                            {item.TrangThai}
+                          </span>
+                        </td>
+                        <td>{item.NguoiLap}</td>
+                        <td>{item.NguoiPheDuyet || '-'}</td>
+                      </tr>
+                    );
+                  })}
+                  {(!data?.rawData || data.rawData.length === 0) && (
+                    <tr>
+                      <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
+                        Không có dữ liệu
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dialog chọn thời gian và loại ngày */}
+      {showDateDialog && (
+        <div className="tkbc-modal-backdrop" onClick={() => setShowDateDialog(false)}>
+          <div className="tkbc-modal-container tkbc-date-dialog" onClick={e => e.stopPropagation()}>
+            <div className="tkbc-modal-header">
+              <h3 className="tkbc-modal-title">Cấu hình thời gian thống kê</h3>
+              <button className="tkbc-modal-close-btn" onClick={() => setShowDateDialog(false)}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="tkbc-modal-body">
+              <div className="tkbc-filter-group" style={{ marginBottom: '16px' }}>
+                <label>Loại ngày thống kê</label>
+                <select
+                  className="tkbc-select"
+                  value={tempLoaiNgay}
+                  onChange={e => setTempLoaiNgay(e.target.value)}
+                  style={{ width: '100%', marginTop: '8px' }}
+                >
+                  <option value="NgayTao">Ngày tạo kế hoạch</option>
+                  <option value="NgayPheDuyet">Ngày phê duyệt kế hoạch</option>
+                  <option value="NgayXuLy">Ngày xử lý kế hoạch</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                <div className="tkbc-filter-group">
+                  <label>Từ ngày</label>
+                  <input
+                    type="date"
+                    className="tkbc-input"
+                    value={tempTuNgay}
+                    onChange={e => setTempTuNgay(e.target.value)}
+                    style={{ marginTop: '8px' }}
+                  />
+                </div>
+                <div className="tkbc-filter-group">
+                  <label>Đến ngày</label>
+                  <input
+                    type="date"
+                    className="tkbc-input"
+                    value={tempDenNgay}
+                    onChange={e => setTempDenNgay(e.target.value)}
+                    style={{ marginTop: '8px' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button type="button" className="tkbc-btn-secondary" onClick={() => setShowDateDialog(false)}>
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  className="tkbc-btn-filter"
+                  onClick={() => {
+                    if (tempTuNgay && tempDenNgay && new Date(tempTuNgay) > new Date(tempDenNgay)) {
+                      alert("Thời gian lọc không hợp lệ: Ngày bắt đầu không thể sau ngày kết thúc.");
+                      return;
+                    }
+                    setLoaiNgay(tempLoaiNgay);
+                    setTuNgay(tempTuNgay);
+                    setDenNgay(tempDenNgay);
+                    setShowDateDialog(false);
+                    setErrorMsg('');
+                    loadData(tempTuNgay, tempDenNgay, maTuyenDuong, maXaPhuong, tempLoaiNgay, maLoaiCongViec, trangThai);
+                  }}
+                >
+                  Xác nhận
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal chi tiết kế hoạch theo ngày khi nhấp vào mốc biểu đồ */}
+      {showModal && selectedDateForModal && (
+        <div className="tkbc-modal-backdrop" onClick={() => setShowModal(false)}>
+          <div className="tkbc-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="tkbc-modal-header">
+              <h3 className="tkbc-modal-title">
+                Danh sách kế hoạch ngày {selectedDateForModal === 'N/A' ? 'N/A' : new Date(selectedDateForModal).toLocaleDateString('vi-VN')}
+              </h3>
+              <button className="tkbc-modal-close-btn" onClick={() => setShowModal(false)}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="tkbc-modal-body">
+              <div className="tkbc-table-responsive">
+                <table className="tkbc-table">
+                  <thead>
+                    <tr>
+                      <th>Mã KH</th>
+                      <th>Tiêu đề</th>
+                      <th>Tuyến đường</th>
+                      <th>Loại CV</th>
+                      <th>Trạng thái</th>
+                      <th>Người lập</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {getPlansForSelectedDate().map((item: any, index: number) => {
+                      const trangThaiLC = item.TrangThai?.toLowerCase() || '';
+                      const isDuyet = trangThaiLC.includes('duyệt');
+                      const isTuChoi = trangThaiLC.includes('từ chối');
+                      const isDaGui = trangThaiLC.includes('gửi') || trangThaiLC.includes('tạo');
+                      const isDaHuy = trangThaiLC.includes('hủy');
+                      const isThamDinh = trangThaiLC.includes('thẩm định');
+
+                      let badgeClass = 'default';
+                      if (isDuyet) badgeClass = 'duyet';
+                      else if (isTuChoi) badgeClass = 'tuchoi';
+                      else if (isDaGui) badgeClass = 'dagui';
+                      else if (isDaHuy) badgeClass = 'dahuy';
+                      else if (isThamDinh) badgeClass = 'dangthamdinh';
+
+                      return (
+                        <tr key={index}>
+                          <td style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-primary)' }}>#{item.MaKeHoach}</td>
+                          <td>{item.TieuDe}</td>
+                          <td>{item.TenTuyenDuong}</td>
+                          <td>{item.TenCongViec}</td>
+                          <td>
+                            <span className={`tkbc-status-badge ${badgeClass}`}>
+                              {item.TrangThai}
+                            </span>
+                          </td>
+                          <td>{item.NguoiLap}</td>
+                        </tr>
+                      );
+                    })}
+                    {getPlansForSelectedDate().length === 0 && (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
+                          Không có kế hoạch nào trong ngày này
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ThongKeBaoCaoPage;

@@ -22,6 +22,7 @@ export const NAV_ITEMS = {
     label: 'Theo dõi kế hoạch', 
     icon: 'work' 
   },
+
   THONG_KE: { 
     path: PATHS.QUAN_LY.THONG_KE, 
     label: 'Báo cáo thống kê', 

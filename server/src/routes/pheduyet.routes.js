@@ -3,6 +3,8 @@ const router = express.Router();
 const pheDuyetController = require("../controllers/pheduyet.controller");
 const multer = require("multer");
 const path = require("path");
+const { authorize } = require("../middlewares/auth.middleware");
+const { ROLE_CODES } = require("../utils/role.utils");
 
 // Cấu hình lưu trữ file PDF vào thư mục client/public/pdf
 const storage = multer.diskStorage({
@@ -26,16 +28,17 @@ const upload = multer({
   }
 });
 
-router.get("/phe-duyet/ke-hoach", pheDuyetController.getAllKeHoachPheDuyet);
-router.get("/phe-duyet/ke-hoach/search", pheDuyetController.searchKeHoachPheDuyet);
-router.get("/phe-duyet/ke-hoach/:maKeHoach", pheDuyetController.getKeHoachChiTiet);
+router.get("/phe-duyet/ke-hoach", authorize([ROLE_CODES.QUAN_LY]), pheDuyetController.getAllKeHoachPheDuyet);
+router.get("/phe-duyet/ke-hoach/search", authorize([ROLE_CODES.QUAN_LY]), pheDuyetController.searchKeHoachPheDuyet);
+router.get("/phe-duyet/ke-hoach/:maKeHoach", authorize([ROLE_CODES.QUAN_LY]), pheDuyetController.getKeHoachChiTiet);
 router.put(
   "/phe-duyet/ke-hoach/:maKeHoach/trang-thai", 
+  authorize([ROLE_CODES.QUAN_LY]),
   upload.single("filePDFBoSungKeHoach"),
   pheDuyetController.updateTrangThaiPheDuyet
 );
 
 // Gỡ file đơn lẻ ngay lập tức
-router.delete("/phe-duyet/ke-hoach/:maKeHoach/file/:fileKey", pheDuyetController.removeSpecificFile);
+router.delete("/phe-duyet/ke-hoach/:maKeHoach/file/:fileKey", authorize([ROLE_CODES.QUAN_LY]), pheDuyetController.removeSpecificFile);
 
 module.exports = router;

@@ -6,6 +6,7 @@ const locationRoutes = require("./routes/location.routes");
 const danhmucRoutes = require("./routes/danhmuc.routes");
 const authRoutes = require("./routes/auth.routes");
 const pheDuyetRoutes = require("./routes/pheduyet.routes");
+const thongKeRoutes = require("./routes/thongke.routes");
 
 const app = express();
 
@@ -18,4 +19,6 @@ app.use("/api/locations", locationRoutes);
 app.use("/api", danhmucRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api", pheDuyetRoutes);
+app.use("/api", thongKeRoutes);
+
 module.exports = app;
