@@ -6,6 +6,7 @@ import SummaryStatsComponent from '../../components/SummaryStats';
 import Pagination from '../../components/Pagination';
 import { TheoDoiKeHoachService } from '../../services/kehoachService';
 import type { KeHoachCongViec, FilterParams } from '../../types';
+import { getUserFromStorage, isKyThuat } from '../../utils/roleUtils';
 
 const TheoDoiTrangThaiKeHoach: React.FC = () => {
   const navigate = useNavigate();
@@ -50,7 +51,10 @@ const TheoDoiTrangThaiKeHoach: React.FC = () => {
   };
 
   const handlePlanClick = (plan: KeHoachCongViec) => {
-    navigate(`/chinh-sua-ke-hoach/${encodeURIComponent(plan.MaKeHoach)}`);
+    const user = getUserFromStorage();
+    if (isKyThuat(user)) {
+      navigate(`/chinh-sua-ke-hoach/${encodeURIComponent(plan.MaKeHoach)}`);
+    }
   };
 
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
