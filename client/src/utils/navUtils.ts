@@ -14,7 +14,7 @@ export interface NavItem {
 export const NAV_ITEMS = {
   LAP_KE_HOACH: { 
     path: PATHS.KY_THUAT.LAP_KE_HOACH, 
-    label: 'Lập kế hoạch', 
+    label: 'Lập kế hoạch',
     icon: 'edit_document' 
   },
   THEO_DOI_KE_HOACH: { 

@@ -1,12 +1,36 @@
 const jwtUtils = require('../utils/jwt.utils');
 const roleUtils = require('../utils/role.utils');
+const userRepository = require('../repositories/user.repository');
+
+const buildAuthenticatedUser = (user) => ({
+  id: user.MaNguoiDung,
+  username: user.TenDangNhap,
+  role: user.MaVaiTro,
+  roleName: user.TenVaiTro,
+  avatar: user.AnhDaiDien
+});
+
+const findCurrentUser = async (decoded) => {
+  if (!decoded) return null;
+
+  if (decoded.id) {
+    const userById = await userRepository.findByMaNguoiDung(decoded.id);
+    if (userById) return userById;
+  }
+
+  if (decoded.username) {
+    return await userRepository.findByUsername(decoded.username);
+  }
+
+  return null;
+};
 
 /**
  * Middleware xác thực Token và phân quyền
  * @param {Array} allowedRoles - Danh sách mã vai trò được phép truy cập (mặc định trống = chỉ cần login)
  */
 const authorize = (allowedRoles = []) => {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     try {
       // 1. Lấy token từ header Authorization: Bearer <token>
       const authHeader = req.headers.authorization;
@@ -30,8 +54,18 @@ const authorize = (allowedRoles = []) => {
 
       // 3. Kiểm tra quyền hạn (Sử dụng roleUtils)
       // Nếu có yêu cầu vai trò cụ thể thì mới kiểm tra
+      const currentUser = await findCurrentUser(decoded);
+      if (!currentUser) {
+        return res.status(401).json({
+          success: false,
+          message: 'Phiên đăng nhập không còn hợp lệ, vui lòng đăng nhập lại'
+        });
+      }
+
+      const authenticatedUser = buildAuthenticatedUser(currentUser);
+
       if (allowedRoles.length > 0) {
-        const hasPermission = roleUtils.hasAnyRole(decoded, allowedRoles);
+        const hasPermission = roleUtils.hasAnyRole(authenticatedUser, allowedRoles);
         if (!hasPermission) {
           return res.status(403).json({ 
             success: false, 
@@ -41,7 +75,7 @@ const authorize = (allowedRoles = []) => {
       }
 
       // 4. Lưu thông tin user đã decode vào request để các middleware/controller phía sau sử dụng
-      req.user = decoded;
+      req.user = authenticatedUser;
       
       // Hợp lệ -> Đi tiếp
       next();

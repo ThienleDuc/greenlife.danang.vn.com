@@ -29,6 +29,15 @@
   border-color: #10b981;
 }
 
+.plan-card-clickable {
+  cursor: pointer;
+}
+
+.plan-card-clickable:focus-visible {
+  outline: 3px solid rgba(16, 185, 129, 0.32);
+  outline-offset: 4px;
+}
+
 .plan-card-header {
   padding: 1.25rem 1.75rem;
   display: flex;

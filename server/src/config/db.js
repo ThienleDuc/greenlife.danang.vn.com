@@ -3,25 +3,28 @@ const sql = require("mssql");
 const dbConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  server: process.env.DB_SERVER, // localhost hoặc IP
+  server: process.env.DB_SERVER,
   database: process.env.DB_NAME,
   options: {
-    encrypt: false, // true nếu dùng Azure
+    encrypt: false,
     trustServerCertificate: true,
   },
 };
 
-const pool = new sql.ConnectionPool(dbConfig)
+// Create pool once and share it across repositories.
+const poolPromise = new sql.ConnectionPool(dbConfig)
   .connect()
-  .then(pool => {
+  .then((pool) => {
     console.log("Connected to SQL Server");
     return pool;
   })
-  .catch(err => {
+  .catch((err) => {
     console.error("DB Connection Failed:", err);
+    // IMPORTANT: do not swallow the error; let callers fail loudly.
+    throw err;
   });
 
 module.exports = {
   sql,
-  pool,
+  poolPromise,
 };

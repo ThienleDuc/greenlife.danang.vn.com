@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import FilterBar from '../../components/FilterBar';
 import PlanTable from '../../components/PlanTable';
 import SummaryStatsComponent from '../../components/SummaryStats';
@@ -7,6 +8,7 @@ import { TheoDoiKeHoachService } from '../../services/kehoachService';
 import type { KeHoachCongViec, FilterParams } from '../../types';
 
 const TheoDoiTrangThaiKeHoach: React.FC = () => {
+  const navigate = useNavigate();
   const [plans, setPlans] = useState<KeHoachCongViec[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   
@@ -14,29 +16,27 @@ const TheoDoiTrangThaiKeHoach: React.FC = () => {
   const [currentFilters, setCurrentFilters] = useState<FilterParams | null>(null);
   const itemsPerPage = 10;
 
-  const fetchPlans = async (page: number, filters: FilterParams | null) => {
-    const offset = (page - 1) * itemsPerPage;
-    let result;
-    
-    if (filters) {
-      result = await TheoDoiKeHoachService.searchKeHoach(filters, itemsPerPage, offset);
-    } else {
-      result = await TheoDoiKeHoachService.getKeHoachList(itemsPerPage, offset);
-    }
-
-    if (result) {
-      setPlans(result.data || []);
-      setTotalItems(result.total || 0);
-    }
-  };
-
-  useEffect(() => {
-    fetchPlans(1, null);
-  }, []);
-
   // Re-fetch when page or filters change
   useEffect(() => {
-    fetchPlans(currentPage, currentFilters);
+    let isActive = true;
+
+    const fetchPlans = async () => {
+      const offset = (currentPage - 1) * itemsPerPage;
+      const result = currentFilters
+        ? await TheoDoiKeHoachService.searchKeHoach(currentFilters, itemsPerPage, offset)
+        : await TheoDoiKeHoachService.getKeHoachList(itemsPerPage, offset);
+
+      if (isActive && result) {
+        setPlans(result.data || []);
+        setTotalItems(result.total || 0);
+      }
+    };
+
+    fetchPlans();
+
+    return () => {
+      isActive = false;
+    };
   }, [currentPage, currentFilters]);
 
   const handleSearch = (params: FilterParams) => {
@@ -47,6 +47,10 @@ const TheoDoiTrangThaiKeHoach: React.FC = () => {
   const handleReset = () => {
     setCurrentFilters(null);
     setCurrentPage(1);
+  };
+
+  const handlePlanClick = (plan: KeHoachCongViec) => {
+    navigate(`/chinh-sua-ke-hoach/${encodeURIComponent(plan.MaKeHoach)}`);
   };
 
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
@@ -76,6 +80,7 @@ const TheoDoiTrangThaiKeHoach: React.FC = () => {
         <main className="page-main-content">
           <PlanTable
             plans={plans}
+            onPlanClick={handlePlanClick}
           />
 
           <Pagination

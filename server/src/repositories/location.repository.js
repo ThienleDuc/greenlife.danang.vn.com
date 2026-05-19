@@ -1,10 +1,10 @@
-const { sql, pool } = require("../config/db");
+const { sql, poolPromise } = require("../config/db");
 
 /**
  * Lấy tất cả xã phường
  */
 const getAllXaPhuong = async () => {
-  const connection = await pool;
+  const connection = await poolPromise;
   const result = await connection.request().query(`
     SELECT MaXaPhuong, TenXaPhuong, MaHanhChinh, LoaiDanhMuc
     FROM dbo.XaPhuong
@@ -18,7 +18,7 @@ const getAllXaPhuong = async () => {
  * @param {string} maXaPhuong 
  */
 const getTuyenDuongByXaPhuong = async (maXaPhuong) => {
-  const connection = await pool;
+  const connection = await poolPromise;
   const result = await connection.request()
     .input("maXaPhuong", sql.VarChar(20), maXaPhuong)
     .query(`

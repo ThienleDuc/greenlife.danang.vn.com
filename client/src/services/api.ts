@@ -7,8 +7,11 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
+    if (!config) return config;
+
     const token = localStorage.getItem("token");
     if (token) {
+      config.headers = config.headers ?? {};
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -20,9 +23,17 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      // Tùy chọn: Tự động logout nếu token hết hạn
-      // localStorage.removeItem("token");
-      // window.location.href = "/login";
+      const requestUrl = err.config?.url || "";
+      const isAuthRequest = requestUrl.includes("/auth/login") || requestUrl.includes("/auth/register");
+
+      if (!isAuthRequest) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+      }
     }
     console.error("API Error:", err);
     return Promise.reject(err);

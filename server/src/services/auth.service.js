@@ -3,15 +3,35 @@ const userRepository = require('../repositories/user.repository');
 const jwtUtils = require('../utils/jwt.utils');
 const crypto = require('crypto');
 
+const INVALID_LOGIN_MESSAGE = 'Tên đăng nhập/Email hoặc mật khẩu không chính xác';
+
+const isBcryptHash = (hash) => /^\$2[aby]\$/.test(hash || '');
+const isMd5Hash = (hash) => /^[a-f0-9]{32}$/i.test(hash || '');
+
+const verifyPassword = async (password, storedHash) => {
+  if (!storedHash) return false;
+
+  if (isBcryptHash(storedHash)) {
+    return await bcrypt.compare(password, storedHash);
+  }
+
+  if (isMd5Hash(storedHash)) {
+    const passwordMd5 = crypto.createHash('md5').update(password).digest('hex');
+    return passwordMd5.toLowerCase() === storedHash.toLowerCase();
+  }
+
+  return false;
+};
+
 const login = async (identifier, matKhau) => {
   const user = await userRepository.findByUsernameOrEmail(identifier);
   if (!user) {
-    throw new Error('Tên đăng nhập/Email hoặc mật khẩu không chính xác');
+    throw new Error(INVALID_LOGIN_MESSAGE);
   }
 
-  const isMatch = await bcrypt.compare(matKhau, user.MatKhauHash);
+  const isMatch = await verifyPassword(matKhau, user.MatKhauHash);
   if (!isMatch) {
-    throw new Error('Tên đăng nhập/Email hoặc mật khẩu không chính xác');
+    throw new Error(INVALID_LOGIN_MESSAGE);
   }
 
   const token = jwtUtils.generateToken({ 

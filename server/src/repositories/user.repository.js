@@ -1,13 +1,13 @@
-const { sql, pool } = require("../config/db");
+const { sql, poolPromise } = require("../config/db");
 
 const getAllUsers = async () => {
-  const connection = await pool;
+  const connection = await poolPromise;
   const result = await connection.request().query("SELECT * FROM dbo.NguoiDung");
   return result.recordset;
 };
 
 const findByUsername = async (username) => {
-  const connection = await pool;
+  const connection = await poolPromise;
   const result = await connection.request()
     .input("username", sql.VarChar, username)
     .query(`
@@ -19,8 +19,21 @@ const findByUsername = async (username) => {
   return result.recordset[0];
 };
 
+const findByMaNguoiDung = async (maNguoiDung) => {
+  const connection = await poolPromise;
+  const result = await connection.request()
+    .input("maNguoiDung", sql.VarChar(20), maNguoiDung)
+    .query(`
+      SELECT u.*, v.TenVaiTro 
+      FROM dbo.NguoiDung u
+      LEFT JOIN dbo.VaiTro v ON u.MaVaiTro = v.MaVaiTro
+      WHERE u.MaNguoiDung = @maNguoiDung
+    `);
+  return result.recordset[0];
+};
+
 const findByUsernameOrEmail = async (identifier) => {
-  const connection = await pool;
+  const connection = await poolPromise;
   const result = await connection.request()
     .input("identifier", sql.VarChar, identifier)
     .query(`
@@ -34,7 +47,7 @@ const findByUsernameOrEmail = async (identifier) => {
 
 const createUser = async (userData) => {
   const { maNguoiDung, tenDangNhap, matKhauHash, hoTen, email, sdt, maVaiTro, anhDaiDien } = userData;
-  const connection = await pool;
+  const connection = await poolPromise;
   const result = await connection.request()
     .input("maNguoiDung", sql.VarChar, maNguoiDung)
     .input("tenDangNhap", sql.VarChar, tenDangNhap)
@@ -55,6 +68,7 @@ const createUser = async (userData) => {
 module.exports = {
   getAllUsers,
   findByUsername,
+  findByMaNguoiDung,
   findByUsernameOrEmail,
   createUser
 };

@@ -180,7 +180,7 @@ INSERT INTO
     )
 VALUES
     (
-        'aB3kL9pQx2mV8nZ1cY5t',
+        'm3Lp8Qz1xK5vB9cJ2hF4',
         'cbquanly',
         'e10adc3949ba59abbe56e057f20f883e',
         N'Nguyễn Văn Quản Lý',
@@ -193,7 +193,7 @@ VALUES
         'CBQL'
     ),
     (
-        'm3Lp8Qz1xK5vB9cJ2hF4',
+        'aB3kL9pQx2mV8nZ1cY5t',
         'nvkythuat',
         'e10adc3949ba59abbe56e057f20f883e',
         N'Trần Thị Kỹ Thuật',
@@ -224,9 +224,14 @@ VALUES
         N'Công tác chăm sóc, tưới nước, bón phân, cắt tỉa'
     ),
     (
-        'DDCH',
-        N'Di dời / Chặt hạ',
-        N'Công tác di dời cây hoặc chặt hạ cây nguy hiểm, chết'
+        'DIDOI',
+        N'Di dời',
+        N'Công tác di dời cây'
+    ),
+    (
+        'CHATHA',
+        N'Chặt hạ',
+        N'Công tác chặt hạ cây nguy hiểm, chết'
     ),
     (
         'XLSC',
@@ -299,7 +304,7 @@ VALUES
     ),
     (
         'KH03',
-        'DDCH',
+        'DIDOI',
         N'Di dời cây xanh mở rộng nút giao Hùng Vương',
         N'Di dời 5 cây Lim xẹt phục vụ thi công nút giao',
         'kh03_kehoach.pdf',
@@ -394,7 +399,7 @@ VALUES
     ),
     (
         'KH08',
-        'DDCH',
+        'CHATHA',
         N'Chặt hạ cây chết khô đường Hùng Vương',
         N'Xử lý 2 cây Bàng đã chết khô có nguy cơ ngã đổ',
         'kh08_kehoach.pdf',
@@ -508,7 +513,7 @@ VALUES
     ),
     (
         'KH14',
-        'DDCH',
+        'CHATHA',
         N'Cắt cành cây che khuất biển báo giao thông Lê Duẩn',
         N'Xử lý cành cây che khuất tầm nhìn biển báo ngã tư',
         'kh14_kehoach.pdf',

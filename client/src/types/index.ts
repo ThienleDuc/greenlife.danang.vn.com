@@ -78,6 +78,7 @@ export interface KeHoachCongViec {
   TenNguoiXuLy?: string;
   TenNguoiPheDuyet?: string;
   TenTuyenDuong?: string;
+  MaXaPhuong?: string;
   TenXaPhuong?: string;
 }
 

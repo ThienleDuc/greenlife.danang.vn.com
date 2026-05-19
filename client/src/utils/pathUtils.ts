@@ -17,6 +17,7 @@ export const PATHS = {
   KY_THUAT: {
     DASHBOARD: '/theo-doi-ke-hoach',
     LAP_KE_HOACH: '/lap-ke-hoach',
+    CHINH_SUA_KE_HOACH: '/chinh-sua-ke-hoach/:maKeHoach',
     DANH_MUC: '/danh-muc-cay-trong',
   },
   // Nhóm quản lý (Cán bộ quản lý)
@@ -49,6 +50,7 @@ export const ROLE_ALLOWED_PATHS: Record<RoleCode, string[]> = {
   [ROLE_CODES.KY_THUAT]: [
     PATHS.KY_THUAT.DASHBOARD,
     PATHS.KY_THUAT.LAP_KE_HOACH,
+    PATHS.KY_THUAT.CHINH_SUA_KE_HOACH,
     PATHS.KY_THUAT.DANH_MUC,
   ],
   [ROLE_CODES.QUAN_LY]: [
@@ -74,5 +76,8 @@ export const isPathAllowed = (role: RoleCode, path: string): boolean => {
   if (!allowedPaths) return false;
   
   // Kiểm tra chính xác hoặc bắt đầu bằng (cho các sub-routes)
-  return allowedPaths.some(p => path === p || path.startsWith(`${p}/`));
+  return allowedPaths.some((p) => {
+    const normalizedPath = p.includes('/:') ? p.split('/:')[0] : p;
+    return path === normalizedPath || path === p || path.startsWith(`${normalizedPath}/`);
+  });
 };

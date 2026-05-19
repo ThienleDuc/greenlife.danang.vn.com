@@ -21,6 +21,9 @@ class KeHoachCongViec {
     this.TenNguoiXuLy = data.TenNguoiXuLy; // Joined
     this.NgayXuLy = data.NgayXuLy;
     this.MaTuyenDuong = data.MaTuyenDuong;
+    this.TenTuyenDuong = data.TenTuyenDuong;
+    this.MaXaPhuong = data.MaXaPhuong;
+    this.TenXaPhuong = data.TenXaPhuong;
   }
 }
 

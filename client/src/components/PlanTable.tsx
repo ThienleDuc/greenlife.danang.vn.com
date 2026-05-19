@@ -4,6 +4,7 @@ import { PLAN_TYPES, PLAN_STATUS } from '../constants/constants';
 
 interface PlanTableProps {
   plans: KeHoachCongViec[];
+  onPlanClick?: (plan: KeHoachCongViec) => void;
 }
 
 const formatDate = (dateString?: string) => {
@@ -18,8 +19,10 @@ const formatDate = (dateString?: string) => {
   });
 };
 
-const PlanTable: React.FC<PlanTableProps> = ({ plans }) => {
-  const openPdf = (fileName?: string) => {
+const PlanTable: React.FC<PlanTableProps> = ({ plans, onPlanClick }) => {
+  const openPdf = (event: React.MouseEvent<HTMLButtonElement>, fileName?: string) => {
+    event.stopPropagation();
+
     if (fileName) {
       // Đảm bảo đường dẫn chính xác từ gốc của trang web
       const baseUrl = window.location.origin;
@@ -27,6 +30,15 @@ const PlanTable: React.FC<PlanTableProps> = ({ plans }) => {
       
       console.log('Opening PDF:', filePath);
       window.open(filePath, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleCardKeyDown = (event: React.KeyboardEvent<HTMLElement>, plan: KeHoachCongViec) => {
+    if (!onPlanClick) return;
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onPlanClick(plan);
     }
   };
 
@@ -41,7 +53,15 @@ const PlanTable: React.FC<PlanTableProps> = ({ plans }) => {
           const approverName = plan.TenNguoiPheDuyet || plan.NguoiPheDuyet || '---';
 
           return (
-            <article key={plan.MaKeHoach} className="plan-card">
+            <article
+              key={plan.MaKeHoach}
+              className={`plan-card ${onPlanClick ? 'plan-card-clickable' : ''}`}
+              role={onPlanClick ? 'button' : undefined}
+              tabIndex={onPlanClick ? 0 : undefined}
+              onClick={() => onPlanClick?.(plan)}
+              onKeyDown={(event) => handleCardKeyDown(event, plan)}
+              title={onPlanClick ? 'Chỉnh sửa/Hủy kế hoạch' : undefined}
+            >
               <div className="plan-card-header">
                 <div className="header-left">
                   <span className={`plan-status-badge plan-status-${plan.TrangThai}`}>
@@ -120,19 +140,19 @@ const PlanTable: React.FC<PlanTableProps> = ({ plans }) => {
                 </div>
                 <div className="files-list">
                   {plan.FilePDFKeHoach && (
-                    <button className="file-pill" onClick={() => openPdf(plan.FilePDFKeHoach)}>
+                    <button className="file-pill" type="button" onClick={(event) => openPdf(event, plan.FilePDFKeHoach)}>
                       <span className="material-symbols-outlined">picture_as_pdf</span>
                       Kế hoạch
                     </button>
                   )}
                   {plan.FilePDFDeNghiCapPhep && (
-                    <button className="file-pill" onClick={() => openPdf(plan.FilePDFDeNghiCapPhep)}>
+                    <button className="file-pill" type="button" onClick={(event) => openPdf(event, plan.FilePDFDeNghiCapPhep)}>
                       <span className="material-symbols-outlined">history_edu</span>
                       Cấp phép
                     </button>
                   )}
                   {plan.FilePDFBoSungKeHoach && (
-                    <button className="file-pill" onClick={() => openPdf(plan.FilePDFBoSungKeHoach)}>
+                    <button className="file-pill" type="button" onClick={(event) => openPdf(event, plan.FilePDFBoSungKeHoach)}>
                       <span className="material-symbols-outlined">note_add</span>
                       Bổ sung
                     </button>
