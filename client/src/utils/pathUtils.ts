@@ -12,6 +12,7 @@ export const PATHS = {
     SETTINGS: '/settings',
     UNAUTHORIZED: '/unauthorized',
     FORBIDDEN: '/403',
+    NOT_FOUND: '/*',
   },
   // Nhóm kỹ thuật (Nhân viên kỹ thuật)
   KY_THUAT: {
@@ -22,7 +23,8 @@ export const PATHS = {
   },
   // Nhóm quản lý (Cán bộ quản lý)
   QUAN_LY: {
-    DASHBOARD: '/phe-duyet-ke-hoach',
+    DASHBOARD: '/theo-doi-ke-hoach',
+    CHI_TIET_KE_HOACH: '/phe-duyet-ke-hoach/:id',
     THONG_KE: '/thong-ke-bao-cao',
   },
   // Nhóm công nhân (Công nhân cây xanh)
@@ -34,6 +36,11 @@ export const PATHS = {
   ADMIN: {
     DASHBOARD: '/admin/dashboard',
     USER_MANAGEMENT: '/admin/users',
+  },
+  // Nhóm người dân (Người dân)
+  NGUOI_DAN: {
+    TRANG_CHU: '/trang-chu',
+    PHAN_ANH_SU_CO: '/phan-anh-su-co',
   }
 } as const;
 
@@ -46,6 +53,7 @@ export const ROLE_ALLOWED_PATHS: Record<RoleCode, string[]> = {
     PATHS.ADMIN.USER_MANAGEMENT,
     PATHS.KY_THUAT.DASHBOARD,
     PATHS.QUAN_LY.DASHBOARD,
+    PATHS.QUAN_LY.CHI_TIET_KE_HOACH,
   ],
   [ROLE_CODES.KY_THUAT]: [
     PATHS.KY_THUAT.DASHBOARD,
@@ -55,6 +63,7 @@ export const ROLE_ALLOWED_PATHS: Record<RoleCode, string[]> = {
   ],
   [ROLE_CODES.QUAN_LY]: [
     PATHS.QUAN_LY.DASHBOARD,
+    PATHS.QUAN_LY.CHI_TIET_KE_HOACH,
     PATHS.QUAN_LY.THONG_KE,
     PATHS.KY_THUAT.DASHBOARD, // Quản lý thường xem được dashboard kỹ thuật
   ],
@@ -63,8 +72,8 @@ export const ROLE_ALLOWED_PATHS: Record<RoleCode, string[]> = {
     PATHS.CONG_NHAN.BAO_CAO_SU_CO,
   ],
   [ROLE_CODES.NGUOI_DAN]: [
-    '/trang-chu',
-    '/phan-anh-su-co',
+    PATHS.NGUOI_DAN.TRANG_CHU,
+    PATHS.NGUOI_DAN.PHAN_ANH_SU_CO,
   ],
 };
 

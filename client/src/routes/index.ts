@@ -1,12 +1,14 @@
 import HomeRoutes from "./features/Home/HomeRoutes";
 import KeHoachRoutes from "./features/TheoDoiTrangThaiKeHoach/KeHoachRoutes";
 import AuthRoutes from "./features/Auth/AuthRoutes";
+import PheDuyetRoutes from "./features/PheDuyetKeHoach/PheDuyetRoutes";
 
 // Tổng hợp tất cả routes
 const allRoutes = [
   ...HomeRoutes,
   ...KeHoachRoutes,
   ...AuthRoutes,
+  ...PheDuyetRoutes,
 ];
 
 // Public routes (không cần đăng nhập)

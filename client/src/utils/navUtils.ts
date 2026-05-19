@@ -22,11 +22,6 @@ export const NAV_ITEMS = {
     label: 'Theo dõi kế hoạch', 
     icon: 'work' 
   },
-  PHE_DUYET_KE_HOACH: { 
-    path: PATHS.QUAN_LY.DASHBOARD, 
-    label: 'Phê duyệt kế hoạch', 
-    icon: 'checklist' 
-  },
   THONG_KE: { 
     path: PATHS.QUAN_LY.THONG_KE, 
     label: 'Báo cáo thống kê', 
@@ -52,16 +47,14 @@ export const ROLE_NAV_ITEMS: Record<RoleCode, NavItem[]> = {
     NAV_ITEMS.DASHBOARD_ADMIN,
     NAV_ITEMS.USER_MANAGEMENT,
     NAV_ITEMS.THEO_DOI_KE_HOACH,
-    NAV_ITEMS.PHE_DUYET_KE_HOACH,
   ],
   [ROLE_CODES.KY_THUAT]: [
     NAV_ITEMS.THEO_DOI_KE_HOACH,
     NAV_ITEMS.LAP_KE_HOACH,
   ],
   [ROLE_CODES.QUAN_LY]: [
-    NAV_ITEMS.PHE_DUYET_KE_HOACH,
-    NAV_ITEMS.THONG_KE,
     NAV_ITEMS.THEO_DOI_KE_HOACH,
+    NAV_ITEMS.THONG_KE,
   ],
   [ROLE_CODES.CONG_NHAN]: [
     { path: PATHS.CONG_NHAN.DASHBOARD, label: 'Công việc của tôi', icon: 'assignment_ind' },

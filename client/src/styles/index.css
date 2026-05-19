@@ -14,5 +14,7 @@
 @import "./layouts/MainLayout.css";
 @import "./pages/TheoDoiTrangThaiKeHoach.css";
 @import "./pages/GuiKeHoachCongViec.css";
+@import "./pages/PheDuyetKeHoach.css";
 
 @import "tailwindcss";
+

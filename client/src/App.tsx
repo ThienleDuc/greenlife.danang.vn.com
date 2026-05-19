@@ -1,9 +1,10 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import TestUserRoutes from "./routes/TestUserRoutes";
 import MainLayout from "./layouts/MainLayout";
 import { publicRoutes, privateRoutes } from "./routes";
 import PublicRoute from "./routes/PublicRoute";
 import PrivateRoute from "./routes/PrivateRoute";
+import { PATHS } from "./utils/pathUtils";
 
 const App = () => {
   return (
@@ -23,6 +24,9 @@ const App = () => {
             } 
           />
         ))}
+
+        {/* Redirect "/" về trang chính */}
+        <Route path="/" element={<Navigate to="/theo-doi-ke-hoach" replace />} />
 
         {/* TestUser routes */}
         {TestUserRoutes.map(({ path, element }) => (
@@ -45,7 +49,7 @@ const App = () => {
         </Route>
 
         {/* 404 */}
-        <Route path="*" element={<div>404 Not Found</div>} />
+        <Route path={PATHS.AUTH.NOT_FOUND} element={<div>404 Not Found</div>} />
       </Routes>
     </Router>
   );

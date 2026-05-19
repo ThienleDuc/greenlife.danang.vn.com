@@ -6,7 +6,8 @@ import SummaryStatsComponent from '../../components/SummaryStats';
 import Pagination from '../../components/Pagination';
 import { TheoDoiKeHoachService } from '../../services/kehoachService';
 import type { KeHoachCongViec, FilterParams } from '../../types';
-import { getUserFromStorage, isKyThuat } from '../../utils/roleUtils';
+import { getUserFromStorage, isKyThuat, isQuanLy } from '../../utils/roleUtils';
+import { PATHS } from '../../utils/pathUtils';
 
 const TheoDoiTrangThaiKeHoach: React.FC = () => {
   const navigate = useNavigate();
@@ -53,7 +54,11 @@ const TheoDoiTrangThaiKeHoach: React.FC = () => {
   const handlePlanClick = (plan: KeHoachCongViec) => {
     const user = getUserFromStorage();
     if (isKyThuat(user)) {
-      navigate(`/chinh-sua-ke-hoach/${encodeURIComponent(plan.MaKeHoach)}`);
+      const targetPath = PATHS.KY_THUAT.CHINH_SUA_KE_HOACH.replace(':maKeHoach', encodeURIComponent(plan.MaKeHoach));
+      navigate(targetPath);
+    } else if (isQuanLy(user)) {
+      const targetPath = PATHS.QUAN_LY.CHI_TIET_KE_HOACH.replace(':id', encodeURIComponent(plan.MaKeHoach));
+      navigate(targetPath);
     }
   };
 
