@@ -223,20 +223,24 @@ const PheDuyetKeHoachDetail: React.FC = () => {
       <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 flex flex-col">
 
         {/* Header Block */}
-        <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-start bg-slate-50/80 rounded-t-2xl" style={{ padding: '24px 36px' }}>
+        <div 
+          className={`px-6 py-5 border-b border-slate-100 flex justify-between items-start rounded-t-2xl transition-all duration-300 ${
+            keHoach.TrangThai === 'Đã phê duyệt' ? 'bg-[#d1fae5]/30 border-b-emerald-100/60' 
+            : keHoach.TrangThai === 'Bị từ chối' ? 'bg-[#ffe4e6]/30 border-b-rose-100/60' 
+            : 'bg-slate-50/80'
+          }`} 
+          style={{ padding: '24px 36px' }}
+        >
           <div className="flex-1 pr-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight">
-                Chi tiết kế hoạch
+            <div className="flex flex-wrap items-center gap-3.5">
+              <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-[28px] text-slate-800">article</span>
+                {keHoach.TieuDe}
               </h2>
-              <span className={`inline-flex items-center px-3.5 py-1.5 rounded-full text-[12px] font-bold border ${keHoach.TrangThai === 'Bị từ chối' ? 'bg-rose-50 text-rose-600 border-rose-200' : keHoach.TrangThai === 'Đã phê duyệt' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : keHoach.TrangThai === 'Đang thẩm định' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
+              <span className={`inline-flex items-center px-5 py-2 rounded-full text-[12px] font-bold border ${keHoach.TrangThai === 'Bị từ chối' ? 'bg-rose-50 text-rose-600 border-rose-200' : keHoach.TrangThai === 'Đã phê duyệt' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : keHoach.TrangThai === 'Đang thẩm định' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
                 {statusInfo.label}
               </span>
             </div>
-            <p className="text-slate-500 font-medium mt-1.5 text-sm flex items-center gap-2">
-              <span className="material-symbols-outlined text-[16px]">article</span>
-              {keHoach.TieuDe}
-            </p>
           </div>
           <div className="flex items-center shrink-0">
             <span className="font-mono font-black text-slate-600 text-[20px] tracking-widest">
@@ -264,7 +268,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                   <div className="flex flex-col gap-1.5">
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Người lập</span>
                     <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">person</span>
+                      <span className="material-symbols-outlined text-[18px] text-sky-500">person</span>
                       {keHoach.TenNguoiLap || keHoach.NguoiLap}
                     </div>
                   </div>
@@ -272,7 +276,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                   <div className="flex flex-col gap-1.5">
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày tạo</span>
                     <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">calendar_today</span>
+                      <span className="material-symbols-outlined text-[18px] text-amber-500">calendar_today</span>
                       {formatDate(keHoach.NgayTao)}
                     </div>
                   </div>
@@ -280,7 +284,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                   <div className="flex flex-col gap-1.5">
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tuyến đường</span>
                     <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">route</span>
+                      <span className="material-symbols-outlined text-[18px] text-emerald-500">route</span>
                       {keHoach.TenTuyenDuong}
                     </div>
                   </div>
@@ -291,7 +295,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                   <div className="flex flex-col gap-1.5">
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Người xử lý</span>
                     <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">manage_accounts</span>
+                      <span className="material-symbols-outlined text-[18px] text-indigo-500">manage_accounts</span>
                       {keHoach.TenNguoiXuLy || keHoach.NguoiXuLy || '---'}
                     </div>
                   </div>
@@ -299,7 +303,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                   <div className="flex flex-col gap-1.5">
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày cập nhật</span>
                     <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">update</span>
+                      <span className="material-symbols-outlined text-[18px] text-teal-500">update</span>
                       {formatDate(keHoach.NgayCapNhat)}
                     </div>
                   </div>
@@ -307,7 +311,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                   <div className="flex flex-col gap-1.5">
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Xã phường</span>
                     <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-slate-400">location_city</span>
+                      <span className="material-symbols-outlined text-[18px] text-rose-500">location_city</span>
                       {keHoach.TenXaPhuong}
                     </div>
                   </div>
@@ -451,10 +455,18 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                 {isAlreadyProcessed ? (
                   <div className="flex flex-col gap-5 bg-slate-50 rounded-xl border border-slate-100" style={{ padding: '28px 20px' }}>
                     <div className="flex items-start gap-4">
-                      <span className="material-symbols-outlined text-[32px] text-emerald-600 mt-0.5">check_circle</span>
+                      <span className={`material-symbols-outlined text-[32px] mt-0.5 ${
+                        keHoach.TrangThai === 'Đã phê duyệt' ? 'text-emerald-600' : 'text-rose-600'
+                      }`}>
+                        {keHoach.TrangThai === 'Đã phê duyệt' ? 'check_circle' : 'cancel'}
+                      </span>
                       <div>
                         <h4 className="font-bold text-slate-800 text-sm">Kế hoạch đã xử lý</h4>
-                        <p className="text-xs text-slate-500 mt-1.5">Trạng thái hiện tại: <span className="font-bold">{statusInfo.label}</span></p>
+                        <p className="text-xs text-slate-500 mt-1.5">
+                          Trạng thái hiện tại: <span className={`font-bold ${
+                            keHoach.TrangThai === 'Đã phê duyệt' ? 'text-emerald-600' : 'text-rose-600'
+                          }`}>{statusInfo.label}</span>
+                        </p>
                       </div>
                     </div>
                     <button

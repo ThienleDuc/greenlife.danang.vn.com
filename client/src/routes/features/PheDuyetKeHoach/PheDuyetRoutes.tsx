@@ -4,7 +4,7 @@ import PheDuyetKeHoachDetail from "../../../pages/PheDuyetKeHoachDetail";
 const PheDuyetRoutes = [
   {
     path: "/phe-duyet-ke-hoach",
-    element: <Navigate to="/phe-duyet-ke-hoach/KH02" replace />,
+    element: <Navigate to="/phe-duyet-ke-hoach/KH01" replace />,
     isPublic: false,
   },
   {
