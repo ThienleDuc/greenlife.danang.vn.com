@@ -144,7 +144,7 @@ const exportExcel = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong,
   
   // Add Table Headers
   const headerRow = worksheet.getRow(8);
-  headerRow.values = ['Mã Kế Hoạch', 'Tiêu Đề', 'Tuyến Đường', 'Loại Công Việc', 'Ngày Tạo', 'Ngày Phê Duyệt', 'Ngày Xử Lý', 'Trạng Thái', 'Người Lập', 'Người Phê Duyệt'];
+  headerRow.values = ['Mã Kế Hoạch', 'Tiêu Đề', 'Tuyến Đường', 'Loại Công Việc', 'Ngày Tạo', 'Ngày Xử Lý', 'Trạng Thái', 'Người Lập', 'Người Xử Lý'];
   headerRow.font = { bold: true, name: 'Times New Roman' };
   headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
   
@@ -154,11 +154,10 @@ const exportExcel = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong,
     { key: 'tuyenDuong', width: 25 },
     { key: 'loaiCongViec', width: 20 },
     { key: 'ngayTao', width: 15 },
-    { key: 'ngayPheDuyet', width: 15 },
     { key: 'ngayXuLy', width: 15 },
     { key: 'trangThai', width: 15 },
     { key: 'nguoiLap', width: 20 },
-    { key: 'nguoiPheDuyet', width: 20 }
+    { key: 'nguoiXuLyName', width: 20 }
   ];
   
   // Add Data
@@ -171,11 +170,10 @@ const exportExcel = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong,
       item.TenTuyenDuong || '',
       item.TenCongViec || '',
       item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : '',
-      item.NgayPheDuyet ? new Date(item.NgayPheDuyet).toLocaleDateString('vi-VN') : '',
       item.NgayXuLy ? new Date(item.NgayXuLy).toLocaleDateString('vi-VN') : '',
       item.TrangThai,
       item.NguoiLap,
-      item.NguoiPheDuyet || ''
+      item.NguoiXuLy || ''
     ];
     row.font = { name: 'Times New Roman', size: 11 };
     startRow++;
@@ -294,10 +292,9 @@ const exportPDF = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong, l
           { label: "Tuyến Đường", property: 'tuyenDuong', width: 100 },
           { label: "Loại CV", property: 'loaiCv', width: 70 },
           { label: "Ngày tạo", property: 'ngay', width: 65 },
-          { label: "Ngày Duyệt", property: 'ngayDuyet', width: 65 },
           { label: "Trạng thái", property: 'trangThai', width: 70 },
           { label: "Người lập", property: 'nguoiLap', width: 75 },
-          { label: "Người duyệt", property: 'nguoiPheDuyet', width: 75 }
+          { label: "Người xử lý", property: 'nguoiXuLyName', width: 75 }
         ],
         rows: rawData.map(item => [
           item.MaKeHoach || '',
@@ -305,10 +302,9 @@ const exportPDF = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong, l
           item.TenTuyenDuong || '',
           item.TenCongViec || '',
           item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : '',
-          item.NgayPheDuyet ? new Date(item.NgayPheDuyet).toLocaleDateString('vi-VN') : '',
           item.TrangThai || '',
           item.NguoiLap || '',
-          item.NguoiPheDuyet || ''
+          item.NguoiXuLy || ''
         ]),
       };
       

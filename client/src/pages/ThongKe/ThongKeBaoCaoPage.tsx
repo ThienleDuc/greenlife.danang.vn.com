@@ -368,15 +368,16 @@ const ThongKeBaoCaoPage: React.FC = () => {
               <table className="tkbc-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '7%' }}>Mã KH</th>
+                    <th style={{ width: '6%' }}>Mã KH</th>
                     <th style={{ width: '14%' }}>Tiêu đề</th>
-                    <th style={{ width: '11%' }}>Xã phường</th>
-                    <th style={{ width: '15%' }}>Tuyến đường</th>
-                    <th style={{ width: '11%' }}>Loại CV</th>
-                    <th style={{ width: '10%' }}>Ngày tạo</th>
-                    <th style={{ width: '12%' }}>Ngày Phê Duyệt</th>
-                    <th style={{ width: '10%' }}>Ngày Xử Lý</th>
+                    <th style={{ width: '10%' }}>Xã phường</th>
+                    <th style={{ width: '14%' }}>Tuyến đường</th>
+                    <th style={{ width: '10%' }}>Loại CV</th>
+                    <th style={{ width: '8%' }}>Ngày tạo</th>
+                    <th style={{ width: '8%' }}>Ngày Xử Lý</th>
                     <th style={{ width: '10%' }}>Trạng thái</th>
+                    <th style={{ width: '10%' }}>Người lập</th>
+                    <th style={{ width: '10%' }}>Người xử lý</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -403,19 +404,20 @@ const ThongKeBaoCaoPage: React.FC = () => {
                         <td title={item.TenTuyenDuong || ''}>{item.TenTuyenDuong}</td>
                         <td title={item.TenCongViec || ''}>{item.TenCongViec}</td>
                         <td title={item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : ''}>{item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : ''}</td>
-                        <td title={item.NgayPheDuyet ? new Date(item.NgayPheDuyet).toLocaleDateString('vi-VN') : '-'}>{item.NgayPheDuyet ? new Date(item.NgayPheDuyet).toLocaleDateString('vi-VN') : '-'}</td>
                         <td title={item.NgayXuLy ? new Date(item.NgayXuLy).toLocaleDateString('vi-VN') : '-'}>{item.NgayXuLy ? new Date(item.NgayXuLy).toLocaleDateString('vi-VN') : '-'}</td>
                         <td title={item.TrangThai || ''}>
                           <span className={`tkbc-status-badge ${badgeClass}`}>
                             {item.TrangThai}
                           </span>
                         </td>
+                        <td title={item.NguoiLap || ''}>{item.NguoiLap || '-'}</td>
+                        <td title={item.NguoiXuLy || ''}>{item.NguoiXuLy || '-'}</td>
                       </tr>
                     );
                   })}
                   {paginatedData.length === 0 && (
                     <tr>
-                      <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
+                      <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
                         Không có dữ liệu
                       </td>
                     </tr>
@@ -535,6 +537,8 @@ const ThongKeBaoCaoPage: React.FC = () => {
                       <th>Tuyến đường</th>
                       <th>Loại CV</th>
                       <th>Trạng thái</th>
+                      <th>Người lập</th>
+                      <th>Người xử lý</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -565,12 +569,14 @@ const ThongKeBaoCaoPage: React.FC = () => {
                               {item.TrangThai}
                             </span>
                           </td>
+                          <td>{item.NguoiLap || '-'}</td>
+                          <td>{item.NguoiXuLy || '-'}</td>
                         </tr>
                       );
                     })}
                     {getPlansForSelectedDate().length === 0 && (
                       <tr>
-                        <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
+                        <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
                           Không có kế hoạch nào trong ngày này
                         </td>
                       </tr>

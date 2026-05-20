@@ -15,11 +15,15 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
       td.TenTuyenDuong,
       cv.TenCongViec,
       xp.MaXaPhuong,
-      xp.TenXaPhuong
+      xp.TenXaPhuong,
+      nl.HoTen AS NguoiLap,
+      xl.HoTen AS NguoiXuLy
     FROM dbo.KeHoachCongViec kh
     LEFT JOIN dbo.TuyenDuong td ON kh.MaTuyenDuong = td.MaTuyenDuong
     LEFT JOIN dbo.XaPhuong xp ON td.MaXaPhuong = xp.MaXaPhuong
     LEFT JOIN dbo.DanhMucCongViec cv ON kh.MaLoaiCongViec = cv.MaLoaiCongViec
+    LEFT JOIN dbo.NguoiDung nl ON kh.NguoiLap = nl.MaNguoiDung
+    LEFT JOIN dbo.NguoiDung xl ON kh.NguoiXuLy = xl.MaNguoiDung
     WHERE 1=1
   `;
 
