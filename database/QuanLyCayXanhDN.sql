@@ -29,7 +29,6 @@ USE QuanLyCayXanhDN;
 
 GO
 -- Thiết lập ngôn ngữ và định dạng ngày giờ Việt Nam cho toàn cục session
-SET LANGUAGE Vietnamese;
 SET DATEFORMAT dmy;
 
 GO
@@ -38,9 +37,9 @@ GO
 -- ==========================================
 CREATE TABLE QuyenHan (
     MaQuyen VARCHAR(20) PRIMARY KEY,
-    TenQuyenHan NVARCHAR(100),
+    TenQuyenHan NVARCHAR(100) NOT NULL,
     MoTa NVARCHAR(500),
-    Slug VARCHAR(100),
+    Slug VARCHAR(100) NOT NULL,
     TenDanhMucCha NVARCHAR(100),
     Icon VARCHAR(MAX)
 );
@@ -48,16 +47,16 @@ CREATE TABLE QuyenHan (
 GO
 CREATE TABLE VaiTro (
     MaVaiTro VARCHAR(10) PRIMARY KEY,
-    TenVaiTro NVARCHAR(100),
+    TenVaiTro NVARCHAR(100) NOT NULL,
     MoTa NVARCHAR(500),
-    Slug VARCHAR(100),
+    Slug VARCHAR(100) NOT NULL,
     Icon VARCHAR(MAX)
 );
 
 GO
 CREATE TABLE GanQuyen (
-    MaVaiTro VARCHAR(10),
-    MaQuyen VARCHAR(20),
+    MaVaiTro VARCHAR(10) NOT NULL,
+    MaQuyen VARCHAR(20) NOT NULL,
     PRIMARY KEY (MaVaiTro, MaQuyen),
     CONSTRAINT FK_GanQuyen_VaiTro FOREIGN KEY (MaVaiTro) REFERENCES VaiTro (MaVaiTro),
     CONSTRAINT FK_GanQuyen_QuyenHan FOREIGN KEY (MaQuyen) REFERENCES QuyenHan (MaQuyen)
@@ -67,26 +66,29 @@ GO
 CREATE TABLE XaPhuong (
     MaXaPhuong VARCHAR(20) PRIMARY KEY,
     MaHanhChinh INT,
-    TenXaPhuong NVARCHAR(150),
-    LoaiDanhMuc NVARCHAR(10)
+    TenXaPhuong NVARCHAR(150) NOT NULL,
+    LoaiDanhMuc NVARCHAR(10) NOT NULL,
+    CONSTRAINT CHK_XaPhuong_LoaiDanhMuc CHECK (LoaiDanhMuc IN (N'Xã', N'Phường'))
 );
 
 GO
 CREATE TABLE TuyenDuong (
     MaTuyenDuong VARCHAR(20) PRIMARY KEY,
-    TenTuyenDuong NVARCHAR(150),
-    TenVietTat VARCHAR(10), -- Phục vụ sinh mã cây tự động
-    LoaiDuong NVARCHAR(50),
-    MaXaPhuong VARCHAR(20) FOREIGN KEY REFERENCES XaPhuong (MaXaPhuong)
+    TenTuyenDuong NVARCHAR(150) NOT NULL,
+    TenVietTat VARCHAR(10) NOT NULL,
+    LoaiDuong NVARCHAR(50) NOT NULL,
+    MaXaPhuong VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES XaPhuong (MaXaPhuong),
+    CONSTRAINT CHK_TuyenDuong_LoaiDuong CHECK (LoaiDuong IN (N'Đường lớn', N'đường nhánh', N'ngõ', N'hẻm'))
 );
+GO
 
 GO
 CREATE TABLE NguoiDung (
     MaNguoiDung VARCHAR(20) PRIMARY KEY,
-    TenDangNhap VARCHAR(17) UNIQUE,
-    MatKhauHash VARCHAR(MAX),
+    TenDangNhap VARCHAR(17) UNIQUE NOT NULL,
+    MatKhauHash VARCHAR(MAX) NOT NULL,
     HoTen NVARCHAR(50),
-    Email VARCHAR(254),
+    Email VARCHAR(254) NOT NULL UNIQUE,
     SDT CHAR(10),
     MaTuyenDuong VARCHAR(20) FOREIGN KEY REFERENCES TuyenDuong (MaTuyenDuong),
     DiaChi NVARCHAR(100),
@@ -110,49 +112,58 @@ GO
 -- ==========================================
 CREATE TABLE DanhMucCayTrong (
     MaDMCay VARCHAR(20) PRIMARY KEY,
-    TenCayTrong NVARCHAR(100),
-    ChieuCaoTruongThanh DECIMAL(18, 2),
-    DuongKinhTruongThanh DECIMAL(18, 2),
-    HinhThucTanCay NVARCHAR(20),
-    DangLa NVARCHAR(20),
-    MauLa NVARCHAR(50),
+    TenCayTrong NVARCHAR(100) NOT NULL,
+    ChieuCaoTruongThanh DECIMAL(18, 2) NOT NULL,
+    DuongKinhTruongThanh DECIMAL(18, 2) NOT NULL,
+    HinhThucTanCay NVARCHAR(20) NOT NULL,
+    DangLa NVARCHAR(20) NOT NULL,
+    MauLa NVARCHAR(50) NOT NULL,
     KyRungLa NVARCHAR(20),
     KyNoHoa NVARCHAR(20),
     MauHoa NVARCHAR(50),
-    LoaiCay NVARCHAR(50),
+    LoaiCay NVARCHAR(50) NOT NULL,
     MoTa NVARCHAR(500),
-    TrangThai NVARCHAR(50),
+    TrangThai NVARCHAR(50) NOT NULL,
     NgayTao DATETIME DEFAULT GETDATE(),
-    NgayCapNhat DATETIME
+    NgayCapNhat DATETIME,
+
+    -- Ràng buộc kiểm tra giá trị cột
+    CONSTRAINT CHK_HinhThucTanCay CHECK (HinhThucTanCay IN (N'Tự do', N'tròn', N'trứng', N'thuỗn', N'tháp', N'phân tầng', N'rù')),
+    CONSTRAINT CHK_DangLa CHECK (DangLa IN (N'bản', N'kim')),
+    CONSTRAINT CHK_LoaiCay CHECK (LoaiCay IN (N'Tiểu mộc', N'đại mộc', N'trung mộc')),
+    CONSTRAINT CHK_TrangThai CHECK (TrangThai IN (N'Được phép trồng', N'không được phép trồng'))
 );
 
 GO
 CREATE TABLE CayXanh (
     MaCay VARCHAR(20) PRIMARY KEY,
-    MaDMCay VARCHAR(20) FOREIGN KEY REFERENCES DanhMucCayTrong (MaDMCay),
+    MaDMCay VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES DanhMucCayTrong (MaDMCay),
     NgayTrong DATETIME,
     NguonGoc NVARCHAR(500),
     ChieuCaoHienTai DECIMAL(18, 2),
     DuongKinhThanHienTai DECIMAL(18, 2),
     DuongKinhTanHienTai DECIMAL(18, 2),
-    TrangThaiSucKhoe NVARCHAR(50),
-    KinhDo VARCHAR(100),
-    ViDo VARCHAR(100),
+    TrangThaiSucKhoe NVARCHAR(50) DEFAULT N'Bình thường',
+    KinhDo VARCHAR(100) NOT NULL,
+    ViDo VARCHAR(100) NOT NULL,
     GhiChu NVARCHAR(MAX),
     NgayTao DATETIME DEFAULT GETDATE(),
     NgayCapNhat DATETIME,
-    MaTuyenDuong VARCHAR(20) FOREIGN KEY REFERENCES TuyenDuong (MaTuyenDuong),
-    MaNguoiCapNhat VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
+    MaTuyenDuong VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES TuyenDuong (MaTuyenDuong),
+    MaNguoiCapNhat VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
     CONSTRAINT CHK_CayXanh_KichThuoc CHECK (
         ChieuCaoHienTai >= 0
         AND DuongKinhThanHienTai >= 0
+    ),
+    CONSTRAINT CHK_CayXanh_TrangThaiSucKhoe CHECK (
+        TrangThaiSucKhoe IN (N'Bình thường', N'nguy hiểm thấp', N'nguy hiểm trung bình', N'nguy hiểm cao', N'khẩn cấp')
     )
 );
 
 GO
 CREATE TABLE DanhMucCongViec (
     MaLoaiCongViec VARCHAR(20) PRIMARY KEY,
-    TenCongViec NVARCHAR(150),
+    TenCongViec NVARCHAR(150) NOT NULL,
     MoTaCV NVARCHAR(500)
 );
 
@@ -162,13 +173,13 @@ GO
 -- ==========================================
 CREATE TABLE KeHoachCongViec (
     MaKeHoach VARCHAR(20) PRIMARY KEY,
-    MaLoaiCongViec VARCHAR(20) FOREIGN KEY REFERENCES DanhMucCongViec (MaLoaiCongViec),
-    TieuDe NVARCHAR(200),
+    MaLoaiCongViec VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES DanhMucCongViec (MaLoaiCongViec),
+    TieuDe NVARCHAR(200) NOT NULL,
     MoTa NVARCHAR(500),
-    FilePDFKeHoach VARCHAR(MAX),
-    FilePDFDeNghiCapPhep VARCHAR(MAX),
-    NguoiLap VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
-    TrangThai NVARCHAR(50),
+    FilePDFKeHoach VARCHAR(MAX) NOT NULL,
+    FilePDFDeNghiCapPhep VARCHAR(MAX) NOT NULL,
+    NguoiLap VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
+    TrangThai NVARCHAR(50) DEFAULT N'Đã gửi',
     FilePDFBoSungKeHoach VARCHAR(MAX),
     YKienPheDuyet NVARCHAR(200),
     NguoiPheDuyet VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
@@ -177,52 +188,42 @@ CREATE TABLE KeHoachCongViec (
     NgayCapNhat DATETIME,
     NguoiXuLy VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
     NgayXuLy DATETIME,
-    MaTuyenDuong VARCHAR(20) FOREIGN KEY REFERENCES TuyenDuong (MaTuyenDuong)
-);
-
--- Thêm ràng buộc và giá trị mặc định cho TrangThai của KeHoachCongViec
-ALTER TABLE KeHoachCongViec
-ADD CONSTRAINT DF_KeHoach_TrangThai DEFAULT N'Đã gửi' FOR TrangThai;
-
-ALTER TABLE KeHoachCongViec
-ADD CONSTRAINT CK_KeHoach_TrangThai CHECK (
-    TrangThai IN (
-        N'Đã gửi',
-        N'Đang thẩm định',
-        N'Đã phê duyệt',
-        N'Bị từ chối',
-        N'Đã hủy'
+    MaTuyenDuong VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES TuyenDuong (MaTuyenDuong),
+    CONSTRAINT CK_KeHoach_TrangThai CHECK (
+        TrangThai IN (N'Đã gửi', N'Đang thẩm định', N'Đã phê duyệt', N'Bị từ chối', N'Đã hủy')
     )
 );
 
 GO
 CREATE TABLE KeHoachPhanCong (
     MaKHPC VARCHAR(20) PRIMARY KEY,
-    MaKHCV VARCHAR(20) FOREIGN KEY REFERENCES KeHoachCongViec (MaKeHoach),
-    TieuDe NVARCHAR(150),
-    FilePDF VARCHAR(MAX),
-    NguoiTao VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
+    MaKHCV VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES KeHoachCongViec (MaKeHoach),
+    TieuDe NVARCHAR(150) NOT NULL,
+    FilePDF VARCHAR(MAX) NOT NULL,
+    NguoiTao VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
     NgayTao DATETIME DEFAULT GETDATE(),
     NguoiCapNhat VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
     NgayCapNhat DATETIME,
-    TrangThaiNghiemThu NVARCHAR(100),
+    TrangThaiNghiemThu NVARCHAR(100) DEFAULT N'Chưa nghiệm thu',
     NgayNghiemThu DATETIME,
     NguoiNghiemThu VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
-    YKienNghiemThu NVARCHAR(500)
+    YKienNghiemThu NVARCHAR(500),
+
+    CONSTRAINT CK_KeHoachPhanCong_TrangThaiNghiemThu CHECK (
+        TrangThaiNghiemThu IN (N'Chưa nghiệm thu', N'đang nghiệm thu', N'Đang nghiệm thu', N'Không đạt yêu cầu')
+    )
 );
 
 GO
 CREATE TABLE ChiTietPhanCong (
     MaChiTiet VARCHAR(20) PRIMARY KEY,
-    MaKHPC VARCHAR(20) FOREIGN KEY REFERENCES KeHoachPhanCong (MaKHPC),
-    MaCongNhan VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
-    CongViecCuThe NVARCHAR(500),
-    ThoiGianBatDau DATETIME,
-    ThoiGianKetThuc DATETIME,
+    MaKHPC VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES KeHoachPhanCong (MaKHPC),
+    MaCongNhan VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
+    CongViecCuThe NVARCHAR(500) NOT NULL,
+    ThoiGianBatDau DATETIME NOT NULL,
+    ThoiGianKetThuc DATETIME NOT NULL,
     XacNhanLam BIT DEFAULT 0,
     LyDo NVARCHAR(500),
-    AnhTruocPhanCong VARCHAR(20),
-    AnhSauPhanCong VARCHAR(20),
     KhoiLuongHoanThanh NVARCHAR(100),
     XacNhanHoanTat BIT DEFAULT 0,
     NgayCapNhat DATETIME,
@@ -238,8 +239,8 @@ CREATE TABLE ChiTietPhanCong (
 GO
 CREATE TABLE AnhTruocPhanCong (
     MaAnhTruoc VARCHAR(20) PRIMARY KEY,
-    MaChiTietPhanCong VARCHAR(20) FOREIGN KEY REFERENCES ChiTietPhanCong (MaChiTiet),
-    DuongDanAnh VARCHAR(MAX),
+    MaChiTietPhanCong VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES ChiTietPhanCong (MaChiTiet),
+    DuongDanAnh VARCHAR(MAX) NOT NULL,
     MoTa NVARCHAR(150),
     NgayUpload DATETIME DEFAULT GETDATE()
 );
@@ -247,8 +248,8 @@ CREATE TABLE AnhTruocPhanCong (
 GO
 CREATE TABLE AnhSauPhanCong (
     MaAnhSau VARCHAR(20) PRIMARY KEY,
-    MaChiTietPhanCong VARCHAR(20) FOREIGN KEY REFERENCES ChiTietPhanCong (MaChiTiet),
-    DuongDanAnh VARCHAR(MAX),
+    MaChiTietPhanCong VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES ChiTietPhanCong (MaChiTiet),
+    DuongDanAnh VARCHAR(MAX) NOT NULL,
     MoTa NVARCHAR(150),
     NgayUpload DATETIME DEFAULT GETDATE()
 );
@@ -259,27 +260,31 @@ GO
 -- ==========================================
 CREATE TABLE BaoCaoSuCo (
     MaBaoCao VARCHAR(20) PRIMARY KEY,
-    MaNguoiBaoCao VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
-    ThoiGianBaoCao DATETIME,
-    MaXaPhuong VARCHAR(20) FOREIGN KEY REFERENCES XaPhuong (MaXaPhuong),
-    DiaChiCuThe NVARCHAR(100),
-    LoaiPhanAnh NVARCHAR(500),
-    TrangThaiXuLy NVARCHAR(50),
+    MaNguoiBaoCao VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
+    ThoiGianBaoCao DATETIME DEFAULT GETDATE(),
+    MaXaPhuong VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES XaPhuong (MaXaPhuong),
+    DiaChiCuThe NVARCHAR(100) NOT NULL,
+    LoiPhanAnh NVARCHAR(500) NOT NULL,
+    TrangThaiXuLy NVARCHAR(50) DEFAULT N'Chờ xử lý',
     MaNguoiXuLy VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
     TraLoiPhanHoi NVARCHAR(500),
     PDFDinhKemXuLy VARCHAR(MAX),
     NgayTao DATETIME DEFAULT GETDATE(),
-    NgayCapNhat DATETIME
+    NgayCapNhat DATETIME,
+
+    CONSTRAINT CK_BaoCaoSuCo_TrangThaiXuLy CHECK (
+        TrangThaiXuLy IN (N'Chờ xử lý', N'đang xử lý', N'đã xử lý', N'bị từ chối', N'đã hủy')
+    )
 );
 
 GO
 CREATE TABLE ChiTietBaoCao (
     MaChiTietBaoCao VARCHAR(20) PRIMARY KEY,
-    MaBaoCao VARCHAR(20) FOREIGN KEY REFERENCES BaoCaoSuCo (MaBaoCao),
-    MaCay VARCHAR(20) FOREIGN KEY REFERENCES CayXanh (MaCay),
-    MaTuyenDuong VARCHAR(20) FOREIGN KEY REFERENCES TuyenDuong (MaTuyenDuong),
-    MoTaTìnhTrang NVARCHAR(500),
-    MucDoNguyHiem NVARCHAR(50),
+    MaBaoCao VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES BaoCaoSuCo (MaBaoCao),
+    MaCay VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES CayXanh (MaCay),
+    MaTuyenDuong VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES TuyenDuong (MaTuyenDuong),
+    MoTaTìnhTrang NVARCHAR(500) NOT NULL,
+    MucDoNguyHiem NVARCHAR(50) NOT NULL,
     DaXuLy BIT DEFAULT 0,
     CONSTRAINT CHK_MucDoNguyHiem CHECK (
         MucDoNguyHiem IN (N'Thấp', N'Trung bình', N'Cao', N'Khẩn cấp')
@@ -289,8 +294,8 @@ CREATE TABLE ChiTietBaoCao (
 GO
 CREATE TABLE HinhAnhBaoCao (
     MaHinhAnh VARCHAR(20) PRIMARY KEY,
-    MaChiTietBaoCao VARCHAR(20) FOREIGN KEY REFERENCES ChiTietBaoCao (MaChiTietBaoCao),
-    DuongDanHinh VARCHAR(MAX),
+    MaChiTietBaoCao VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES ChiTietBaoCao (MaChiTietBaoCao),
+    DuongDanHinh VARCHAR(MAX) NOT NULL,
     MoTaHinh NVARCHAR(100),
     NgayUpload DATETIME DEFAULT GETDATE()
 );
@@ -298,15 +303,15 @@ CREATE TABLE HinhAnhBaoCao (
 GO
 CREATE TABLE HoSoLuuTruNghiemThu (
     MaHoSo VARCHAR(20) PRIMARY KEY,
-    MaLoaiCongViec VARCHAR(20) FOREIGN KEY REFERENCES DanhMucCongViec (MaLoaiCongViec),
-    TieuDe NVARCHAR(150),
+    MaLoaiCongViec VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES DanhMucCongViec (MaLoaiCongViec),
+    TieuDe NVARCHAR(150) NOT NULL,
     MoTa NVARCHAR(500),
-    FilePDF VARCHAR(MAX),
+    FilePDF VARCHAR(MAX) NOT NULL,
     NguoiTao VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
     NgayTao DATETIME DEFAULT GETDATE(),
     NguoiCapNhat VARCHAR(20) FOREIGN KEY REFERENCES NguoiDung (MaNguoiDung),
     NgayCapNhat DATETIME,
-    MaTuyenDuong VARCHAR(20) FOREIGN KEY REFERENCES TuyenDuong (MaTuyenDuong)
+    MaTuyenDuong VARCHAR(20) NOT NULL FOREIGN KEY REFERENCES TuyenDuong (MaTuyenDuong)
 );
 
 GO
