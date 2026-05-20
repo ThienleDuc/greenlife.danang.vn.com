@@ -28,6 +28,11 @@ GO
 USE QuanLyCayXanhDN;
 
 GO
+-- Thiết lập ngôn ngữ và định dạng ngày giờ Việt Nam cho toàn cục session
+SET LANGUAGE Vietnamese;
+SET DATEFORMAT dmy;
+
+GO
 -- ==========================================
 -- 2. NHÓM DANH MỤC & PHÂN QUYỀN
 -- ==========================================

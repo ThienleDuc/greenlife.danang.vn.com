@@ -10,18 +10,6 @@ const sendError = (res, error, fallbackMessage = "Lỗi xử lý kế hoạch c�
   });
 };
 
-const getAllKeHoach = async (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit) || 10;
-    const offset = parseInt(req.query.offset) || 0;
-    
-    const data = await keHoachService.getAllKeHoach(limit, offset);
-    res.status(200).json(data);
-  } catch (error) {
-    res.status(500).json({ message: "Lỗi khi lấy danh sách kế hoạch công việc", error: error.message });
-  }
-};
-
 const searchKeHoach = async (req, res) => {
   try {
     const filters = req.query;
@@ -104,7 +92,7 @@ const updateKeHoach = async (req, res) => {
 
 const huyKeHoach = async (req, res) => {
   try {
-    const data = await keHoachService.huyKeHoach(req.params.maKeHoach, req.user);
+    const data = await keHoachService.huyKeHoach(req.params.maKeHoach, req.user, req.body.nguoiXuLy);
 
     res.status(200).json({
       success: true,
@@ -117,7 +105,6 @@ const huyKeHoach = async (req, res) => {
 };
 
 module.exports = {
-  getAllKeHoach,
   searchKeHoach,
   getKeHoachStats,
   getKeHoachCuaToi,

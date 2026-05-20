@@ -1,48 +1,24 @@
 const { sql, poolPromise } = require("../config/db");
 
-const getAllKeHoach = async (limit = 10, offset = 0) => {
-  const connection = await poolPromise;
-
-  const result = await connection
-    .request()
-    .input("limit", sql.Int, limit)
-    .input("offset", sql.Int, offset)
-    .query(`
-      SELECT 
-        kh.*,
-        dm.TenCongViec,
-        nl.HoTen AS TenNguoiLap,
-        xl.HoTen AS TenNguoiXuLy,
-        pd.HoTen AS TenNguoiPheDuyet,
-        td.TenTuyenDuong,
-        xp.MaXaPhuong,
-        xp.TenXaPhuong
-      FROM dbo.KeHoachCongViec kh
-      LEFT JOIN dbo.DanhMucCongViec dm ON kh.MaLoaiCongViec = dm.MaLoaiCongViec
-      LEFT JOIN dbo.NguoiDung nl ON kh.NguoiLap = nl.MaNguoiDung
-      LEFT JOIN dbo.NguoiDung xl ON kh.NguoiXuLy = xl.MaNguoiDung
-      LEFT JOIN dbo.NguoiDung pd ON kh.NguoiPheDuyet = pd.MaNguoiDung
-      LEFT JOIN dbo.TuyenDuong td ON kh.MaTuyenDuong = td.MaTuyenDuong
-      LEFT JOIN dbo.XaPhuong xp ON td.MaXaPhuong = xp.MaXaPhuong
-      ORDER BY kh.NgayTao DESC
-      OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
-    `);
-
-  const countResult = await connection
-    .request()
-    .query(`SELECT COUNT(*) as total FROM dbo.KeHoachCongViec`);
-
-  return {
-    data: result.recordset,
-    total: countResult.recordset[0].total,
-    limit,
-    offset,
-  };
-};
-
 const buildKeHoachDetailQuery = (whereClause = "") => `
   SELECT
-    kh.*,
+    kh.MaKeHoach,
+    kh.MaLoaiCongViec,
+    kh.TieuDe,
+    kh.MoTa,
+    kh.FilePDFKeHoach,
+    kh.FilePDFDeNghiCapPhep,
+    kh.FilePDFBoSungKeHoach,
+    kh.NguoiLap,
+    kh.TrangThai,
+    kh.YKienPheDuyet,
+    kh.NguoiPheDuyet,
+    kh.NgayPheDuyet,
+    kh.NgayTao,
+    kh.NgayCapNhat,
+    kh.NguoiXuLy,
+    kh.NgayXuLy,
+    kh.MaTuyenDuong,
     dm.TenCongViec,
     nl.HoTen AS TenNguoiLap,
     xl.HoTen AS TenNguoiXuLy,
@@ -147,8 +123,8 @@ const createKeHoach = async (planData) => {
         NULL,
         NULL,
         NULL,
-        GETDATE(),
-        NULL,
+        GETDATE(), -- NgayTao
+        GETDATE(), -- NgayCapNhat
         NULL,
         NULL,
         @maTuyenDuong
@@ -165,6 +141,7 @@ const updateKeHoach = async (planData) => {
     .request()
     .input("maKeHoach", sql.VarChar(20), planData.maKeHoach)
     .input("nguoiLap", sql.VarChar(20), planData.nguoiLap)
+    .input("nguoiXuLy", sql.VarChar(20), planData.nguoiXuLy || planData.nguoiLap)
     .input("maLoaiCongViec", sql.VarChar(20), planData.maLoaiCongViec)
     .input("tieuDe", sql.NVarChar(200), planData.tieuDe)
     .input("moTa", sql.NVarChar(500), planData.moTa)
@@ -184,10 +161,12 @@ const updateKeHoach = async (planData) => {
         FilePDFBoSungKeHoach = COALESCE(@filePDFBoSungKeHoach, FilePDFBoSungKeHoach),
         MaTuyenDuong = @maTuyenDuong,
         TrangThai = @trangThai,
+        NguoiXuLy = @nguoiXuLy,
+        NgayXuLy = GETDATE(),
         NgayCapNhat = GETDATE()
       WHERE MaKeHoach = @maKeHoach
         AND NguoiLap = @nguoiLap
-        AND TrangThai IN (N'Đã gửi', N'Bị từ chối')
+        AND TrangThai IN (N'Đã gửi', N'Bị từ chối', N'Đã hủy')
     `);
 
   if (!result.rowsAffected[0]) {
@@ -197,18 +176,21 @@ const updateKeHoach = async (planData) => {
   return await findByMaKeHoach(planData.maKeHoach);
 };
 
-const huyKeHoach = async (maKeHoach, nguoiLap) => {
+const huyKeHoach = async (maKeHoach, nguoiLap, nguoiXuLy) => {
   const connection = await poolPromise;
 
   const result = await connection
     .request()
     .input("maKeHoach", sql.VarChar(20), maKeHoach)
     .input("nguoiLap", sql.VarChar(20), nguoiLap)
+    .input("nguoiXuLy", sql.VarChar(20), nguoiXuLy || nguoiLap)
     .input("trangThai", sql.NVarChar(50), "Đã hủy")
     .query(`
       UPDATE dbo.KeHoachCongViec
       SET
         TrangThai = @trangThai,
+        NguoiXuLy = @nguoiXuLy,
+        NgayXuLy = GETDATE(),
         NgayCapNhat = GETDATE()
       WHERE MaKeHoach = @maKeHoach
         AND NguoiLap = @nguoiLap
@@ -230,7 +212,9 @@ const searchKeHoach = async (filters) => {
     maKeHoach,
     title,
     status,
+    creator,
     processor,
+    approver,
     xaPhuong,
     tuyenDuong,
     startDate,
@@ -246,7 +230,23 @@ const searchKeHoach = async (filters) => {
 
   let query = `
     SELECT 
-      kh.*,
+      kh.MaKeHoach,
+      kh.MaLoaiCongViec,
+      kh.TieuDe,
+      kh.MoTa,
+      kh.FilePDFKeHoach,
+      kh.FilePDFDeNghiCapPhep,
+      kh.FilePDFBoSungKeHoach,
+      kh.NguoiLap,
+      kh.TrangThai,
+      kh.YKienPheDuyet,
+      kh.NguoiPheDuyet,
+      kh.NgayPheDuyet,
+      kh.NgayTao,
+      kh.NgayCapNhat,
+      kh.NguoiXuLy,
+      kh.NgayXuLy,
+      kh.MaTuyenDuong,
       dm.TenCongViec,
       nl.HoTen AS TenNguoiLap,
       xl.HoTen AS TenNguoiXuLy,
@@ -284,9 +284,19 @@ const searchKeHoach = async (filters) => {
     request.input("jobType", sql.VarChar, jobType);
   }
 
+  if (creator) {
+    query += ` AND nl.HoTen LIKE @creator`;
+    request.input("creator", sql.NVarChar, `%${creator}%`);
+  }
+
   if (processor) {
-    query += ` AND (nl.HoTen LIKE @processor OR xl.HoTen LIKE @processor)`;
+    query += ` AND xl.HoTen LIKE @processor`;
     request.input("processor", sql.NVarChar, `%${processor}%`);
+  }
+
+  if (approver) {
+    query += ` AND pd.HoTen LIKE @approver`;
+    request.input("approver", sql.NVarChar, `%${approver}%`);
   }
 
   if (xaPhuong) {
@@ -313,8 +323,7 @@ const searchKeHoach = async (filters) => {
   const countResult = await request.query(countQuery);
 
   // Data query
-  const sortCol = dateType || "NgayTao";
-  query += ` ORDER BY kh.${sortCol} DESC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
+  query += ` ORDER BY kh.NgayTao DESC, kh.NgayXuLy DESC, kh.NgayPheDuyet DESC, kh.NgayCapNhat DESC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
   request.input("limit", sql.Int, parseInt(limit, 10));
   request.input("offset", sql.Int, parseInt(offset, 10));
 
@@ -378,7 +387,6 @@ const getKeHoachStats = async () => {
 };
 
 module.exports = {
-  getAllKeHoach,
   searchKeHoach,
   getKeHoachStats,
   existsMaKeHoach,

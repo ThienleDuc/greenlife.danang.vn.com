@@ -3,21 +3,10 @@ import api from './api';
 
 
 export const TheoDoiKeHoachService = {
-  // Gọi API lấy danh sách kế hoạch từ server
-  getKeHoachList: async (limit = 10, offset = 0): Promise<any> => {
-    try {
-      const response = await api.get('/ke-hoach', { params: { limit, offset } });
-      return response.data;
-    } catch (error) {
-      console.error('Lỗi khi lấy danh sách kế hoạch:', error);
-      return { data: [], total: 0 };
-    }
-  },
-
   // Gọi API tìm kiếm đa năng từ server
-  searchKeHoach: async (filters: FilterParams, limit = 10, offset = 0): Promise<any> => {
+  searchKeHoach: async (filters: Partial<FilterParams>, limit = 10, offset = 0): Promise<any> => {
     try {
-      const response = await api.get('/ke-hoach/search', { 
+      const response = await api.get('/ke-hoach', { 
         params: { ...filters, limit, offset } 
       });
       return response.data;

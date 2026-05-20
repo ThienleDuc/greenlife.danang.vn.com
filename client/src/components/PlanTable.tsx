@@ -9,7 +9,9 @@ interface PlanTableProps {
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return '---';
-  const date = new Date(dateString);
+  const str = String(dateString);
+  const normalizedString = str.endsWith('Z') ? str.slice(0, -1) : str;
+  const date = new Date(normalizedString);
   return date.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',

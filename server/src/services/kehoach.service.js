@@ -11,7 +11,7 @@ const PLAN_STATUS = {
 };
 
 const ALLOWED_PLAN_TYPES = ["TM", "CS", "DIDOI", "CHATHA"];
-const EDITABLE_STATUSES = [PLAN_STATUS.DA_GUI, PLAN_STATUS.BI_TU_CHOI];
+const EDITABLE_STATUSES = [PLAN_STATUS.DA_GUI, PLAN_STATUS.BI_TU_CHOI, PLAN_STATUS.DA_HUY];
 const PERMIT_REQUIRED_TYPES = ["DIDOI", "CHATHA"];
 
 const createHttpError = (message, statusCode = 400) => {
@@ -82,10 +82,6 @@ const generateMaKeHoach = async () => {
   return maKeHoach;
 };
 
-const getAllKeHoach = async (limit, offset) => {
-  return await keHoachRepo.getAllKeHoach(limit, offset);
-};
-
 const searchKeHoach = async (filters) => {
   return await keHoachRepo.searchKeHoach(filters);
 };
@@ -116,7 +112,7 @@ const getKeHoachByMa = async (maKeHoach) => {
 };
 
 const createKeHoach = async (payload, files, user) => {
-  const nguoiLap = getCurrentUserId(user);
+  const nguoiLap = payload.nguoiLap || getCurrentUserId(user);
   const planPayload = normalizePlanPayload(payload);
 
   validatePlanPayload(planPayload);
@@ -161,6 +157,10 @@ const assertEditablePlan = async (maKeHoach, nguoiLap, action = "chỉnh sửa")
     );
   }
 
+  if (action === "hủy" && plan.TrangThai === PLAN_STATUS.DA_HUY) {
+    throw createHttpError("Kế hoạch đã ở trạng thái hủy", 409);
+  }
+
   if (!EDITABLE_STATUSES.includes(plan.TrangThai)) {
     throw createHttpError(`Kế hoạch ở trạng thái "${plan.TrangThai}" không thể ${action}`, 409);
   }
@@ -191,6 +191,7 @@ const updateKeHoach = async (maKeHoach, payload, files, user) => {
     ...planPayload,
     maKeHoach,
     nguoiLap,
+    nguoiXuLy: payload.nguoiXuLy || nguoiLap,
     filePDFKeHoach,
     filePDFDeNghiCapPhep,
     filePDFBoSungKeHoach,
@@ -214,11 +215,12 @@ const updateKeHoach = async (maKeHoach, payload, files, user) => {
   return updatedPlan;
 };
 
-const huyKeHoach = async (maKeHoach, user) => {
+const huyKeHoach = async (maKeHoach, user, requestNguoiXuLy) => {
   const nguoiLap = getCurrentUserId(user);
   await assertEditablePlan(maKeHoach, nguoiLap, "hủy");
 
-  const canceledPlan = await keHoachRepo.huyKeHoach(maKeHoach, nguoiLap);
+  const nguoiXuLy = requestNguoiXuLy || nguoiLap;
+  const canceledPlan = await keHoachRepo.huyKeHoach(maKeHoach, nguoiLap, nguoiXuLy);
 
   if (!canceledPlan) {
     throw createHttpError("Không thể hủy kế hoạch công việc", 400);
@@ -228,7 +230,6 @@ const huyKeHoach = async (maKeHoach, user) => {
 };
 
 module.exports = {
-  getAllKeHoach,
   searchKeHoach,
   getKeHoachStats,
   getKeHoachCuaToi,

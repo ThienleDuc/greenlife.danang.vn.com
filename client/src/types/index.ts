@@ -124,9 +124,11 @@ export interface FilterParams {
   status: string;
   startDate: string;
   endDate: string;
-  dateType: 'NgayTao' | 'NgayCapNhat' | 'NgayPheDuyet';
+  dateType: 'NgayTao' | 'NgayXuLy' | 'NgayPheDuyet';
   jobType: string;
+  creator: string;
   processor: string;
+  approver: string;
   xaPhuong: string;
   tuyenDuong: string;
 }

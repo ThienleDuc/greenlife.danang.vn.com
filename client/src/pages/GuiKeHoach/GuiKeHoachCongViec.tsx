@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GuiKeHoachService } from '../../services/guiKeHoachService';
 import { LocationService } from '../../services/locationService';
 import type { DanhMucCongViec, TuyenDuong, XaPhuong } from '../../types';
+import { PATHS } from '../../utils/pathUtils';
+import { storage } from '../../utils/storageUtils';
 
 type PlanFormState = {
   maLoaiCongViec: string;
@@ -49,6 +52,7 @@ const getApiErrorMessage = (error: ApiError | unknown, fallback: string) => {
 };
 
 const GuiKeHoachCongViec: React.FC = () => {
+  const navigate = useNavigate();
   const [form, setForm] = useState<PlanFormState>(EMPTY_FORM);
   const [files, setFiles] = useState<PlanFileState>(EMPTY_FILES);
   const [jobTypes, setJobTypes] = useState<DanhMucCongViec[]>([]);
@@ -216,6 +220,11 @@ const GuiKeHoachCongViec: React.FC = () => {
     formData.append('moTa', form.moTa.trim());
     formData.append('maTuyenDuong', form.maTuyenDuong);
 
+    const user = storage.getUser();
+    if (user?.maNguoiDung) {
+      formData.append('nguoiLap', user.maNguoiDung);
+    }
+
     if (files.fileKeHoach) formData.append('fileKeHoach', files.fileKeHoach);
     if (files.fileDeNghiCapPhep) formData.append('fileDeNghiCapPhep', files.fileDeNghiCapPhep);
 
@@ -238,6 +247,7 @@ const GuiKeHoachCongViec: React.FC = () => {
       await GuiKeHoachService.createKeHoach(buildFormData());
       setNotice({ type: 'success', text: 'Gửi kế hoạch thành công' });
       resetForm();
+      window.setTimeout(() => navigate(PATHS.KY_THUAT.DASHBOARD), 900);
     } catch (error) {
       setNotice({
         type: 'error',

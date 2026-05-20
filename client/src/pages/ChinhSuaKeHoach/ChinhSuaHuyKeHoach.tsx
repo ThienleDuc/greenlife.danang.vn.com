@@ -4,6 +4,7 @@ import { GuiKeHoachService } from '../../services/guiKeHoachService';
 import { LocationService } from '../../services/locationService';
 import type { DanhMucCongViec, KeHoachCongViec, TuyenDuong, XaPhuong } from '../../types';
 import { PATHS } from '../../utils/pathUtils';
+import { storage } from '../../utils/storageUtils';
 
 type PlanFormState = {
   maLoaiCongViec: string;
@@ -245,6 +246,11 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
     formData.append('moTa', form.moTa.trim());
     formData.append('maTuyenDuong', form.maTuyenDuong);
 
+    const currentUser = storage.getUser();
+    if (currentUser?.maNguoiDung) {
+      formData.append('nguoiXuLy', currentUser.maNguoiDung);
+    }
+
     if (files.fileKeHoach) formData.append('fileKeHoach', files.fileKeHoach);
     if (files.fileDeNghiCapPhep) formData.append('fileDeNghiCapPhep', files.fileDeNghiCapPhep);
     if (files.fileBoSungKeHoach) formData.append('fileBoSungKeHoach', files.fileBoSungKeHoach);
@@ -270,6 +276,7 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
       setFiles(EMPTY_FILES);
       resetFileInputs();
       setNotice({ type: 'success', text: 'Cập nhật kế hoạch thành công' });
+      window.setTimeout(() => navigate(PATHS.KY_THUAT.DASHBOARD), 900);
     } catch (error) {
       setNotice({
         type: 'error',
@@ -519,23 +526,27 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
           )}
 
           <div className="send-plan-actions send-plan-actions-inline">
-            <button
-              type="submit"
-              className="send-plan-primary-btn"
-              disabled={submitting || cancelling}
-            >
-              <span className="material-symbols-outlined">sync</span>
-              Cập nhật kế hoạch
-            </button>
-            <button
-              type="button"
-              className="send-plan-danger-btn"
-              onClick={handleCancelPlan}
-              disabled={submitting || cancelling}
-            >
-              <span className="material-symbols-outlined">cancel</span>
-              Hủy kế hoạch
-            </button>
+            {(plan?.TrangThai === 'Đã gửi' || plan?.TrangThai === 'Bị từ chối' || plan?.TrangThai === 'Đã hủy') && (
+              <button
+                type="submit"
+                className="send-plan-primary-btn"
+                disabled={submitting || cancelling}
+              >
+                <span className="material-symbols-outlined">sync</span>
+                Cập nhật kế hoạch
+              </button>
+            )}
+            {plan?.TrangThai !== 'Đã hủy' && plan?.TrangThai !== 'Đang thẩm định' && plan?.TrangThai !== 'Đã phê duyệt' && (
+              <button
+                type="button"
+                className="send-plan-danger-btn"
+                onClick={handleCancelPlan}
+                disabled={submitting || cancelling}
+              >
+                <span className="material-symbols-outlined">cancel</span>
+                Hủy kế hoạch
+              </button>
+            )}
           </div>
         </form>
       )}

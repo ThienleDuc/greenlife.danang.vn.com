@@ -24,9 +24,7 @@ const TheoDoiTrangThaiKeHoach: React.FC = () => {
 
     const fetchPlans = async () => {
       const offset = (currentPage - 1) * itemsPerPage;
-      const result = currentFilters
-        ? await TheoDoiKeHoachService.searchKeHoach(currentFilters, itemsPerPage, offset)
-        : await TheoDoiKeHoachService.getKeHoachList(itemsPerPage, offset);
+      const result = await TheoDoiKeHoachService.searchKeHoach(currentFilters || {}, itemsPerPage, offset);
 
       if (isActive && result) {
         setPlans(result.data || []);

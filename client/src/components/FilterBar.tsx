@@ -22,7 +22,9 @@ const FilterBar: React.FC<FilterBarProps> = ({ onSearch, onReset }) => {
     endDate: '',
     dateType: 'NgayTao',
     jobType: '',
+    creator: '',
     processor: '',
+    approver: '',
     xaPhuong: '',
     tuyenDuong: '',
   });
@@ -75,7 +77,9 @@ const FilterBar: React.FC<FilterBarProps> = ({ onSearch, onReset }) => {
       endDate: '',
       dateType: 'NgayTao',
       jobType: '',
+      creator: '',
       processor: '',
+      approver: '',
       xaPhuong: '',
       tuyenDuong: '',
     });
@@ -185,13 +189,35 @@ const FilterBar: React.FC<FilterBarProps> = ({ onSearch, onReset }) => {
                 </div>
 
                 <div className="filter-field">
-                  <label className="filter-label">Nhân viên xử lý</label>
+                  <label className="filter-label">Người lập</label>
                   <input
                     className="filter-input"
-                    placeholder="Nhập tên nhân viên..."
+                    placeholder="Nhập tên người lập..."
+                    type="text"
+                    value={filters.creator}
+                    onChange={(e) => handleInputChange('creator', e.target.value)}
+                  />
+                </div>
+
+                <div className="filter-field">
+                  <label className="filter-label">Người xử lý</label>
+                  <input
+                    className="filter-input"
+                    placeholder="Nhập tên người xử lý..."
                     type="text"
                     value={filters.processor}
                     onChange={(e) => handleInputChange('processor', e.target.value)}
+                  />
+                </div>
+
+                <div className="filter-field">
+                  <label className="filter-label">Người phê duyệt</label>
+                  <input
+                    className="filter-input"
+                    placeholder="Nhập tên người phê duyệt..."
+                    type="text"
+                    value={filters.approver}
+                    onChange={(e) => handleInputChange('approver', e.target.value)}
                   />
                 </div>
 
@@ -235,17 +261,17 @@ const FilterBar: React.FC<FilterBarProps> = ({ onSearch, onReset }) => {
                         checked={filters.dateType === 'NgayTao'}
                         onChange={(e) => handleInputChange('dateType', e.target.value)}
                       />
-                      <span>Ngày tạo</span>
+                      <span>Ngày lập</span>
                     </label>
                     <label className="filter-radio-label">
                       <input
                         type="radio"
                         name="dateType"
-                        value="NgayCapNhat"
-                        checked={filters.dateType === 'NgayCapNhat'}
+                        value="NgayXuLy"
+                        checked={filters.dateType === 'NgayXuLy'}
                         onChange={(e) => handleInputChange('dateType', e.target.value)}
                       />
-                      <span>Ngày cập nhật</span>
+                      <span>Ngày xử lý</span>
                     </label>
                     <label className="filter-radio-label">
                       <input
