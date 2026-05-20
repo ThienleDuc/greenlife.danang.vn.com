@@ -4,10 +4,13 @@ import type { KeHoachChiTietResponse } from '../types';
 import { PLAN_STATUS } from '../constants/constants';
 import { PheDuyetService } from '../services/pheDuyetService';
 import { PATHS } from '../utils/pathUtils';
+import { storage } from '../utils/storageUtils';
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'không có';
-  const date = new Date(dateString);
+  const str = String(dateString);
+  const normalizedString = str.endsWith('Z') ? str.slice(0, -1) : str;
+  const date = new Date(normalizedString);
   return date.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -88,30 +91,6 @@ const PheDuyetKeHoachDetail: React.FC = () => {
   const isAuditing = keHoach.TrangThai === 'Đang thẩm định';
   const isAlreadyProcessed = keHoach.TrangThai === 'Đã phê duyệt' || keHoach.TrangThai === 'Bị từ chối';
 
-  const handleRemoveFile = async (fileKey: string, fileLabel: string, specificFilename?: string) => {
-    const displayName = specificFilename ? `${fileLabel} (${specificFilename})` : fileLabel;
-    if (!window.confirm(`Bạn có chắc chắn muốn gỡ bỏ "${displayName}" ngay lập tức không? Hành động này không thể hoàn tác.`)) {
-      return;
-    }
-
-    try {
-      await PheDuyetService.removeSpecificFile(keHoach.MaKeHoach, fileKey, specificFilename);
-
-      if (data && data.keHoach) {
-        if (specificFilename) {
-          const currentFiles = (data.keHoach as any)[fileKey]?.split(',') || [];
-          const updatedFiles = currentFiles.filter((f: string) => f !== specificFilename);
-          (data.keHoach as any)[fileKey] = updatedFiles.length > 0 ? updatedFiles.join(',') : null;
-        } else {
-          (data.keHoach as any)[fileKey] = null;
-        }
-        setRemoveFiles(prev => [...prev, specificFilename || fileKey]);
-      }
-      alert('Đã gỡ tài liệu thành công!');
-    } catch (error) {
-      alert('Lỗi khi gỡ tài liệu. Vui lòng thử lại.');
-    }
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const existingBoSung = data?.keHoach.FilePDFBoSungKeHoach;
@@ -159,17 +138,36 @@ const PheDuyetKeHoachDetail: React.FC = () => {
     window.open(fileURL, '_blank', 'noopener,noreferrer');
   };
 
-  const handleApprove = async (status: string, feedbackVal: string, file?: File, removeFilesList?: string[]) => {
+  const handleApprove = async (
+    status: string,
+    feedbackVal: string,
+    file?: File,
+    removeFilesList?: string[],
+    isCancelApproval = false
+  ) => {
+    const user = storage.getUser();
+    // Server trả về camelCase: { maNguoiDung, tenDangNhap, hoTen, role, ... }
+    const userId: string = user?.maNguoiDung || user?.MaNguoiDung || user?.id || '';
+
+    // Người phê duyệt: chỉ gán khi phê duyệt/từ chối
+    const nguoiPheDuyet =
+      status === 'Đã phê duyệt' || status === 'Bị từ chối' ? userId : '';
+
+    // Người xử lý: gán khi chuyển sang Đang thẩm định
+    const nguoiXuLy = status === 'Đang thẩm định' ? userId : '';
+
     try {
       await PheDuyetService.updateTrangThaiPheDuyet(
         keHoach.MaKeHoach,
         status,
         feedbackVal,
-        'aB3kL9pQx2mV8nZ1cY5t', // Mock User ID
+        nguoiPheDuyet,
+        nguoiXuLy,
+        isCancelApproval,
         file,
         removeFilesList
       );
-      fetchDetail();
+      navigate(PATHS.QUAN_LY.DASHBOARD);
     } catch (error) {
       alert('Có lỗi xảy ra khi cập nhật trạng thái.');
     }
@@ -189,16 +187,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
           <span className="material-symbols-outlined text-[20px]">{colors.icon}</span>
           {file.label} {index !== undefined ? `#${index + 1}` : ''}
         </button>
-        {isAuditing && !isRemoved && (
-          <button
-            onClick={() => handleRemoveFile(file.key, file.label, file.key === 'FilePDFBoSungKeHoach' ? file.value : undefined)}
-            className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform shadow-sm z-10 cursor-pointer"
-            style={{ backgroundColor: '#ef4444', border: '2px solid #ffffff' }}
-            title="Gỡ file này"
-          >
-            <span className="material-symbols-outlined text-[14px] font-bold">close</span>
-          </button>
-        )}
+
         {isRemoved && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}>
             <span className="bg-slate-800 text-white text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wider shadow-sm">Đã gỡ</span>
@@ -649,14 +638,16 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                     padding: '8px 20px'
                   }}
                   onClick={() => {
+                    const isCancelApproval = confirmAction.type === 'cancel_approval';
                     const newStatus = confirmAction.type === 'approve' ? 'Đã phê duyệt'
                       : confirmAction.type === 'reject' ? 'Bị từ chối'
                         : 'Đang thẩm định';
                     handleApprove(
                       newStatus,
-                      newStatus === 'Đang thẩm định' ? '' : feedback,
-                      newStatus === 'Đang thẩm định' ? undefined : selectedFile,
-                      newStatus === 'Đang thẩm định' ? [] : removeFiles
+                      isCancelApproval ? '' : feedback,
+                      isCancelApproval ? undefined : selectedFile,
+                      isCancelApproval ? [] : removeFiles,
+                      isCancelApproval
                     );
                     if (newStatus === 'Đang thẩm định') {
                       setFeedback('');

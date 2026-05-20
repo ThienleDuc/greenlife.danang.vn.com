@@ -216,14 +216,14 @@ const getKeHoachChiTiet = async (maKeHoach) => {
 /**
  * Cập nhật trạng thái và ý kiến phê duyệt
  */
-const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles = []) => {
+const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles = [], nguoiXuLy = null, isCancelApproval = false) => {
   const connection = await poolPromise;
-  const now = new Date();
 
   // Xử lý các cờ xóa file
   const removeBoSung = removeFiles.includes('FilePDFBoSungKeHoach') ? 1 : 0;
   const removeGoc = removeFiles.includes('FilePDFKeHoach') ? 1 : 0;
   const removeDeNghi = removeFiles.includes('FilePDFDeNghiCapPhep') ? 1 : 0;
+  const cancelFlag = isCancelApproval ? 1 : 0;
 
   await connection
     .request()
@@ -231,15 +231,46 @@ const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguo
     .input("trangThai", sql.NVarChar, trangThai)
     .input("yKienPheDuyet", sql.NVarChar, yKienPheDuyet || null)
     .input("nguoiPheDuyet", sql.NVarChar, nguoiPheDuyet || null)
+    .input("nguoiXuLy", sql.NVarChar, nguoiXuLy || null)
     .input("filePDFBoSungKeHoach", sql.NVarChar, filePDFBoSungKeHoach || null)
-    .input("ngayCapNhat", sql.DateTime, now)
-    .input("ngayPheDuyet", sql.DateTime, now)
     .query(`
       UPDATE dbo.KeHoachCongViec
       SET 
         TrangThai = @trangThai,
-        YKienPheDuyet = @yKienPheDuyet,
-        NguoiPheDuyet = @nguoiPheDuyet,
+
+        -- Ý kiến: chỉ cập nhật khi phê duyệt/từ chối
+        YKienPheDuyet = CASE
+          WHEN @trangThai IN (N'Đã phê duyệt', N'Bị từ chối') THEN @yKienPheDuyet
+          ELSE YKienPheDuyet
+        END,
+
+        -- Người phê duyệt: gán khi phê duyệt/từ chối, xóa khi huỷ phê duyệt
+        NguoiPheDuyet = CASE
+          WHEN @trangThai IN (N'Đã phê duyệt', N'Bị từ chối') THEN @nguoiPheDuyet
+          WHEN ${cancelFlag} = 1 THEN NULL
+          ELSE NguoiPheDuyet
+        END,
+
+        -- Ngày phê duyệt: gán khi phê duyệt/từ chối, xóa khi huỷ phê duyệt
+        NgayPheDuyet = CASE
+          WHEN @trangThai IN (N'Đã phê duyệt', N'Bị từ chối') THEN GETDATE()
+          WHEN ${cancelFlag} = 1 THEN NULL
+          ELSE NgayPheDuyet
+        END,
+
+        -- Người xử lý: cập nhật khi chuyển sang Đang thẩm định
+        NguoiXuLy = CASE
+          WHEN @trangThai = N'Đang thẩm định' THEN @nguoiXuLy
+          ELSE NguoiXuLy
+        END,
+
+        -- Ngày xử lý: cập nhật khi chuyển sang Đang thẩm định
+        NgayXuLy = CASE
+          WHEN @trangThai = N'Đang thẩm định' THEN GETDATE()
+          ELSE NgayXuLy
+        END,
+
+        -- File bổ sung
         FilePDFBoSungKeHoach = CASE 
           WHEN ${removeBoSung} = 1 THEN NULL 
           ELSE 
@@ -260,8 +291,7 @@ const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguo
           WHEN ${removeDeNghi} = 1 THEN NULL 
           ELSE FilePDFDeNghiCapPhep 
         END,
-        NgayCapNhat = @ngayCapNhat,
-        NgayPheDuyet = @ngayPheDuyet
+        NgayCapNhat = GETDATE()
       WHERE MaKeHoach = @maKeHoach
     `);
 

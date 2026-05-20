@@ -40,7 +40,7 @@ const getKeHoachChiTiet = async (req, res) => {
 const updateTrangThaiPheDuyet = async (req, res) => {
   try {
     const { maKeHoach } = req.params;
-    const { trangThai, yKienPheDuyet, nguoiPheDuyet, removeFiles } = req.body;
+    const { trangThai, yKienPheDuyet, nguoiPheDuyet, nguoiXuLy, isCancelApproval, removeFiles } = req.body;
     const filePDFBoSungKeHoach = req.file ? req.file.filename : null;
 
     // Parse removeFiles if it's sent as a JSON string (common with FormData)
@@ -53,6 +53,8 @@ const updateTrangThaiPheDuyet = async (req, res) => {
       }
     }
 
+    const parsedIsCancelApproval = isCancelApproval === 'true' || isCancelApproval === true;
+
     if (!trangThai) {
       return res.status(400).json({ message: "Trạng thái không được để trống" });
     }
@@ -64,7 +66,9 @@ const updateTrangThaiPheDuyet = async (req, res) => {
       nguoiPheDuyet,
       filePDFBoSungKeHoach,
       parsedRemoveFiles,
-      req.user
+      req.user,
+      nguoiXuLy,
+      parsedIsCancelApproval
     );
     res.status(200).json(result);
   } catch (error) {

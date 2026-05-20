@@ -75,7 +75,7 @@ const getKeHoachChiTiet = async (maKeHoach, user) => {
   return result;
 };
 
-const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles, user) => {
+const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles, user, nguoiXuLy = null, isCancelApproval = false) => {
   assertQuanLy(user);
 
   if (removeFiles && removeFiles.length > 0) {
@@ -99,7 +99,7 @@ const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguo
     }
   }
 
-  return await pheDuyetRepo.updateTrangThaiPheDuyet(maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles);
+  return await pheDuyetRepo.updateTrangThaiPheDuyet(maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles, nguoiXuLy, isCancelApproval);
 };
 
 const removeSpecificFile = async (maKeHoach, fileKey, fileName, user) => {

@@ -43,6 +43,8 @@ export const PheDuyetService = {
     trangThai: string, 
     yKienPheDuyet: string, 
     nguoiPheDuyet: string,
+    nguoiXuLy: string,
+    isCancelApproval: boolean,
     file?: File,
     removeFiles?: string[]
   ): Promise<any> => {
@@ -51,6 +53,8 @@ export const PheDuyetService = {
       formData.append('trangThai', trangThai);
       formData.append('yKienPheDuyet', yKienPheDuyet);
       formData.append('nguoiPheDuyet', nguoiPheDuyet);
+      formData.append('nguoiXuLy', nguoiXuLy);
+      formData.append('isCancelApproval', String(isCancelApproval));
       
       if (file) {
         formData.append('filePDFBoSungKeHoach', file);

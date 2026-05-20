@@ -10,9 +10,8 @@ const PLAN_STATUS = {
   DA_HUY: "Đã hủy",
 };
 
-const ALLOWED_PLAN_TYPES = ["TM", "CS", "DIDOI", "CHATHA"];
 const EDITABLE_STATUSES = [PLAN_STATUS.DA_GUI, PLAN_STATUS.BI_TU_CHOI, PLAN_STATUS.DA_HUY];
-const PERMIT_REQUIRED_TYPES = ["DIDOI", "CHATHA"];
+const PERMIT_REQUIRED_TYPES = ["DDCH"];
 
 const createHttpError = (message, statusCode = 400) => {
   const error = new Error(message);
@@ -43,10 +42,6 @@ const normalizePlanPayload = (payload = {}) => ({
 const validatePlanPayload = (payload) => {
   if (!payload.maLoaiCongViec) {
     throw createHttpError("Vui lòng chọn loại kế hoạch");
-  }
-
-  if (!ALLOWED_PLAN_TYPES.includes(payload.maLoaiCongViec)) {
-    throw createHttpError("Loại kế hoạch không hợp lệ cho chức năng gửi kế hoạch công việc");
   }
 
   if (!payload.tieuDe) {
@@ -125,7 +120,7 @@ const createKeHoach = async (payload, files, user) => {
   }
 
   if (PERMIT_REQUIRED_TYPES.includes(planPayload.maLoaiCongViec) && !filePDFDeNghiCapPhep) {
-    throw createHttpError("Vui lòng tải file PDF đề nghị cấp phép cho kế hoạch chặt hạ/di chuyển");
+    throw createHttpError("Vui lòng tải file PDF đề nghị cấp phép cho kế hoạch di dời / chặt hạ");
   }
 
   const maKeHoach = await generateMaKeHoach();
@@ -184,7 +179,7 @@ const updateKeHoach = async (maKeHoach, payload, files, user) => {
     !filePDFDeNghiCapPhep &&
     !currentPlan.FilePDFDeNghiCapPhep
   ) {
-    throw createHttpError("Vui lòng tải file PDF đề nghị cấp phép cho kế hoạch chặt hạ/di chuyển");
+    throw createHttpError("Vui lòng tải file PDF đề nghị cấp phép cho kế hoạch di dời / chặt hạ");
   }
 
   const updatedPlan = await keHoachRepo.updateKeHoach({

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GuiKeHoachService } from '../../services/guiKeHoachService';
 import { LocationService } from '../../services/locationService';
@@ -44,8 +44,7 @@ const EMPTY_FILES: PlanFileState = {
   fileBoSungKeHoach: null,
 };
 
-const ALLOWED_PLAN_TYPE_CODES = ['TM', 'CS', 'DIDOI', 'CHATHA'];
-const PERMIT_REQUIRED_TYPE_CODES = ['DIDOI', 'CHATHA'];
+const PERMIT_REQUIRED_TYPE_CODES = ['DDCH'];
 const MAX_PDF_SIZE = 10 * 1024 * 1024;
 
 const getApiErrorMessage = (error: ApiError | unknown, fallback: string) => {
@@ -86,10 +85,6 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
     const fileUrl = URL.createObjectURL(file);
     window.open(fileUrl, '_blank', 'noopener,noreferrer');
   };
-
-  const filteredJobTypes = useMemo(() => {
-    return jobTypes.filter((item) => ALLOWED_PLAN_TYPE_CODES.includes(item.MaLoaiCongViec));
-  }, [jobTypes]);
 
   const resetFileInputs = () => {
     if (fileKeHoachRef.current) fileKeHoachRef.current.value = '';
@@ -232,7 +227,7 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
     if (!files.fileKeHoach && !plan?.FilePDFKeHoach) return 'Vui lòng tải file PDF kế hoạch';
 
     if (requiresPermitFile && !files.fileDeNghiCapPhep && !plan?.FilePDFDeNghiCapPhep) {
-      return 'Vui lòng tải file PDF đề nghị cấp phép cho kế hoạch chặt hạ/di chuyển';
+      return 'Vui lòng tải file PDF đề nghị cấp phép cho kế hoạch di dời / chặt hạ';
     }
 
     return '';
@@ -355,7 +350,7 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
                 required
               >
                 <option value="">Chọn loại kế hoạch</option>
-                {filteredJobTypes.map((item) => (
+                {jobTypes.map((item) => (
                   <option key={item.MaLoaiCongViec} value={item.MaLoaiCongViec}>
                     {item.TenCongViec || item.MaLoaiCongViec}
                   </option>
