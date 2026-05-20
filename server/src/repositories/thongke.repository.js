@@ -27,12 +27,7 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
     WHERE 1=1
   `;
 
-  const validDateFields = {
-    'NgayTao': 'kh.NgayTao',
-    'NgayPheDuyet': 'kh.NgayPheDuyet',
-    'NgayXuLy': 'kh.NgayXuLy'
-  };
-  const dateField = validDateFields[loaiNgay] || 'kh.NgayTao';
+  const dateField = 'kh.NgayTao';
 
   if (tuNgay) {
     query += ` AND ${dateField} >= @tuNgay`;
@@ -44,6 +39,11 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
     end.setHours(23, 59, 59, 999);
     query += ` AND ${dateField} <= @denNgay`;
     request.input("denNgay", sql.DateTime, end);
+  }
+
+  if (loaiNgay && loaiNgay !== 'Tất cả') {
+    query += ` AND kh.TrangThai = @loaiNgayStatus`;
+    request.input("loaiNgayStatus", sql.NVarChar, loaiNgay);
   }
 
   if (maTuyenDuong) {

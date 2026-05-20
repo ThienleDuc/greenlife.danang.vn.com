@@ -9,16 +9,19 @@ function removeAccents(str) {
 }
 
 const getTongQuan = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, page, limit) => {
-  // 1. Lấy toàn bộ dữ liệu (không phân trang) để tính toán biểu đồ và tổng quan
-  const allData = await thongKeRepository.getThongKeData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+  // 1. Lấy toàn bộ dữ liệu (không phân trang) ĐỂ TÍNH TOÁN TỔNG QUAN (không bị ảnh hưởng bởi bộ lọc Trạng thái/loaiNgay)
+  const allDataForSummary = await thongKeRepository.getThongKeData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, 'Tất cả', maLoaiCongViec, '');
   
-  // 2. Lấy dữ liệu phân trang cho bảng chi tiết (chỉ khi có page và limit)
+  // 2. Lấy toàn bộ dữ liệu (không phân trang) nhưng ĐÃ LỌC theo trạng thái (loaiNgay) để làm rawData
+  const filteredAllData = await thongKeRepository.getThongKeData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+  
+  // 3. Lấy dữ liệu phân trang cho bảng chi tiết (chỉ khi có page và limit)
   const paginatedData = (page && limit)
     ? await thongKeRepository.getThongKeData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, page, limit)
-    : allData;
+    : filteredAllData;
   
-  // Tính toán tổng quan và gom nhóm theo ngày từ allData
-  const summary = allData.reduce((acc, row) => {
+  // Tính toán tổng quan và gom nhóm theo ngày từ allDataForSummary (Dữ liệu chưa bị lọc trạng thái)
+  const summary = allDataForSummary.reduce((acc, row) => {
     const trangThaiStr = row.TrangThai ? row.TrangThai.toLowerCase() : '';
     
     // Mọi kế hoạch đều được tính là 1 "Tạo mới"
@@ -35,13 +38,8 @@ const getTongQuan = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, 
       acc.tongThamDinh++;
     }
 
-    // Gom nhóm theo ngày tương ứng với loại ngày lọc
+    // Gom nhóm theo ngày Tạo
     let dateValue = row.NgayTao;
-    if (loaiNgay === 'NgayPheDuyet') {
-      dateValue = row.NgayPheDuyet;
-    } else if (loaiNgay === 'NgayXuLy') {
-      dateValue = row.NgayXuLy;
-    }
 
     const dateStr = dateValue ? new Date(dateValue).toISOString().split('T')[0] : 'N/A';
     if (!acc.byDate[dateStr]) {
@@ -91,8 +89,8 @@ const getTongQuan = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, 
     },
     chartData,
     rawData: paginatedData,
-    totalItems: allData.length,
-    allRawData: allData
+    totalItems: filteredAllData.length,
+    allRawData: filteredAllData
   };
 };
 

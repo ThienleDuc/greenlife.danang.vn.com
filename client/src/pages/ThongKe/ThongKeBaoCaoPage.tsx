@@ -156,12 +156,12 @@ const ThongKeBaoCaoPage: React.FC = () => {
     if (!selectedDateForModal || plansSource.length === 0) return [];
     return plansSource.filter(item => {
       let itemDate = item.NgayTao;
-      if (loaiNgay === 'NgayPheDuyet') {
+      if (loaiNgay === 'Đã phê duyệt') {
         itemDate = item.NgayPheDuyet;
-      } else if (loaiNgay === 'NgayXuLy') {
+      } else if (loaiNgay === 'Bị từ chối' || loaiNgay === 'Đã hủy') {
         itemDate = item.NgayXuLy;
       }
-      if (!itemDate) return selectedDateForModal === 'N/A';
+      if (!itemDate) return false;
       const formattedItemDate = new Date(itemDate).toISOString().split('T')[0];
       return formattedItemDate === selectedDateForModal;
     });
@@ -173,7 +173,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
 
   // Lấy nhãn hiển thị cho nút lọc thời gian
   const getDateFilterLabel = () => {
-    const loaiNgayText = loaiNgay === 'NgayPheDuyet' ? 'Ngày duyệt' : loaiNgay === 'NgayXuLy' ? 'Ngày xử lý' : 'Ngày tạo';
+    const loaiNgayText = loaiNgay || 'Tất cả';
     const tu = tuNgay ? new Date(tuNgay).toLocaleDateString('vi-VN') : '...';
     const den = denNgay ? new Date(denNgay).toLocaleDateString('vi-VN') : '...';
     return `${loaiNgayText}: ${tu} - ${den}`;
@@ -238,17 +238,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
               ))}
             </select>
           </div>
-          <div className="tkbc-filter-group">
-            <label>Trạng thái</label>
-            <select className="tkbc-select" value={trangThai} onChange={e => setTrangThai(e.target.value)}>
-              <option value="">-- Tất cả --</option>
-              <option value="Đã gửi">Đã gửi</option>
-              <option value="Đang thẩm định">Đang thẩm định</option>
-              <option value="Đã phê duyệt">Đã phê duyệt</option>
-              <option value="Bị từ chối">Bị từ chối</option>
-              <option value="Đã hủy">Đã hủy</option>
-            </select>
-          </div>
+          {/* Trạng thái dropdown has been removed to avoid conflict with Loại kế hoạch */}
           <div className="tkbc-filter-group button-group">
             <button className="tkbc-btn-filter" onClick={handleFilter} disabled={loading}>
               <span className="material-symbols-outlined">filter_alt</span>
@@ -450,16 +440,19 @@ const ThongKeBaoCaoPage: React.FC = () => {
             </div>
             <div className="tkbc-modal-body">
               <div className="tkbc-filter-group" style={{ marginBottom: '16px' }}>
-                <label>Loại ngày thống kê</label>
+                <label>Trạng thái</label>
                 <select
                   className="tkbc-select"
                   value={tempLoaiNgay}
                   onChange={e => setTempLoaiNgay(e.target.value)}
                   style={{ width: '100%', marginTop: '8px' }}
                 >
-                  <option value="NgayTao">Ngày tạo kế hoạch</option>
-                  <option value="NgayPheDuyet">Ngày phê duyệt kế hoạch</option>
-                  <option value="NgayXuLy">Ngày xử lý kế hoạch</option>
+                  <option value="Tất cả">Tất cả</option>
+                  <option value="Đã gửi">Đã gửi</option>
+                  <option value="Đang thẩm định">Đang thẩm định</option>
+                  <option value="Đã phê duyệt">Đã phê duyệt</option>
+                  <option value="Bị từ chối">Bị từ chối</option>
+                  <option value="Đã hủy">Đã hủy</option>
                 </select>
               </div>
 
