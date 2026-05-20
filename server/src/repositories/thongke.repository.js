@@ -8,18 +8,17 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
     SELECT 
       kh.MaKeHoach,
       kh.TieuDe,
+      kh.TrangThai,
       kh.NgayTao,
       kh.NgayPheDuyet,
       kh.NgayXuLy,
-      kh.TrangThai,
-      nl.HoTen AS NguoiLap,
-      pd.HoTen AS NguoiPheDuyet,
       td.TenTuyenDuong,
-      cv.TenCongViec
+      cv.TenCongViec,
+      xp.MaXaPhuong,
+      xp.TenXaPhuong
     FROM dbo.KeHoachCongViec kh
-    LEFT JOIN dbo.NguoiDung nl ON kh.NguoiLap = nl.MaNguoiDung
-    LEFT JOIN dbo.NguoiDung pd ON kh.NguoiPheDuyet = pd.MaNguoiDung
     LEFT JOIN dbo.TuyenDuong td ON kh.MaTuyenDuong = td.MaTuyenDuong
+    LEFT JOIN dbo.XaPhuong xp ON td.MaXaPhuong = xp.MaXaPhuong
     LEFT JOIN dbo.DanhMucCongViec cv ON kh.MaLoaiCongViec = cv.MaLoaiCongViec
     WHERE 1=1
   `;
@@ -63,7 +62,7 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
     request.input("trangThai", sql.NVarChar, trangThai);
   }
 
-  query += ` ORDER BY kh.MaKeHoach ASC`;
+  query += ` ORDER BY kh.NgayCapNhat DESC, kh.NgayPheDuyet DESC, kh.NgayXuLy DESC, kh.NgayTao DESC`;
 
   if (page && limit) {
     const offset = (page - 1) * limit;

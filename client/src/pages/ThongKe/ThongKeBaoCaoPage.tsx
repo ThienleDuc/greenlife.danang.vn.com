@@ -368,16 +368,15 @@ const ThongKeBaoCaoPage: React.FC = () => {
               <table className="tkbc-table">
                 <thead>
                   <tr>
-                    <th>Mã KH</th>
-                    <th>Tiêu đề</th>
-                    <th>Tuyến đường</th>
-                    <th>Loại CV</th>
-                    <th>Ngày tạo</th>
-                    <th>Ngày Phê Duyệt</th>
-                    <th>Ngày Xử Lý</th>
-                    <th>Trạng thái</th>
-                    <th>Người lập</th>
-                    <th>Người phê duyệt</th>
+                    <th style={{ width: '7%' }}>Mã KH</th>
+                    <th style={{ width: '14%' }}>Tiêu đề</th>
+                    <th style={{ width: '11%' }}>Xã phường</th>
+                    <th style={{ width: '15%' }}>Tuyến đường</th>
+                    <th style={{ width: '11%' }}>Loại CV</th>
+                    <th style={{ width: '10%' }}>Ngày tạo</th>
+                    <th style={{ width: '12%' }}>Ngày Phê Duyệt</th>
+                    <th style={{ width: '10%' }}>Ngày Xử Lý</th>
+                    <th style={{ width: '10%' }}>Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -398,26 +397,25 @@ const ThongKeBaoCaoPage: React.FC = () => {
 
                     return (
                       <tr key={index}>
-                        <td style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-primary)' }}>#{item.MaKeHoach}</td>
-                        <td>{item.TieuDe}</td>
-                        <td>{item.TenTuyenDuong}</td>
-                        <td>{item.TenCongViec}</td>
-                        <td>{item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : ''}</td>
-                        <td>{item.NgayPheDuyet ? new Date(item.NgayPheDuyet).toLocaleDateString('vi-VN') : '-'}</td>
-                        <td>{item.NgayXuLy ? new Date(item.NgayXuLy).toLocaleDateString('vi-VN') : '-'}</td>
-                        <td>
+                        <td title={`#${item.MaKeHoach}`} style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-primary)' }}>#{item.MaKeHoach}</td>
+                        <td title={item.TieuDe || ''}>{item.TieuDe}</td>
+                        <td title={item.TenXaPhuong || '-'}>{item.TenXaPhuong || '-'}</td>
+                        <td title={item.TenTuyenDuong || ''}>{item.TenTuyenDuong}</td>
+                        <td title={item.TenCongViec || ''}>{item.TenCongViec}</td>
+                        <td title={item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : ''}>{item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : ''}</td>
+                        <td title={item.NgayPheDuyet ? new Date(item.NgayPheDuyet).toLocaleDateString('vi-VN') : '-'}>{item.NgayPheDuyet ? new Date(item.NgayPheDuyet).toLocaleDateString('vi-VN') : '-'}</td>
+                        <td title={item.NgayXuLy ? new Date(item.NgayXuLy).toLocaleDateString('vi-VN') : '-'}>{item.NgayXuLy ? new Date(item.NgayXuLy).toLocaleDateString('vi-VN') : '-'}</td>
+                        <td title={item.TrangThai || ''}>
                           <span className={`tkbc-status-badge ${badgeClass}`}>
                             {item.TrangThai}
                           </span>
                         </td>
-                        <td>{item.NguoiLap}</td>
-                        <td>{item.NguoiPheDuyet || '-'}</td>
                       </tr>
                     );
                   })}
                   {paginatedData.length === 0 && (
                     <tr>
-                      <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
+                      <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
                         Không có dữ liệu
                       </td>
                     </tr>
@@ -533,10 +531,10 @@ const ThongKeBaoCaoPage: React.FC = () => {
                     <tr>
                       <th>Mã KH</th>
                       <th>Tiêu đề</th>
+                      <th>Xã phường</th>
                       <th>Tuyến đường</th>
                       <th>Loại CV</th>
                       <th>Trạng thái</th>
-                      <th>Người lập</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -559,6 +557,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                         <tr key={index}>
                           <td style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-primary)' }}>#{item.MaKeHoach}</td>
                           <td>{item.TieuDe}</td>
+                          <td>{item.TenXaPhuong || '-'}</td>
                           <td>{item.TenTuyenDuong}</td>
                           <td>{item.TenCongViec}</td>
                           <td>
@@ -566,7 +565,6 @@ const ThongKeBaoCaoPage: React.FC = () => {
                               {item.TrangThai}
                             </span>
                           </td>
-                          <td>{item.NguoiLap}</td>
                         </tr>
                       );
                     })}
