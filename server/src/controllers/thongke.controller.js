@@ -3,8 +3,12 @@ const userRepository = require("../repositories/user.repository");
 
 const getThongKeTongQuan = async (req, res) => {
   try {
-    const { tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai } = req.query;
-    const data = await thongKeService.getTongQuan(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+    const { tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, page, limit } = req.query;
+    const data = await thongKeService.getTongQuan(
+      tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined
+    );
     res.status(200).json(data);
   } catch (error) {
     console.error("Lỗi lấy thống kê:", error);

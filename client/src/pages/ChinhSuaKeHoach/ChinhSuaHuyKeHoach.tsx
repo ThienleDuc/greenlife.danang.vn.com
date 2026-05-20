@@ -80,6 +80,12 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
   const requiresPermitFile = PERMIT_REQUIRED_TYPE_CODES.includes(form.maLoaiCongViec);
   const isRejectedPlan = plan?.TrangThai === 'Bị từ chối';
 
+  const openLocalPdf = (file: File | null) => {
+    if (!file) return;
+    const fileUrl = URL.createObjectURL(file);
+    window.open(fileUrl, '_blank', 'noopener,noreferrer');
+  };
+
   const filteredJobTypes = useMemo(() => {
     return jobTypes.filter((item) => ALLOWED_PLAN_TYPE_CODES.includes(item.MaLoaiCongViec));
   }, [jobTypes]);
@@ -412,7 +418,7 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
               />
             </label>
 
-            <label className="send-plan-field">
+            <div className="send-plan-field">
               <span>File PDF kế hoạch</span>
               <input
                 ref={fileKeHoachRef}
@@ -422,9 +428,22 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
                 onChange={handleFileChange}
                 required={!plan?.FilePDFKeHoach}
               />
-            </label>
+              {files.fileKeHoach && (
+                <div className="send-plan-file-preview">
+                  <button
+                    type="button"
+                    className="preview-pdf-btn"
+                    onClick={() => openLocalPdf(files.fileKeHoach)}
+                    title="Click để xem trước file PDF"
+                  >
+                    <span className="material-symbols-outlined">visibility</span>
+                    <span>Xem trước: {files.fileKeHoach.name}</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
-            <label className="send-plan-field">
+            <div className="send-plan-field">
               <span>File PDF đề nghị cấp phép</span>
               <input
                 ref={fileDeNghiRef}
@@ -434,10 +453,23 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
                 onChange={handleFileChange}
                 required={requiresPermitFile && !plan?.FilePDFDeNghiCapPhep}
               />
-            </label>
+              {files.fileDeNghiCapPhep && (
+                <div className="send-plan-file-preview">
+                  <button
+                    type="button"
+                    className="preview-pdf-btn"
+                    onClick={() => openLocalPdf(files.fileDeNghiCapPhep)}
+                    title="Click để xem trước file PDF"
+                  >
+                    <span className="material-symbols-outlined">visibility</span>
+                    <span>Xem trước: {files.fileDeNghiCapPhep.name}</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {isRejectedPlan && (
-              <label className="send-plan-field">
+              <div className="send-plan-field">
                 <span>File PDF bổ sung kế hoạch</span>
                 <input
                   ref={fileBoSungRef}
@@ -446,7 +478,20 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
                   accept="application/pdf,.pdf"
                   onChange={handleFileChange}
                 />
-              </label>
+                {files.fileBoSungKeHoach && (
+                  <div className="send-plan-file-preview">
+                    <button
+                      type="button"
+                      className="preview-pdf-btn"
+                      onClick={() => openLocalPdf(files.fileBoSungKeHoach)}
+                      title="Click để xem trước file PDF"
+                    >
+                      <span className="material-symbols-outlined">visibility</span>
+                      <span>Xem trước: {files.fileBoSungKeHoach.name}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

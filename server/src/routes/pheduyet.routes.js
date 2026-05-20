@@ -1,32 +1,31 @@
 const express = require("express");
 const router = express.Router();
 const pheDuyetController = require("../controllers/pheduyet.controller");
-const multer = require("multer");
-const path = require("path");
 const { authorize } = require("../middlewares/auth.middleware");
 const { ROLE_CODES } = require("../utils/role.utils");
+const { uploadPdf } = require("../utils/pdfUpload.utils");
 
-// Cấu hình lưu trữ file PDF vào thư mục client/public/pdf
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../../../client/public/pdf"));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, "BoSung-" + uniqueSuffix + path.extname(file.originalname));
-  },
-});
+const uploadBoSungFile = uploadPdf.single("filePDFBoSungKeHoach");
 
-const upload = multer({ 
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype === "application/pdf") {
-      cb(null, true);
-    } else {
-      cb(new Error("Chỉ cho phép tải lên file PDF"), false);
+const handleUploadBoSungFile = (req, res, next) => {
+  uploadBoSungFile(req, res, (error) => {
+    if (!error) {
+      return next();
     }
-  }
-});
+
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({
+        success: false,
+        message: "Dung lượng file vượt quá giới hạn 10MB",
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Không thể lưu file kế hoạch, vui lòng thử lại",
+    });
+  });
+};
 
 router.get("/phe-duyet/ke-hoach", authorize([ROLE_CODES.QUAN_LY]), pheDuyetController.getAllKeHoachPheDuyet);
 router.get("/phe-duyet/ke-hoach/search", authorize([ROLE_CODES.QUAN_LY]), pheDuyetController.searchKeHoachPheDuyet);
@@ -34,7 +33,7 @@ router.get("/phe-duyet/ke-hoach/:maKeHoach", authorize([ROLE_CODES.QUAN_LY]), ph
 router.put(
   "/phe-duyet/ke-hoach/:maKeHoach/trang-thai", 
   authorize([ROLE_CODES.QUAN_LY]),
-  upload.single("filePDFBoSungKeHoach"),
+  handleUploadBoSungFile,
   pheDuyetController.updateTrangThaiPheDuyet
 );
 

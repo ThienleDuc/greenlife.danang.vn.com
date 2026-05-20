@@ -83,7 +83,7 @@ const Header: React.FC = () => {
                 <img
                   alt="Avatar"
                   className="header-user-avatar"
-                  src={user?.anhDaiDien ? `/avatars/${user.anhDaiDien}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.hoTen || 'U')}&background=059669&color=fff`}
+                  src={user?.anhDaiDien ? `http://localhost:5000/avatars/${user.anhDaiDien}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.hoTen || 'U')}&background=059669&color=fff`}
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.hoTen || 'U')}&background=059669&color=fff`;
                   }}
@@ -97,7 +97,7 @@ const Header: React.FC = () => {
                   <div className="dropdown-header">
                     <img 
                       className="dropdown-avatar" 
-                      src={user?.anhDaiDien ? `/avatars/${user.anhDaiDien}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.hoTen || 'U')}&background=059669&color=fff`}
+                      src={user?.anhDaiDien ? `http://localhost:5000/avatars/${user.anhDaiDien}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.hoTen || 'U')}&background=059669&color=fff`}
                       alt="Avatar"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.hoTen || 'U')}&background=059669&color=fff`;

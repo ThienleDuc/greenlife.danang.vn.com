@@ -3,13 +3,14 @@ const fs = require("fs");
 const multer = require("multer");
 const path = require("path");
 
-const PDF_DIR = path.join(__dirname, "../../../client/public/pdf");
+const PDF_DIR = path.join(__dirname, "../../public/pdf");
 const MAX_PDF_SIZE = 10 * 1024 * 1024;
 
 const FIELD_PREFIX_MAP = {
   fileKeHoach: "kh",
   fileDeNghiCapPhep: "cp",
   fileBoSungKeHoach: "bs",
+  filePDFBoSungKeHoach: "bs",
 };
 
 const ensurePdfDir = () => {
@@ -66,9 +67,22 @@ const deleteUploadedFiles = (files = {}) => {
     });
 };
 
+const deletePdfFile = (fileName) => {
+  if (!fileName) return;
+  const filePath = path.join(PDF_DIR, fileName);
+  if (fs.existsSync(filePath)) {
+    try {
+      fs.unlinkSync(filePath);
+    } catch (err) {
+      console.error(`Không thể xóa file ${fileName}:`, err);
+    }
+  }
+};
+
 module.exports = {
   PDF_DIR,
   MAX_PDF_SIZE,
   uploadPdf,
   deleteUploadedFiles,
+  deletePdfFile,
 };

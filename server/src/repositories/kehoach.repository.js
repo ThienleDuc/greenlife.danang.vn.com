@@ -227,6 +227,7 @@ const huyKeHoach = async (maKeHoach, nguoiLap) => {
  */
 const searchKeHoach = async (filters) => {
   const {
+    maKeHoach,
     title,
     status,
     processor,
@@ -262,6 +263,11 @@ const searchKeHoach = async (filters) => {
     LEFT JOIN dbo.XaPhuong xp ON td.MaXaPhuong = xp.MaXaPhuong
     WHERE 1=1
   `;
+
+  if (maKeHoach) {
+    query += ` AND kh.MaKeHoach LIKE @maKeHoach`;
+    request.input("maKeHoach", sql.VarChar, `%${maKeHoach}%`);
+  }
 
   if (title) {
     query += ` AND kh.TieuDe LIKE @title`;

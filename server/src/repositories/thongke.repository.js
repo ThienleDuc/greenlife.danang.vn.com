@@ -1,6 +1,6 @@
 const { sql, poolPromise } = require("../config/db");
 
-const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai) => {
+const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, page, limit) => {
   const connection = await poolPromise;
   const request = connection.request();
   
@@ -64,6 +64,13 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
   }
 
   query += ` ORDER BY kh.MaKeHoach ASC`;
+
+  if (page && limit) {
+    const offset = (page - 1) * limit;
+    query += ` OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
+    request.input("offset", sql.Int, offset);
+    request.input("limit", sql.Int, limit);
+  }
   
   const result = await request.query(query);
   return result.recordset;

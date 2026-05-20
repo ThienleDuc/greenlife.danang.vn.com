@@ -2,6 +2,7 @@ const pheDuyetRepo = require("../repositories/pheduyet.repository");
 const fs = require("fs");
 const path = require("path");
 const { isQuanLy } = require("../utils/role.utils");
+const { PDF_DIR, deletePdfFile } = require("../utils/pdfUpload.utils");
 
 const createHttpError = (message, statusCode = 400) => {
   const error = new Error(message);
@@ -23,7 +24,7 @@ const checkAndCleanPlanFiles = (keHoach) => {
   
   const checkFileExists = (fileName) => {
     if (!fileName) return false;
-    const filePath = path.join(__dirname, "../../../client/public/pdf", fileName);
+    const filePath = path.join(PDF_DIR, fileName);
     return fs.existsSync(filePath);
   };
 
@@ -76,11 +77,38 @@ const getKeHoachChiTiet = async (maKeHoach, user) => {
 
 const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles, user) => {
   assertQuanLy(user);
+
+  if (removeFiles && removeFiles.length > 0) {
+    try {
+      const detail = await pheDuyetRepo.getKeHoachChiTiet(maKeHoach);
+      if (detail && detail.keHoach) {
+        const plan = detail.keHoach;
+        if (removeFiles.includes('FilePDFKeHoach') && plan.FilePDFKeHoach) {
+          deletePdfFile(plan.FilePDFKeHoach);
+        }
+        if (removeFiles.includes('FilePDFDeNghiCapPhep') && plan.FilePDFDeNghiCapPhep) {
+          deletePdfFile(plan.FilePDFDeNghiCapPhep);
+        }
+        if (removeFiles.includes('FilePDFBoSungKeHoach') && plan.FilePDFBoSungKeHoach) {
+          const files = plan.FilePDFBoSungKeHoach.split(",");
+          files.forEach(f => deletePdfFile(f.trim()));
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi khi xóa file vật lý trong lúc cập nhật phê duyệt:", err);
+    }
+  }
+
   return await pheDuyetRepo.updateTrangThaiPheDuyet(maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles);
 };
 
 const removeSpecificFile = async (maKeHoach, fileKey, fileName, user) => {
   assertQuanLy(user);
+
+  if (fileName) {
+    deletePdfFile(fileName);
+  }
+
   return await pheDuyetRepo.removeSpecificFile(maKeHoach, fileKey, fileName);
 };
 

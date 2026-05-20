@@ -7,10 +7,13 @@ import {
   LineChart, Line
 } from 'recharts';
 import '../../styles/pages/ThongKeBaoCao.css';
+import Pagination from '../../components/Pagination';
 
 const ThongKeBaoCaoPage: React.FC = () => {
   const [data, setData] = useState<ThongKeTongQuanResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 10;
 
   // Bộ lọc thời gian
   const [tuNgay, setTuNgay] = useState<string>(() => {
@@ -46,11 +49,10 @@ const ThongKeBaoCaoPage: React.FC = () => {
   const [tempDenNgay, setTempDenNgay] = useState<string>('');
 
   const [errorMsg, setErrorMsg] = useState<string>('');
-  const [exportType, setExportType] = useState<string>('excel');
 
   useEffect(() => {
     loadLocationsAndCategories();
-    loadData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+    loadData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, 1);
   }, []);
 
   const loadLocationsAndCategories = async () => {
@@ -88,12 +90,14 @@ const ThongKeBaoCaoPage: React.FC = () => {
     maXp?: string,
     ln?: string,
     maCv?: string,
-    tt?: string
+    tt?: string,
+    page: number = 1
   ) => {
     setLoading(true);
     try {
-      const res = await thongKeService.getThongKeTongQuan(tu, den, maTd, maXp, ln, maCv, tt);
+      const res = await thongKeService.getThongKeTongQuan(tu, den, maTd, maXp, ln, maCv, tt, page, itemsPerPage);
       setData(res);
+      setCurrentPage(page);
     } catch (error) {
       console.error('Lỗi lấy thống kê', error);
       alert('Không thể tải dữ liệu thống kê');
@@ -108,15 +112,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
       return;
     }
     setErrorMsg('');
-    loadData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
-  };
-
-  const handleExport = async () => {
-    if (exportType === 'excel') {
-      await handleExportExcel();
-    } else {
-      await handleExportPDF();
-    }
+    loadData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, 1);
   };
 
   const handleExportExcel = async () => {
@@ -125,27 +121,22 @@ const ThongKeBaoCaoPage: React.FC = () => {
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'BaoCaoThongKe.xlsx');
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const timestamp = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+
+      link.setAttribute('download', `BaoCaoThongKe_${timestamp}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
     } catch (error) {
       alert("Lỗi xuất Excel");
-    }
-  };
-
-  const handleExportPDF = async () => {
-    try {
-      const blob = await thongKeService.downloadPDF(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
-      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'BaoCaoThongKe.pdf');
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-    } catch (error) {
-      alert("Lỗi xuất PDF");
     }
   };
 
@@ -161,8 +152,9 @@ const ThongKeBaoCaoPage: React.FC = () => {
 
   // Lọc kế hoạch thuộc ngày được click dựa trên loại ngày lọc
   const getPlansForSelectedDate = () => {
-    if (!selectedDateForModal || !data?.rawData) return [];
-    return data.rawData.filter(item => {
+    const plansSource = data?.allRawData || data?.rawData || [];
+    if (!selectedDateForModal || plansSource.length === 0) return [];
+    return plansSource.filter(item => {
       let itemDate = item.NgayTao;
       if (loaiNgay === 'NgayPheDuyet') {
         itemDate = item.NgayPheDuyet;
@@ -174,6 +166,10 @@ const ThongKeBaoCaoPage: React.FC = () => {
       return formattedItemDate === selectedDateForModal;
     });
   };
+
+  const totalItems = data?.totalItems || 0;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const paginatedData = data?.rawData || [];
 
   // Lấy nhãn hiển thị cho nút lọc thời gian
   const getDateFilterLabel = () => {
@@ -188,18 +184,9 @@ const ThongKeBaoCaoPage: React.FC = () => {
       <div className="tkbc-header">
         <h1 className="tkbc-title">Thống kê kế hoạch</h1>
         <div className="tkbc-actions">
-          <select
-            className="tkbc-select"
-            style={{ fontWeight: 'var(--font-weight-medium)' }}
-            value={exportType}
-            onChange={(e) => setExportType(e.target.value)}
-          >
-            <option value="excel">File Excel</option>
-            <option value="pdf">File PDF</option>
-          </select>
-          <button className="tkbc-btn-export" onClick={handleExport} disabled={loading}>
+          <button className="tkbc-btn-export" onClick={handleExportExcel} disabled={loading}>
             <span className="material-symbols-outlined">download</span>
-            Xuất báo cáo
+            Xuất Excel
           </button>
         </div>
       </div>
@@ -394,7 +381,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {data?.rawData?.map((item: any, index: number) => {
+                  {paginatedData.map((item: any, index: number) => {
                     const trangThaiLC = item.TrangThai?.toLowerCase() || '';
                     const isDuyet = trangThaiLC.includes('duyệt');
                     const isTuChoi = trangThaiLC.includes('từ chối');
@@ -428,7 +415,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                       </tr>
                     );
                   })}
-                  {(!data?.rawData || data.rawData.length === 0) && (
+                  {paginatedData.length === 0 && (
                     <tr>
                       <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
                         Không có dữ liệu
@@ -438,6 +425,15 @@ const ThongKeBaoCaoPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+            {totalItems > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={(page) => loadData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, page)}
+              />
+            )}
           </div>
         </div>
       )}
@@ -507,7 +503,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                     setDenNgay(tempDenNgay);
                     setShowDateDialog(false);
                     setErrorMsg('');
-                    loadData(tempTuNgay, tempDenNgay, maTuyenDuong, maXaPhuong, tempLoaiNgay, maLoaiCongViec, trangThai);
+                    loadData(tempTuNgay, tempDenNgay, maTuyenDuong, maXaPhuong, tempLoaiNgay, maLoaiCongViec, trangThai, 1);
                   }}
                 >
                   Xác nhận

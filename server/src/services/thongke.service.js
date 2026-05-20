@@ -8,11 +8,17 @@ function removeAccents(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
 }
 
-const getTongQuan = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai) => {
-  const data = await thongKeRepository.getThongKeData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+const getTongQuan = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, page, limit) => {
+  // 1. Lấy toàn bộ dữ liệu (không phân trang) để tính toán biểu đồ và tổng quan
+  const allData = await thongKeRepository.getThongKeData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
   
-  // Tính toán tổng quan và gom nhóm theo ngày
-  const summary = data.reduce((acc, row) => {
+  // 2. Lấy dữ liệu phân trang cho bảng chi tiết (chỉ khi có page và limit)
+  const paginatedData = (page && limit)
+    ? await thongKeRepository.getThongKeData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, page, limit)
+    : allData;
+  
+  // Tính toán tổng quan và gom nhóm theo ngày từ allData
+  const summary = allData.reduce((acc, row) => {
     const trangThaiStr = row.TrangThai ? row.TrangThai.toLowerCase() : '';
     
     // Mọi kế hoạch đều được tính là 1 "Tạo mới"
@@ -84,7 +90,9 @@ const getTongQuan = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, 
         tongHuy: summary.tongHuy 
     },
     chartData,
-    rawData: data
+    rawData: paginatedData,
+    totalItems: allData.length,
+    allRawData: allData
   };
 };
 

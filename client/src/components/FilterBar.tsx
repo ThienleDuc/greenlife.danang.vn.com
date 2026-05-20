@@ -15,6 +15,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ onSearch, onReset }) => {
   const [jobTypeList, setJobTypeList] = useState<any[]>([]);
   
   const [filters, setFilters] = useState<FilterParams>({
+    maKeHoach: '',
     title: '',
     status: 'Tất cả',
     startDate: '',
@@ -67,6 +68,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ onSearch, onReset }) => {
 
   const handleReset = () => {
     setFilters({
+      maKeHoach: '',
       title: '',
       status: 'Tất cả',
       startDate: '',
@@ -139,6 +141,17 @@ const FilterBar: React.FC<FilterBarProps> = ({ onSearch, onReset }) => {
 
             <div className="filter-modal-body">
               <div className="filter-modal-grid">
+                <div className="filter-field">
+                  <label className="filter-label">Mã kế hoạch</label>
+                  <input
+                    className="filter-input"
+                    placeholder="Nhập mã kế hoạch..."
+                    type="text"
+                    value={filters.maKeHoach}
+                    onChange={(e) => handleInputChange('maKeHoach', e.target.value)}
+                  />
+                </div>
+
                 <div className="filter-field">
                   <label className="filter-label">Loại công việc</label>
                   <select

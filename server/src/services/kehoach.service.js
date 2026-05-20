@@ -1,5 +1,6 @@
 const keHoachRepo = require("../repositories/kehoach.repository");
 const crypto = require("crypto");
+const { deletePdfFile } = require("../utils/pdfUpload.utils");
 
 const PLAN_STATUS = {
   DA_GUI: "Đã gửi",
@@ -197,6 +198,17 @@ const updateKeHoach = async (maKeHoach, payload, files, user) => {
 
   if (!updatedPlan) {
     throw createHttpError("Không thể cập nhật kế hoạch công việc", 400);
+  }
+
+  // Xóa các file cũ nếu có file mới được tải lên thay thế thành công
+  if (filePDFKeHoach && currentPlan.FilePDFKeHoach) {
+    deletePdfFile(currentPlan.FilePDFKeHoach);
+  }
+  if (filePDFDeNghiCapPhep && currentPlan.FilePDFDeNghiCapPhep) {
+    deletePdfFile(currentPlan.FilePDFDeNghiCapPhep);
+  }
+  if (filePDFBoSungKeHoach && currentPlan.FilePDFBoSungKeHoach) {
+    deletePdfFile(currentPlan.FilePDFBoSungKeHoach);
   }
 
   return updatedPlan;

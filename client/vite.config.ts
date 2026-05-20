@@ -8,4 +8,10 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  server: {
+    proxy: {
+      '/pdf': 'http://localhost:5000',
+      '/avatars': 'http://localhost:5000',
+    }
+  }
 })

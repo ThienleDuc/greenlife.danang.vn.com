@@ -53,7 +53,8 @@
   font-weight: 700;
 }
 
-.status-badge-inline.plan-status-Đang\ chờ\ duyệt { background: #eef2ff; color: #4338ca; }
+.status-badge-inline.plan-status-Đang\ chờ\ duyệt,
+.status-badge-inline.plan-status-Đã\ gửi { background: #eef2ff; color: #4338ca; }
 .status-badge-inline.plan-status-Đang\ thẩm\ định { background: #fff7ed; color: #c2410c; }
 .status-badge-inline.plan-status-Đã\ phê\ duyệt { background: #ecfdf5; color: #047857; }
 .status-badge-inline.plan-status-Bị\ từ\ chối { background: #fef2f2; color: #b91c1c; }
@@ -182,7 +183,8 @@
   width: fit-content;
 }
 
-.plan-status-badge.plan-status-Đang\ chờ\ duyệt { background: #eef2ff; color: #4338ca; }
+.plan-status-badge.plan-status-Đang\ chờ\ duyệt,
+.plan-status-badge.plan-status-Đã\ gửi { background: #eef2ff; color: #4338ca; }
 .plan-status-badge.plan-status-Đang\ thẩm\ định { background: #fff7ed; color: #c2410c; }
 .plan-status-badge.plan-status-Đã\ phê\ duyệt { background: #ecfdf5; color: #047857; }
 .plan-status-badge.plan-status-Bị\ từ\ chối { background: #fef2f2; color: #b91c1c; }

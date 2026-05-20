@@ -19,6 +19,8 @@ export interface ThongKeTongQuanResponse {
     daHuy: number;
   }>;
   rawData: any[];
+  totalItems?: number;
+  allRawData?: any[];
 }
 
 const thongKeService = {
@@ -29,7 +31,9 @@ const thongKeService = {
     maXaPhuong?: string,
     loaiNgay?: string,
     maLoaiCongViec?: string,
-    trangThai?: string
+    trangThai?: string,
+    page?: number,
+    limit?: number
   ): Promise<ThongKeTongQuanResponse> => {
     const params = new URLSearchParams();
     if (tuNgay) params.append('tuNgay', tuNgay);
@@ -39,6 +43,8 @@ const thongKeService = {
     if (loaiNgay) params.append('loaiNgay', loaiNgay);
     if (maLoaiCongViec) params.append('maLoaiCongViec', maLoaiCongViec);
     if (trangThai) params.append('trangThai', trangThai);
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
 
     const response = await api.get(`/thong-ke/tong-quan?${params.toString()}`);
     return response.data;

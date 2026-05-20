@@ -710,3 +710,41 @@
     gap: 0.6rem;
   }
 }
+
+/* ---- PDF File Preview ---- */
+.send-plan-file-preview {
+  margin-top: 0.5rem;
+}
+
+.preview-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(16, 185, 129, 0.08);
+  color: var(--color-primary);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  max-width: 100%;
+}
+
+.preview-pdf-btn:hover {
+  background-color: rgba(16, 185, 129, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12);
+}
+
+.preview-pdf-btn span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-pdf-btn .material-symbols-outlined {
+  font-size: 18px;
+  flex-shrink: 0;
+}

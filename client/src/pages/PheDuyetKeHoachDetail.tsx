@@ -84,7 +84,8 @@ const PheDuyetKeHoachDetail: React.FC = () => {
   const { keHoach } = data;
   const statusInfo = PLAN_STATUS[keHoach.TrangThai as keyof typeof PLAN_STATUS] || { label: keHoach.TrangThai, color: 'bg-slate-100 text-slate-700' };
 
-  const isStatusDisabled = keHoach.TrangThai === 'Đang thẩm định';
+  const isSubmitted = keHoach.TrangThai === 'Đã gửi';
+  const isAuditing = keHoach.TrangThai === 'Đang thẩm định';
   const isAlreadyProcessed = keHoach.TrangThai === 'Đã phê duyệt' || keHoach.TrangThai === 'Bị từ chối';
 
   const handleRemoveFile = async (fileKey: string, fileLabel: string, specificFilename?: string) => {
@@ -188,7 +189,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
           <span className="material-symbols-outlined text-[20px]">{colors.icon}</span>
           {file.label} {index !== undefined ? `#${index + 1}` : ''}
         </button>
-        {!isStatusDisabled && !isAlreadyProcessed && !isRemoved && (
+        {isAuditing && !isRemoved && (
           <button
             onClick={() => handleRemoveFile(file.key, file.label, file.key === 'FilePDFBoSungKeHoach' ? file.value : undefined)}
             className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform shadow-sm z-10 cursor-pointer"
@@ -453,7 +454,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                   <span className="material-symbols-outlined text-rose-500">fact_check</span>
                   Xử lý phê duyệt
                 </h3>
-                {isAlreadyProcessed ? (
+                {isAlreadyProcessed && (
                   <div className="flex flex-col gap-5 bg-slate-50 rounded-xl border border-slate-100" style={{ padding: '28px 20px' }}>
                     <div className="flex items-start gap-4">
                       <span className={`material-symbols-outlined text-[32px] mt-0.5 ${
@@ -479,71 +480,88 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                       Hủy phê duyệt
                     </button>
                   </div>
-                ) : (
-                  isStatusDisabled ? (
-                    <div className="flex items-start gap-4 p-6 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 shadow-inner">
-                      <span className="material-symbols-outlined mt-0.5 text-amber-600 text-[26px]">warning</span>
+                )}
+
+                {isSubmitted && (
+                  <div className="flex flex-col gap-5 bg-slate-50 rounded-xl border border-slate-100" style={{ padding: '28px 20px' }}>
+                    <div className="flex items-start gap-4">
+                      <span className="material-symbols-outlined text-[32px] mt-0.5 text-blue-500">
+                        forward_to_inbox
+                      </span>
                       <div>
-                        <p className="font-bold mb-2 text-sm">Kế hoạch đang ở trạng thái Đang thẩm định</p>
-                        <p className="text-xs leading-relaxed mt-1.5">Hành động phê duyệt tạm thời bị vô hiệu hóa cho đến khi nhân viên kỹ thuật hoàn tất và gửi yêu cầu duyệt kế hoạch này.</p>
+                        <h4 className="font-bold text-slate-800 text-sm">Kế hoạch mới gửi</h4>
+                        <p className="text-xs text-slate-500 mt-1.5">
+                          Trạng thái hiện tại: <span className="font-bold text-blue-600">{statusInfo.label}</span>
+                        </p>
                       </div>
                     </div>
-                  ) : (
-                    <div className="bg-slate-50 rounded-xl border border-slate-100 flex flex-col gap-6" style={{ padding: '28px 20px' }}>
-                      <div className="relative">
-                        <label className="block text-sm font-bold text-slate-800 mb-2.5 flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[20px] text-slate-500">edit_note</span> Ý kiến phê duyệt / Lý do từ chối:
-                        </label>
-                        <textarea
-                          className="w-full border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all duration-300 resize-none text-slate-800 bg-white shadow-inner text-[15px] placeholder:text-slate-400"
-                          style={{ padding: '20px 24px' }}
-                          rows={4}
-                          placeholder="Nhập nhận xét, ý kiến chỉ đạo hoặc chi tiết lý do từ chối..."
-                          value={feedback}
-                          onChange={(e) => setFeedback(e.target.value)}
-                        />
-                      </div>
-                      <div className="relative">
-                        <label className="block text-sm font-bold text-slate-800 mb-2.5 flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[20px] text-slate-500">upload_file</span> Đính kèm File Pdf Bổ sung:
-                        </label>
-                        <div className="flex flex-col gap-2.5">
-                          {!selectedFile ? (
-                            <div className="relative group">
-                              <input
-                                type="file"
-                                accept=".pdf"
-                                onChange={handleFileChange}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                              />
-                              <div className="flex items-center justify-center gap-3 w-full py-4 px-4 border-2 border-dashed border-slate-200 rounded-xl bg-white group-hover:border-emerald-400 group-hover:bg-emerald-50/30 transition-all duration-300">
-                                <span className="material-symbols-outlined text-slate-400 group-hover:text-emerald-500 text-[22px] transition-colors">
-                                  add_circle
-                                </span>
-                                <span className="text-sm text-slate-600 truncate font-bold group-hover:text-emerald-700 transition-colors">
-                                  Chọn file PDF bổ sung...
-                                </span>
-                              </div>
+                    <button
+                      className="w-full flex items-center justify-center rounded-xl font-bold transition-all shadow-sm text-sm hover:opacity-90 py-3"
+                      style={{ backgroundColor: '#f59e0b', color: '#ffffff', border: 'none', cursor: 'pointer' }}
+                      onClick={() => handleApprove('Đang thẩm định', '', undefined, [])}
+                    >
+                      <span className="material-symbols-outlined text-[18px] mr-2">analytics</span>
+                      Đang thẩm định
+                    </button>
+                  </div>
+                )}
+
+                {isAuditing && (
+                  <div className="bg-slate-50 rounded-xl border border-slate-100 flex flex-col gap-6" style={{ padding: '28px 20px' }}>
+                    <div className="relative">
+                      <label className="block text-sm font-bold text-slate-800 mb-2.5 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[20px] text-slate-500">edit_note</span> Ý kiến phê duyệt / Lý do từ chối:
+                      </label>
+                      <textarea
+                        className="w-full border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all duration-300 resize-none text-slate-800 bg-white shadow-inner text-[15px] placeholder:text-slate-400"
+                        style={{ padding: '20px 24px' }}
+                        rows={4}
+                        placeholder="Nhập nhận xét, ý kiến chỉ đạo hoặc chi tiết lý do từ chối..."
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
+                      />
+                    </div>
+                    <div className="relative">
+                      <label className="block text-sm font-bold text-slate-800 mb-2.5 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[20px] text-slate-500">upload_file</span> Đính kèm File Pdf Bổ sung:
+                      </label>
+                      <div className="flex flex-col gap-2.5">
+                        {!selectedFile ? (
+                          <div className="relative group">
+                            <input
+                              type="file"
+                              accept=".pdf"
+                              onChange={handleFileChange}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
+                            <div className="flex items-center justify-center gap-3 w-full py-4 px-4 border-2 border-dashed border-slate-200 rounded-xl bg-white group-hover:border-emerald-400 group-hover:bg-emerald-50/30 transition-all duration-300">
+                              <span className="material-symbols-outlined text-slate-400 group-hover:text-emerald-500 text-[22px] transition-colors">
+                                add_circle
+                              </span>
+                              <span className="text-sm text-slate-600 truncate font-bold group-hover:text-emerald-700 transition-colors">
+                                Chọn file PDF bổ sung...
+                              </span>
                             </div>
-                          ) : (
-                            <div className="flex items-center justify-between gap-3.5 w-full py-3 px-3.5 border-2 border-emerald-100 rounded-xl bg-emerald-50/30 animate-fade-in-up">
-                              <div
-                                onClick={() => openLocalPdf(selectedFile)}
-                                className="flex items-center gap-2.5 overflow-hidden cursor-pointer hover:underline group/file"
-                                title="Click để xem trước file PDF"
-                              >
-                                <span className="material-symbols-outlined text-emerald-600 group-hover/file:text-emerald-700 text-[20px] transition-colors">picture_as_pdf</span>
-                                <span className="text-sm text-emerald-800 truncate font-bold group-hover/file:text-emerald-950 transition-colors">
-                                  {selectedFile.name}
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setSelectedFile(undefined);
-                                }}
-                                className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-all shadow-sm group"
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between gap-3.5 w-full py-3 px-3.5 border-2 border-emerald-100 rounded-xl bg-emerald-50/30 animate-fade-in-up">
+                            <div
+                              onClick={() => openLocalPdf(selectedFile)}
+                              className="flex items-center gap-2.5 overflow-hidden cursor-pointer hover:underline group/file"
+                              title="Click để xem trước file PDF"
+                            >
+                              <span className="material-symbols-outlined text-emerald-600 group-hover/file:text-emerald-700 text-[20px] transition-colors">picture_as_pdf</span>
+                              <span className="text-sm text-emerald-800 truncate font-bold group-hover/file:text-emerald-950 transition-colors">
+                                {selectedFile.name}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setSelectedFile(undefined);
+                              }}
+                              className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-all shadow-sm group"
                                 title="Gỡ file đính kèm"
                               >
                                 <span className="material-symbols-outlined text-[18px]">close</span>
@@ -576,8 +594,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                  )
-                )}
+                  )}
               </div>
 
             </div>
@@ -605,7 +622,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
               </div>
               <p className="text-slate-600 text-sm mb-6" style={{ marginBottom: '24px' }}>
                 {confirmAction.type === 'cancel_approval' ? (
-                  <span>Bạn có chắc chắn muốn <strong>hủy kết quả</strong> của kế hoạch này không? Trạng thái sẽ được chuyển về "Đang chờ duyệt".</span>
+                  <span>Bạn có chắc chắn muốn <strong>hủy kết quả</strong> của kế hoạch này không? Trạng thái sẽ được chuyển về "Đang thẩm định".</span>
                 ) : (
                   <span>Bạn có chắc chắn muốn <span className="font-bold">{confirmAction.type === 'approve' ? 'phê duyệt' : 'từ chối'}</span> kế hoạch này không? Hành động này sẽ gửi kết quả cho người lập kế hoạch.</span>
                 )}
@@ -634,14 +651,14 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                   onClick={() => {
                     const newStatus = confirmAction.type === 'approve' ? 'Đã phê duyệt'
                       : confirmAction.type === 'reject' ? 'Bị từ chối'
-                        : 'Đang chờ duyệt';
+                        : 'Đang thẩm định';
                     handleApprove(
                       newStatus,
-                      newStatus === 'Đang chờ duyệt' ? '' : feedback,
-                      selectedFile,
-                      removeFiles
+                      newStatus === 'Đang thẩm định' ? '' : feedback,
+                      newStatus === 'Đang thẩm định' ? undefined : selectedFile,
+                      newStatus === 'Đang thẩm định' ? [] : removeFiles
                     );
-                    if (newStatus === 'Đang chờ duyệt') {
+                    if (newStatus === 'Đang thẩm định') {
                       setFeedback('');
                     }
                     setConfirmAction({ type: null });

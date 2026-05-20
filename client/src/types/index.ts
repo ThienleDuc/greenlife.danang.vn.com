@@ -119,6 +119,7 @@ export interface CayXanh {
 }
 
 export interface FilterParams {
+  maKeHoach: string;
   title: string;
   status: string;
   startDate: string;
