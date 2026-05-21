@@ -66,7 +66,7 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
     request.input("trangThai", sql.NVarChar, trangThai);
   }
 
-  query += ` ORDER BY kh.NgayCapNhat DESC, kh.NgayPheDuyet DESC, kh.NgayXuLy DESC, kh.NgayTao DESC`;
+  query += ` ORDER BY kh.NgayTao ASC`;
 
   if (page && limit) {
     const offset = (page - 1) * limit;

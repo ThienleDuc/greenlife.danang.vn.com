@@ -9,35 +9,21 @@ function removeAccents(str) {
 }
 
 const getTongQuan = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, page, limit) => {
-  // 1. Lấy toàn bộ dữ liệu (không phân trang) ĐỂ TÍNH TOÁN TỔNG QUAN (không bị ảnh hưởng bởi bộ lọc Trạng thái/loaiNgay)
-  const allDataForSummary = await thongKeRepository.getThongKeData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, 'Tất cả', maLoaiCongViec, '');
-  
-  // 2. Lấy toàn bộ dữ liệu (không phân trang) nhưng ĐÃ LỌC theo trạng thái (loaiNgay) để làm rawData
+  // Lấy toàn bộ dữ liệu (không phân trang) đã lọc theo trạng thái (loaiNgay) để làm rawData và tính summary
   const filteredAllData = await thongKeRepository.getThongKeData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
   
-  // 3. Lấy dữ liệu phân trang cho bảng chi tiết (chỉ khi có page và limit)
+  // Lấy dữ liệu phân trang cho bảng chi tiết (chỉ khi có page và limit)
   const paginatedData = (page && limit)
     ? await thongKeRepository.getThongKeData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, page, limit)
     : filteredAllData;
   
-  // Tính toán tổng quan và gom nhóm theo ngày từ allDataForSummary (Dữ liệu chưa bị lọc trạng thái)
-  const summary = allDataForSummary.reduce((acc, row) => {
+  // Tính toán tổng quan và gom nhóm theo ngày từ filteredAllData
+  const summary = filteredAllData.reduce((acc, row) => {
     const trangThaiStr = row.TrangThai ? row.TrangThai.toLowerCase() : '';
     
-    // Mọi kế hoạch đều được tính là 1 "Tạo mới"
+    // Mọi kế hoạch đều được tính vào "Tổng kế hoạch" (card đầu tiên)
     acc.tongTao++;
     
-    if (trangThaiStr.includes('duyệt')) {
-      acc.tongDuyet++;
-    } else if (trangThaiStr.includes('từ chối')) {
-      acc.tongTuChoi++;
-    } else if (trangThaiStr.includes('hủy')) {
-      acc.tongHuy++;
-    } else if (!trangThaiStr.includes('gửi') && !trangThaiStr.includes('tạo')) {
-      // Nếu không phải 'đã gửi' và các trạng thái trên, thì là đang thẩm định
-      acc.tongThamDinh++;
-    }
-
     // Gom nhóm theo ngày Tạo
     let dateValue = row.NgayTao;
 
@@ -46,16 +32,21 @@ const getTongQuan = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, 
       acc.byDate[dateStr] = { taoMoi: 0, daDuyet: 0, tuChoi: 0, dangThamDinh: 0, daHuy: 0 };
     }
     
-    // Luôn tính vào cột Tạo mới
-    acc.byDate[dateStr].taoMoi++;
-    
     if (trangThaiStr.includes('duyệt')) {
+      acc.tongDuyet++;
       acc.byDate[dateStr].daDuyet++;
     } else if (trangThaiStr.includes('từ chối')) {
+      acc.tongTuChoi++;
       acc.byDate[dateStr].tuChoi++;
     } else if (trangThaiStr.includes('hủy')) {
+      acc.tongHuy++;
       acc.byDate[dateStr].daHuy++;
-    } else if (!trangThaiStr.includes('gửi') && !trangThaiStr.includes('tạo')) {
+    } else if (trangThaiStr.includes('gửi') || trangThaiStr.includes('tạo')) {
+      // Chỉ tính vào cột 'Tạo mới/Đã gửi' trên biểu đồ nếu đúng trạng thái này
+      acc.byDate[dateStr].taoMoi++;
+    } else {
+      // Nếu không thuộc các trạng thái trên thì mặc định là đang thẩm định
+      acc.tongThamDinh++;
       acc.byDate[dateStr].dangThamDinh++;
     }
 
@@ -107,7 +98,7 @@ const exportExcel = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong,
   worksheet.getCell('A1').alignment = { horizontal: 'center' };
 
   worksheet.mergeCells('A2:B2');
-  worksheet.getCell('A2').value = 'SỞ XÂY DỰNG';
+  worksheet.getCell('A2').value = 'CÔNG TY GREENLIFE ĐÀ NẴNG';
   worksheet.getCell('A2').font = { name: 'Times New Roman', size: 11, bold: true };
   worksheet.getCell('A2').alignment = { horizontal: 'center' };
 
@@ -130,8 +121,7 @@ const exportExcel = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong,
   worksheet.mergeCells('A5:J5');
   const tuNgayStr = tuNgay ? new Date(tuNgay).toLocaleDateString('vi-VN') : '...';
   const denNgayStr = denNgay ? new Date(denNgay).toLocaleDateString('vi-VN') : '...';
-  const loaiNgayText = loaiNgay === 'NgayPheDuyet' ? 'Ngày phê duyệt' : loaiNgay === 'NgayXuLy' ? 'Ngày xử lý' : 'Ngày tạo';
-  worksheet.getCell('A5').value = `Từ ngày: ${tuNgayStr} - Đến ngày: ${denNgayStr} (Lọc theo ${loaiNgayText})`;
+  worksheet.getCell('A5').value = `Từ ngày: ${tuNgayStr} - Đến ngày: ${denNgayStr}`;
   worksheet.getCell('A5').font = { name: 'Times New Roman', size: 11, italic: true };
   worksheet.getCell('A5').alignment = { vertical: 'middle', horizontal: 'center' };
   
@@ -209,7 +199,11 @@ const exportPDF = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong, l
   
   return new Promise(async (resolve, reject) => {
     try {
-      const doc = new PDFDocument({ margin: 30, size: 'A4', layout: 'landscape' });
+      const doc = new PDFDocument({ 
+        margins: { top: 30, left: 30, right: 30, bottom: 60 }, 
+        size: 'A4', 
+        layout: 'landscape' 
+      });
       // Nạp font Arial hỗ trợ tiếng Việt trên Windows
       doc.registerFont('Arial', 'C:/Windows/Fonts/arial.ttf');
       doc.font('Arial');
@@ -232,20 +226,21 @@ const exportPDF = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong, l
         console.error("Lỗi load logo:", e);
       }
       
-      // Cơ quan
-      doc.fontSize(11).font('Arial').text('UBND THÀNH PHỐ ĐÀ NẴNG', 85, currentY);
-      doc.fontSize(11).font('Arial').text('GREENLIFE ĐÀ NẴNG', 85, currentY + 15);
+      // Cột trái: Cơ quan
+      doc.fontSize(11).font('Arial').text('UBND THÀNH PHỐ ĐÀ NẴNG', 80, currentY, { width: 220, align: 'center' });
+      doc.fontSize(11).font('Arial').text('CÔNG TY GREENLIFE ĐÀ NẴNG', 80, currentY + 15, { width: 220, align: 'center' });
       
-      // Line dưới cơ quan
-      doc.moveTo(100, currentY + 30).lineTo(180, currentY + 30).stroke();
+      // Line dưới cơ quan (căn giữa phần chữ)
+      doc.moveTo(140, currentY + 32).lineTo(240, currentY + 32).stroke();
 
-      // Quốc hiệu
-      doc.fontSize(11).font('Arial').text('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', 0, currentY, { align: 'right' });
-      doc.fontSize(12).font('Arial').text('Độc lập - Tự do - Hạnh phúc', 0, currentY + 15, { align: 'right' });
+      // Cột phải: Quốc hiệu
+      const rightColX = doc.page.width - 30 - 320; // 320 is width of text box
+      doc.fontSize(11).font('Arial').text('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', rightColX, currentY, { width: 320, align: 'center' });
+      doc.fontSize(12).font('Arial').text('Độc lập - Tự do - Hạnh phúc', rightColX, currentY + 15, { width: 320, align: 'center' });
       
-      // Line dưới quốc hiệu
-      const rightX = doc.page.width - 30; // margin right
-      doc.moveTo(rightX - 180, currentY + 35).lineTo(rightX - 40, currentY + 35).stroke();
+      // Line dưới quốc hiệu (căn giữa phần chữ)
+      const rightCenter = rightColX + 160;
+      doc.moveTo(rightCenter - 70, currentY + 32).lineTo(rightCenter + 70, currentY + 32).stroke();
 
       doc.moveDown(5);
       
@@ -255,48 +250,51 @@ const exportPDF = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong, l
 
       const tuNgayStr = tuNgay ? new Date(tuNgay).toLocaleDateString('vi-VN') : '...';
       const denNgayStr = denNgay ? new Date(denNgay).toLocaleDateString('vi-VN') : '...';
-      const loaiNgayText = loaiNgay === 'NgayPheDuyet' ? 'Ngày phê duyệt' : loaiNgay === 'NgayXuLy' ? 'Ngày xử lý' : 'Ngày tạo';
       doc.moveDown(0.5);
-      doc.fontSize(11).text(`(Thời gian: Từ ${tuNgayStr} đến ${denNgayStr} - Lọc theo ${loaiNgayText})`, { align: 'center', oblique: true });
+      doc.fontSize(11).text(`(Thời gian: Từ ${tuNgayStr} đến ${denNgayStr})`, { align: 'center', oblique: true });
       doc.moveDown(0.5);
       
       doc.fontSize(11).text(`Người xuất báo cáo: ${nguoiXuat || 'Cán bộ quản lý'}`, { align: 'center', oblique: true });
       doc.moveDown(1.5);
       
       // Summary Box
-      doc.fontSize(12).text('I. TỔNG QUAN', 30, doc.y);
+      doc.fontSize(12).text('I. TỔNG QUAN TÌNH HÌNH KẾ HOẠCH', 30, doc.y);
       doc.moveDown(0.5);
       
-      // Box vẽ bằng line
+      // Box vẽ bằng line full width
       const boxY = doc.y;
-      doc.rect(30, boxY, 350, 110).strokeColor('#e5e7eb').stroke();
-      doc.fontSize(11);
-      doc.text(`- Tổng số kế hoạch tạo mới: ${tongQuan.tongTao}`, 40, boxY + 10);
-      doc.text(`- Tổng số kế hoạch đang thẩm định: ${tongQuan.tongThamDinh}`, 40, boxY + 30);
-      doc.text(`- Tổng số kế hoạch đã phê duyệt: ${tongQuan.tongDuyet}`, 40, boxY + 50);
-      doc.text(`- Tổng số kế hoạch bị từ chối: ${tongQuan.tongTuChoi}`, 40, boxY + 70);
-      doc.text(`- Tổng số kế hoạch đã hủy: ${tongQuan.tongHuy}`, 40, boxY + 90);
+      doc.rect(30, boxY, doc.page.width - 60, 80).strokeColor('#e5e7eb').stroke();
+      doc.fontSize(11).fillColor('#1f2937');
+      doc.text(`• Tổng số kế hoạch tạo mới trong kỳ: ${tongQuan.tongTao}`, 45, boxY + 15);
+      doc.text(`• Số lượng đang thẩm định: ${tongQuan.tongThamDinh}`, 45, boxY + 35);
+      doc.text(`• Số lượng đã được phê duyệt: ${tongQuan.tongDuyet}`, 45, boxY + 55);
+      
+      doc.text(`• Số lượng bị từ chối: ${tongQuan.tongTuChoi}`, 400, boxY + 15);
+      doc.text(`• Số lượng đã hủy: ${tongQuan.tongHuy}`, 400, boxY + 35);
+      doc.fillColor('black');
       
       // Table
-      doc.y = boxY + 140;
+      doc.y = boxY + 100;
       doc.fontSize(12).text('II. CHI TIẾT KẾ HOẠCH', 30, doc.y);
       doc.moveDown(0.5);
 
       const table = {
         title: "",
         headers: [
-          { label: "Mã KH", property: 'ma', width: 55 },
-          { label: "Tiêu đề", property: 'tieuDe', width: 170 },
+          { label: "Mã KH", property: 'ma', width: 60 },
+          { label: "Tiêu đề", property: 'tieuDe', width: 150 },
+          { label: "Xã Phường", property: 'xaPhuong', width: 100 },
           { label: "Tuyến Đường", property: 'tuyenDuong', width: 100 },
-          { label: "Loại CV", property: 'loaiCv', width: 70 },
-          { label: "Ngày tạo", property: 'ngay', width: 65 },
-          { label: "Trạng thái", property: 'trangThai', width: 70 },
+          { label: "Loại CV", property: 'loaiCv', width: 80 },
+          { label: "Ngày tạo", property: 'ngay', width: 70 },
+          { label: "Trạng thái", property: 'trangThai', width: 75 },
           { label: "Người lập", property: 'nguoiLap', width: 75 },
-          { label: "Người xử lý", property: 'nguoiXuLyName', width: 75 }
+          { label: "Người xử lý", property: 'nguoiXuLyName', width: 70 }
         ],
         rows: rawData.map(item => [
           item.MaKeHoach || '',
           item.TieuDe || '',
+          item.TenXaPhuong || '',
           item.TenTuyenDuong || '',
           item.TenCongViec || '',
           item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : '',
@@ -306,11 +304,16 @@ const exportPDF = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong, l
         ]),
       };
       
+      const oldBottomMargin = doc.page.margins.bottom;
+      doc.page.margins.bottom = 100; // Tăng bottom margin để pdfkit-table ngắt trang sớm, tránh cắt đôi dòng
+      
       await doc.table(table, {
         prepareHeader: () => doc.font('Arial').fontSize(9).fillColor('#374151'),
         prepareRow: () => doc.font('Arial').fontSize(8.5).fillColor('black'),
         padding: 5
       });
+      
+      doc.page.margins.bottom = oldBottomMargin;
       
       // Chữ ký
       if (doc.y > doc.page.height - doc.page.margins.bottom - 100) {
@@ -321,13 +324,19 @@ const exportPDF = async (tuNgay, denNgay, nguoiXuat, maTuyenDuong, maXaPhuong, l
       
       const signY = doc.y;
       
+      // Ngày tháng năm xuất báo cáo (Cột phải)
+      const now = new Date();
+      const exportDateStr = `Đà Nẵng, ngày ${String(now.getDate()).padStart(2, '0')} tháng ${String(now.getMonth() + 1).padStart(2, '0')} năm ${now.getFullYear()}`;
+      
       // Trái
-      doc.fontSize(11).text('Người lập biểu', 100, signY);
-      doc.fontSize(10).text('(Ký, ghi rõ họ tên)', 100, signY + 15, { oblique: true });
+      doc.fontSize(11).text('NGƯỜI LẬP BIỂU', 30, signY + 20, { width: 300, align: 'center' });
+      doc.fontSize(10).text('(Ký, ghi rõ họ tên)', 30, signY + 35, { width: 300, align: 'center', oblique: true });
 
       // Phải
-      doc.fontSize(11).text('Giám đốc / Cán bộ quản lý', 550, signY);
-      doc.fontSize(10).text('(Ký, ghi rõ họ tên)', 575, signY + 15, { oblique: true });
+      const rightSignX = doc.page.width - 30 - 300;
+      doc.fontSize(11).text(exportDateStr, rightSignX, signY, { width: 300, align: 'center' });
+      doc.fontSize(11).text('GIÁM ĐỐC / CÁN BỘ QUẢN LÝ', rightSignX, signY + 20, { width: 300, align: 'center' });
+      doc.fontSize(10).text('(Ký, ghi rõ họ tên, đóng dấu)', rightSignX, signY + 35, { width: 300, align: 'center', oblique: true });
       
       doc.end();
     } catch (err) {

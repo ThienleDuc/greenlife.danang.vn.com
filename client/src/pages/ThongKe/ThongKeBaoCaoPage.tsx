@@ -33,7 +33,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
   const [allTuyenDuongs, setAllTuyenDuongs] = useState<any[]>([]);
 
   // Bộ lọc loại công việc, loại ngày, trạng thái
-  const [loaiNgay, setLoaiNgay] = useState<string>('NgayTao');
+  const [loaiNgay, setLoaiNgay] = useState<string>('Tất cả');
   const [maLoaiCongViec, setMaLoaiCongViec] = useState<string>('');
   const [trangThai, setTrangThai] = useState<string>('');
   const [danhMucCongViecs, setDanhMucCongViecs] = useState<any[]>([]);
@@ -44,11 +44,14 @@ const ThongKeBaoCaoPage: React.FC = () => {
 
   // Trạng thái dialog chọn thời gian
   const [showDateDialog, setShowDateDialog] = useState<boolean>(false);
-  const [tempLoaiNgay, setTempLoaiNgay] = useState<string>('NgayTao');
+  const [tempLoaiNgay, setTempLoaiNgay] = useState<string>('Tất cả');
   const [tempTuNgay, setTempTuNgay] = useState<string>('');
   const [tempDenNgay, setTempDenNgay] = useState<string>('');
 
   const [errorMsg, setErrorMsg] = useState<string>('');
+  
+  // Trạng thái loại xuất báo cáo
+  const [exportType, setExportType] = useState<string>('excel');
 
   useEffect(() => {
     loadLocationsAndCategories();
@@ -115,29 +118,43 @@ const ThongKeBaoCaoPage: React.FC = () => {
     loadData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, 1);
   };
 
-  const handleExportExcel = async () => {
+  const handleExport = async () => {
     try {
-      const blob = await thongKeService.downloadExcel(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+      let blob;
+      let filename = '';
+      const timestamp = getTimestamp();
+
+      if (exportType === 'excel') {
+        blob = await thongKeService.downloadExcel(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+        filename = `BaoCaoThongKe_${timestamp}.xlsx`;
+      } else if (exportType === 'pdf') {
+        blob = await thongKeService.downloadPDF(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+        filename = `BaoCaoThongKe_${timestamp}.pdf`;
+      }
+
+      if (!blob) return;
+
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
-
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      const timestamp = `${year}${month}${day}_${hours}${minutes}${seconds}`;
-
-      link.setAttribute('download', `BaoCaoThongKe_${timestamp}.xlsx`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
     } catch (error) {
-      alert("Lỗi xuất Excel");
+      alert("Lỗi xuất báo cáo");
     }
+  };
+
+  const getTimestamp = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}${month}${day}_${hours}${minutes}${seconds}`;
   };
 
   // Nhấp chuột vào biểu đồ để mở Modal danh sách theo ngày
@@ -183,10 +200,19 @@ const ThongKeBaoCaoPage: React.FC = () => {
     <div className="tkbc-container fade-in">
       <div className="tkbc-header">
         <h1 className="tkbc-title">Thống kê kế hoạch</h1>
-        <div className="tkbc-actions">
-          <button className="tkbc-btn-export" onClick={handleExportExcel} disabled={loading}>
+        <div className="tkbc-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <select 
+            className="tkbc-select" 
+            style={{ padding: '8px 12px', minWidth: '120px', backgroundColor: 'white' }}
+            value={exportType}
+            onChange={(e) => setExportType(e.target.value)}
+          >
+            <option value="excel">Excel (.xlsx)</option>
+            <option value="pdf">PDF (.pdf)</option>
+          </select>
+          <button className="tkbc-btn-export" onClick={handleExport} disabled={loading}>
             <span className="material-symbols-outlined">download</span>
-            Xuất Excel
+            Xuất báo cáo
           </button>
         </div>
       </div>
