@@ -2,11 +2,11 @@ require('dotenv').config({ path: './server/.env' });
 const { sql, pool } = require('./server/src/config/db');
 pool.then(async (p) => {
     try {
-        const result = await p.request().query('SELECT name FROM sys.tables');
-        console.log('Tables:', result.recordset.map(r => r.name));
+        const kh = await p.request().query('SELECT TOP 5 MaKeHoach, TieuDe, NguoiLap, NguoiPheDuyet FROM KeHoachCongViec');
+        console.log('KeHoachCongViec:', kh.recordset);
 
-        const columns = await p.request().query("SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'KeHoachCongViec'");
-        console.log('Columns:', columns.recordset);
+        const nd = await p.request().query('SELECT TOP 5 MaNguoiDung, HoTen FROM NguoiDung');
+        console.log('NguoiDung:', nd.recordset);
     } catch (err) {
         console.error(err);
     }

@@ -33,7 +33,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
   const [allTuyenDuongs, setAllTuyenDuongs] = useState<any[]>([]);
 
   // Bộ lọc loại công việc, loại ngày, trạng thái
-  const [loaiNgay, setLoaiNgay] = useState<string>('NgayTao');
+  const [loaiNgay, setLoaiNgay] = useState<string>('Tất cả');
   const [maLoaiCongViec, setMaLoaiCongViec] = useState<string>('');
   const [trangThai, setTrangThai] = useState<string>('');
   const [danhMucCongViecs, setDanhMucCongViecs] = useState<any[]>([]);
@@ -44,11 +44,14 @@ const ThongKeBaoCaoPage: React.FC = () => {
 
   // Trạng thái dialog chọn thời gian
   const [showDateDialog, setShowDateDialog] = useState<boolean>(false);
-  const [tempLoaiNgay, setTempLoaiNgay] = useState<string>('NgayTao');
+  const [tempLoaiNgay, setTempLoaiNgay] = useState<string>('Tất cả');
   const [tempTuNgay, setTempTuNgay] = useState<string>('');
   const [tempDenNgay, setTempDenNgay] = useState<string>('');
 
   const [errorMsg, setErrorMsg] = useState<string>('');
+  
+  // Trạng thái loại xuất báo cáo
+  const [exportType, setExportType] = useState<string>('excel');
 
   useEffect(() => {
     loadLocationsAndCategories();
@@ -115,29 +118,43 @@ const ThongKeBaoCaoPage: React.FC = () => {
     loadData(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai, 1);
   };
 
-  const handleExportExcel = async () => {
+  const handleExport = async () => {
     try {
-      const blob = await thongKeService.downloadExcel(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+      let blob;
+      let filename = '';
+      const timestamp = getTimestamp();
+
+      if (exportType === 'excel') {
+        blob = await thongKeService.downloadExcel(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+        filename = `BaoCaoThongKe_${timestamp}.xlsx`;
+      } else if (exportType === 'pdf') {
+        blob = await thongKeService.downloadPDF(tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, maLoaiCongViec, trangThai);
+        filename = `BaoCaoThongKe_${timestamp}.pdf`;
+      }
+
+      if (!blob) return;
+
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
-
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      const timestamp = `${year}${month}${day}_${hours}${minutes}${seconds}`;
-
-      link.setAttribute('download', `BaoCaoThongKe_${timestamp}.xlsx`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
     } catch (error) {
-      alert("Lỗi xuất Excel");
+      alert("Lỗi xuất báo cáo");
     }
+  };
+
+  const getTimestamp = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}${month}${day}_${hours}${minutes}${seconds}`;
   };
 
   // Nhấp chuột vào biểu đồ để mở Modal danh sách theo ngày
@@ -156,12 +173,12 @@ const ThongKeBaoCaoPage: React.FC = () => {
     if (!selectedDateForModal || plansSource.length === 0) return [];
     return plansSource.filter(item => {
       let itemDate = item.NgayTao;
-      if (loaiNgay === 'NgayPheDuyet') {
+      if (loaiNgay === 'Đã phê duyệt') {
         itemDate = item.NgayPheDuyet;
-      } else if (loaiNgay === 'NgayXuLy') {
+      } else if (loaiNgay === 'Bị từ chối' || loaiNgay === 'Đã hủy') {
         itemDate = item.NgayXuLy;
       }
-      if (!itemDate) return selectedDateForModal === 'N/A';
+      if (!itemDate) return false;
       const formattedItemDate = new Date(itemDate).toISOString().split('T')[0];
       return formattedItemDate === selectedDateForModal;
     });
@@ -173,7 +190,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
 
   // Lấy nhãn hiển thị cho nút lọc thời gian
   const getDateFilterLabel = () => {
-    const loaiNgayText = loaiNgay === 'NgayPheDuyet' ? 'Ngày duyệt' : loaiNgay === 'NgayXuLy' ? 'Ngày xử lý' : 'Ngày tạo';
+    const loaiNgayText = loaiNgay || 'Tất cả';
     const tu = tuNgay ? new Date(tuNgay).toLocaleDateString('vi-VN') : '...';
     const den = denNgay ? new Date(denNgay).toLocaleDateString('vi-VN') : '...';
     return `${loaiNgayText}: ${tu} - ${den}`;
@@ -183,10 +200,19 @@ const ThongKeBaoCaoPage: React.FC = () => {
     <div className="tkbc-container fade-in">
       <div className="tkbc-header">
         <h1 className="tkbc-title">Thống kê kế hoạch</h1>
-        <div className="tkbc-actions">
-          <button className="tkbc-btn-export" onClick={handleExportExcel} disabled={loading}>
+        <div className="tkbc-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <select 
+            className="tkbc-select" 
+            style={{ padding: '8px 12px', minWidth: '120px', backgroundColor: 'white' }}
+            value={exportType}
+            onChange={(e) => setExportType(e.target.value)}
+          >
+            <option value="excel">Excel (.xlsx)</option>
+            <option value="pdf">PDF (.pdf)</option>
+          </select>
+          <button className="tkbc-btn-export" onClick={handleExport} disabled={loading}>
             <span className="material-symbols-outlined">download</span>
-            Xuất Excel
+            Xuất báo cáo
           </button>
         </div>
       </div>
@@ -238,17 +264,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
               ))}
             </select>
           </div>
-          <div className="tkbc-filter-group">
-            <label>Trạng thái</label>
-            <select className="tkbc-select" value={trangThai} onChange={e => setTrangThai(e.target.value)}>
-              <option value="">-- Tất cả --</option>
-              <option value="Đã gửi">Đã gửi</option>
-              <option value="Đang thẩm định">Đang thẩm định</option>
-              <option value="Đã phê duyệt">Đã phê duyệt</option>
-              <option value="Bị từ chối">Bị từ chối</option>
-              <option value="Đã hủy">Đã hủy</option>
-            </select>
-          </div>
+          {/* Trạng thái dropdown has been removed to avoid conflict with Loại kế hoạch */}
           <div className="tkbc-filter-group button-group">
             <button className="tkbc-btn-filter" onClick={handleFilter} disabled={loading}>
               <span className="material-symbols-outlined">filter_alt</span>
@@ -368,15 +384,16 @@ const ThongKeBaoCaoPage: React.FC = () => {
               <table className="tkbc-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '7%' }}>Mã KH</th>
+                    <th style={{ width: '6%' }}>Mã KH</th>
                     <th style={{ width: '14%' }}>Tiêu đề</th>
-                    <th style={{ width: '11%' }}>Xã phường</th>
-                    <th style={{ width: '15%' }}>Tuyến đường</th>
-                    <th style={{ width: '11%' }}>Loại CV</th>
-                    <th style={{ width: '10%' }}>Ngày tạo</th>
-                    <th style={{ width: '12%' }}>Ngày Phê Duyệt</th>
-                    <th style={{ width: '10%' }}>Ngày Xử Lý</th>
+                    <th style={{ width: '10%' }}>Xã phường</th>
+                    <th style={{ width: '14%' }}>Tuyến đường</th>
+                    <th style={{ width: '10%' }}>Loại CV</th>
+                    <th style={{ width: '8%' }}>Ngày tạo</th>
+                    <th style={{ width: '8%' }}>Ngày Xử Lý</th>
                     <th style={{ width: '10%' }}>Trạng thái</th>
+                    <th style={{ width: '10%' }}>Người lập</th>
+                    <th style={{ width: '10%' }}>Người xử lý</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -403,19 +420,20 @@ const ThongKeBaoCaoPage: React.FC = () => {
                         <td title={item.TenTuyenDuong || ''}>{item.TenTuyenDuong}</td>
                         <td title={item.TenCongViec || ''}>{item.TenCongViec}</td>
                         <td title={item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : ''}>{item.NgayTao ? new Date(item.NgayTao).toLocaleDateString('vi-VN') : ''}</td>
-                        <td title={item.NgayPheDuyet ? new Date(item.NgayPheDuyet).toLocaleDateString('vi-VN') : '-'}>{item.NgayPheDuyet ? new Date(item.NgayPheDuyet).toLocaleDateString('vi-VN') : '-'}</td>
                         <td title={item.NgayXuLy ? new Date(item.NgayXuLy).toLocaleDateString('vi-VN') : '-'}>{item.NgayXuLy ? new Date(item.NgayXuLy).toLocaleDateString('vi-VN') : '-'}</td>
                         <td title={item.TrangThai || ''}>
                           <span className={`tkbc-status-badge ${badgeClass}`}>
                             {item.TrangThai}
                           </span>
                         </td>
+                        <td title={item.NguoiLap || ''}>{item.NguoiLap || '-'}</td>
+                        <td title={item.NguoiXuLy || ''}>{item.NguoiXuLy || '-'}</td>
                       </tr>
                     );
                   })}
                   {paginatedData.length === 0 && (
                     <tr>
-                      <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
+                      <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
                         Không có dữ liệu
                       </td>
                     </tr>
@@ -448,16 +466,19 @@ const ThongKeBaoCaoPage: React.FC = () => {
             </div>
             <div className="tkbc-modal-body">
               <div className="tkbc-filter-group" style={{ marginBottom: '16px' }}>
-                <label>Loại ngày thống kê</label>
+                <label>Trạng thái</label>
                 <select
                   className="tkbc-select"
                   value={tempLoaiNgay}
                   onChange={e => setTempLoaiNgay(e.target.value)}
                   style={{ width: '100%', marginTop: '8px' }}
                 >
-                  <option value="NgayTao">Ngày tạo kế hoạch</option>
-                  <option value="NgayPheDuyet">Ngày phê duyệt kế hoạch</option>
-                  <option value="NgayXuLy">Ngày xử lý kế hoạch</option>
+                  <option value="Tất cả">Tất cả</option>
+                  <option value="Đã gửi">Đã gửi</option>
+                  <option value="Đang thẩm định">Đang thẩm định</option>
+                  <option value="Đã phê duyệt">Đã phê duyệt</option>
+                  <option value="Bị từ chối">Bị từ chối</option>
+                  <option value="Đã hủy">Đã hủy</option>
                 </select>
               </div>
 
@@ -535,6 +556,8 @@ const ThongKeBaoCaoPage: React.FC = () => {
                       <th>Tuyến đường</th>
                       <th>Loại CV</th>
                       <th>Trạng thái</th>
+                      <th>Người lập</th>
+                      <th>Người xử lý</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -565,12 +588,14 @@ const ThongKeBaoCaoPage: React.FC = () => {
                               {item.TrangThai}
                             </span>
                           </td>
+                          <td>{item.NguoiLap || '-'}</td>
+                          <td>{item.NguoiXuLy || '-'}</td>
                         </tr>
                       );
                     })}
                     {getPlansForSelectedDate().length === 0 && (
                       <tr>
-                        <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
+                        <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-on-surface-variant)' }}>
                           Không có kế hoạch nào trong ngày này
                         </td>
                       </tr>

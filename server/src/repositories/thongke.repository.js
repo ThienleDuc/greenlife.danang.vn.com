@@ -15,20 +15,19 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
       td.TenTuyenDuong,
       cv.TenCongViec,
       xp.MaXaPhuong,
-      xp.TenXaPhuong
+      xp.TenXaPhuong,
+      nl.HoTen AS NguoiLap,
+      xl.HoTen AS NguoiXuLy
     FROM dbo.KeHoachCongViec kh
     LEFT JOIN dbo.TuyenDuong td ON kh.MaTuyenDuong = td.MaTuyenDuong
     LEFT JOIN dbo.XaPhuong xp ON td.MaXaPhuong = xp.MaXaPhuong
     LEFT JOIN dbo.DanhMucCongViec cv ON kh.MaLoaiCongViec = cv.MaLoaiCongViec
+    LEFT JOIN dbo.NguoiDung nl ON kh.NguoiLap = nl.MaNguoiDung
+    LEFT JOIN dbo.NguoiDung xl ON kh.NguoiXuLy = xl.MaNguoiDung
     WHERE 1=1
   `;
 
-  const validDateFields = {
-    'NgayTao': 'kh.NgayTao',
-    'NgayPheDuyet': 'kh.NgayPheDuyet',
-    'NgayXuLy': 'kh.NgayXuLy'
-  };
-  const dateField = validDateFields[loaiNgay] || 'kh.NgayTao';
+  const dateField = 'kh.NgayTao';
 
   if (tuNgay) {
     query += ` AND ${dateField} >= @tuNgay`;
@@ -40,6 +39,11 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
     end.setHours(23, 59, 59, 999);
     query += ` AND ${dateField} <= @denNgay`;
     request.input("denNgay", sql.DateTime, end);
+  }
+
+  if (loaiNgay && loaiNgay !== 'Tất cả') {
+    query += ` AND kh.TrangThai = @loaiNgayStatus`;
+    request.input("loaiNgayStatus", sql.NVarChar, loaiNgay);
   }
 
   if (maTuyenDuong) {
@@ -62,7 +66,7 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
     request.input("trangThai", sql.NVarChar, trangThai);
   }
 
-  query += ` ORDER BY kh.NgayCapNhat DESC, kh.NgayPheDuyet DESC, kh.NgayXuLy DESC, kh.NgayTao DESC`;
+  query += ` ORDER BY kh.NgayTao ASC`;
 
   if (page && limit) {
     const offset = (page - 1) * limit;
