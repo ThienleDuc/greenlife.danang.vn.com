@@ -167,7 +167,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
         file,
         removeFilesList
       );
-      navigate(PATHS.QUAN_LY.DASHBOARD);
+      await fetchDetail();
     } catch (error) {
       alert('Có lỗi xảy ra khi cập nhật trạng thái.');
     }
