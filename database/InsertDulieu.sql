@@ -318,59 +318,59 @@ VALUES
     ('CX005', 'ME', '2017-11-11', N'Vườn ươm Hòa Liên', 4.0, 0.20, 2.0, N'nguy hiểm trung bình', '108.225278', '16.072500', 'HV', 'aB3kL9pQx2mV8nZ1cY5t');
 GO
 
-INSERT INTO KeHoachCongViec (MaKeHoach, MaLoaiCongViec, TieuDe, MoTa, FilePDFKeHoach, FilePDFDeNghiCapPhep, NguoiLap, TrangThai, MaTuyenDuong)
+INSERT INTO KeHoachCongViec (MaKeHoach, MaLoaiCongViec, TieuDe, MoTa, FilePDFKeHoach, FilePDFDeNghiCapPhep, NguoiLap, TrangThai, MaTuyenDuong, NgayTao, NgayPheDuyet, NgayXuLy, NguoiXuLy)
 VALUES
-    ('KH001', 'TM', N'Kế hoạch trồng mới cây xanh tuyến Lê Duẩn', N'Trồng 20 cây sao đen', 'kh_tm_ld.pdf', 'denghi_tm_ld.pdf', 'aB3kL9pQx2mV8nZ1cY5t', N'Đã gửi', 'LD'),
-    ('KH002', 'CS', N'Chăm sóc cây tuyến Nguyễn Văn Linh', N'Tưới, cắt tỉa, bón phân', 'kh_cs_nvl.pdf', 'denghi_cs_nvl.pdf', 'aB3kL9pQx2mV8nZ1cY5t', N'Đã phê duyệt', 'NVL'),
-    ('KH003', 'DIDOI', N'Di dời cây phượng tuyến Bạch Đằng', N'Di dời 5 cây phượng già', 'kh_dd_bd.pdf', 'denghi_dd_bd.pdf', 'aB3kL9pQx2mV8nZ1cY5t', N'Đang thẩm định', 'BD'),
-    ('KH004', 'CHATHA', N'Chặt hạ cây nguy hiểm tuyến Trần Phú', N'Xử lý cây me có nguy cơ gãy', 'kh_ch_tp.pdf', 'denghi_ch_tp.pdf', 'aB3kL9pQx2mV8nZ1cY5t', N'Bị từ chối', 'TP'),
-    ('KH005', 'XLSC', N'Xử lý sự cố sau bão tuyến Hùng Vương', N'Dựng lại cây đổ, cắt tỉa cành gãy', 'kh_sc_hv.pdf', 'denghi_sc_hv.pdf', 'aB3kL9pQx2mV8nZ1cY5t', N'Đã hủy', 'HV');
+    ('KH001', 'TM', N'Kế hoạch trồng mới cây xanh tuyến Lê Duẩn', N'Trồng 20 cây sao đen', 'kh_tm_ld.pdf', 'denghi_tm_ld.pdf', 'aB3kL9pQx2mV8nZ1cY5t', N'Đã gửi', 'LD', '2026-05-02 08:00:00', NULL, NULL, NULL),
+    ('KH002', 'CS', N'Chăm sóc cây tuyến Nguyễn Văn Linh', N'Tưới, cắt tỉa, bón phân', 'kh_cs_nvl.pdf', 'denghi_cs_nvl.pdf', 'aB3kL9pQx2mV8nZ1cY5t', N'Đã phê duyệt', 'NVL', '2026-05-02 09:00:00', '2026-05-03 10:00:00', NULL, 'm3Lp8Qz1xK5vB9cJ2hF4'),
+    ('KH003', 'DIDOI', N'Di dời cây phượng tuyến Bạch Đằng', N'Di dời 5 cây phượng già', 'kh_dd_bd.pdf', 'denghi_dd_bd.pdf', 'aB3kL9pQx2mV8nZ1cY5t', N'Đang thẩm định', 'BD', '2026-05-10 08:30:00', NULL, '2026-05-11 09:00:00', 'm3Lp8Qz1xK5vB9cJ2hF4'),
+    ('KH004', 'CHATHA', N'Chặt hạ cây nguy hiểm tuyến Trần Phú', N'Xử lý cây me có nguy cơ gãy', 'kh_ch_tp.pdf', 'denghi_ch_tp.pdf', 'aB3kL9pQx2mV8nZ1cY5t', N'Bị từ chối', 'TP', '2026-05-05 14:00:00', NULL, '2026-05-06 09:00:00', 'm3Lp8Qz1xK5vB9cJ2hF4'),
+    ('KH005', 'XLSC', N'Xử lý sự cố sau bão tuyến Hùng Vương', N'Dựng lại cây đổ, cắt tỉa cành gãy', 'kh_sc_hv.pdf', 'denghi_sc_hv.pdf', 'aB3kL9pQx2mV8nZ1cY5t', N'Đã hủy', 'HV', '2026-05-05 07:00:00', NULL, '2026-05-06 11:00:00', 'm3Lp8Qz1xK5vB9cJ2hF4');
 GO
 
 INSERT INTO KeHoachCongViec (
     MaKeHoach, MaLoaiCongViec, TieuDe, MoTa, 
-    FilePDFKeHoach, FilePDFDeNghiCapPhep, NguoiLap, TrangThai, MaTuyenDuong
+    FilePDFKeHoach, FilePDFDeNghiCapPhep, NguoiLap, TrangThai, MaTuyenDuong, NgayTao, NgayPheDuyet, NgayXuLy, NguoiXuLy
 )
 VALUES
     ('KH006', 'TM', N'Kế hoạch trồng mới cây xanh tuyến Bạch Đằng', 
      N'Trồng 15 cây bằng lăng dọc tuyến ven sông', 'kh_tm_bd.pdf', 'denghi_tm_bd.pdf', 
-     'm3Lp8Qz1xK5vB9cJ2hF4', N'Đã phê duyệt', 'BD'),
+     'm3Lp8Qz1xK5vB9cJ2hF4', N'Đã phê duyệt', 'BD', '2026-05-05 08:00:00', '2026-05-07 15:00:00', NULL, 'm3Lp8Qz1xK5vB9cJ2hF4'),
 
     ('KH007', 'CS', N'Chăm sóc cây tuyến Lê Duẩn - Đợt 1', 
      N'Tưới nước, bón phân, kiểm tra sâu bệnh', 'kh_cs_ld.pdf', 'denghi_cs_ld.pdf', 
-     'aB3kL9pQx2mV8nZ1cY5t', N'Đang thẩm định', 'LD'),
+     'aB3kL9pQx2mV8nZ1cY5t', N'Đang thẩm định', 'LD', '2026-05-10 09:30:00', NULL, '2026-05-11 10:00:00', 'm3Lp8Qz1xK5vB9cJ2hF4'),
 
     ('KH008', 'DIDOI', N'Di dời cây dừa tuyến Hùng Vương', 
      N'Di dời 8 cây dừa để thi công hạ tầng', 'kh_dd_hv.pdf', 'denghi_dd_hv.pdf', 
-     'aB3kL9pQx2mV8nZ1cY5t', N'Đã gửi', 'HV'),
+     'aB3kL9pQx2mV8nZ1cY5t', N'Đã gửi', 'HV', '2026-05-02 10:00:00', NULL, NULL, NULL),
 
     ('KH009', 'CHATHA', N'Chặt hạ cây chết tuyến Nguyễn Văn Linh', 
      N'Xử lý 3 cây sao đen bị chết khô', 'kh_ch_nvl.pdf', 'denghi_ch_nvl.pdf', 
-     'm3Lp8Qz1xK5vB9cJ2hF4', N'Bị từ chối', 'NVL'),
+     'm3Lp8Qz1xK5vB9cJ2hF4', N'Bị từ chối', 'NVL', '2026-05-05 11:15:00', NULL, '2026-05-06 08:00:00', 'm3Lp8Qz1xK5vB9cJ2hF4'),
 
     ('KH010', 'XLSC', N'Xử lý cây gãy đổ sau mưa lớn tuyến Trần Phú', 
      N'Cắt tỉa cành, dựng lại cây nghiêng', 'kh_sc_tp.pdf', 'denghi_sc_tp.pdf', 
-     'aB3kL9pQx2mV8nZ1cY5t', N'Đã hủy', 'TP'),
+     'aB3kL9pQx2mV8nZ1cY5t', N'Đã hủy', 'TP', '2026-05-10 13:45:00', NULL, '2026-05-11 10:00:00', 'm3Lp8Qz1xK5vB9cJ2hF4'),
 
     ('KH011', 'TM', N'Trồng bổ sung cây phượng tuyến Bạch Đằng', 
      N'Trồng 10 cây phượng vĩ thay thế cây già cỗi', 'kh_tm_bd2.pdf', 'denghi_tm_bd2.pdf', 
-     'aB3kL9pQx2mV8nZ1cY5t', N'Đã gửi', 'BD'),
+     'aB3kL9pQx2mV8nZ1cY5t', N'Đã gửi', 'BD', '2026-05-14 08:20:00', NULL, NULL, NULL),
 
     ('KH012', 'CS', N'Chăm sóc cây tuyến Hùng Vương - Cắt tỉa tạo tán', 
      N'Cắt tỉa cành, tạo dáng cho cây sao đen', 'kh_cs_hv.pdf', 'denghi_cs_hv.pdf', 
-     'm3Lp8Qz1xK5vB9cJ2hF4', N'Đã phê duyệt', 'HV'),
+     'm3Lp8Qz1xK5vB9cJ2hF4', N'Đã phê duyệt', 'HV', '2026-05-14 09:10:00', '2026-05-15 14:00:00', NULL, 'm3Lp8Qz1xK5vB9cJ2hF4'),
 
     ('KH013', 'DIDOI', N'Di dời cây me tây tuyến Trần Phú', 
      N'Di dời 4 cây me tây sang vườn ươm', 'kh_dd_tp.pdf', 'denghi_dd_tp.pdf', 
-     'aB3kL9pQx2mV8nZ1cY5t', N'Đang thẩm định', 'TP'),
+     'aB3kL9pQx2mV8nZ1cY5t', N'Đang thẩm định', 'TP', '2026-05-10 10:30:00', NULL, '2026-05-11 11:00:00', 'm3Lp8Qz1xK5vB9cJ2hF4'),
 
     ('KH014', 'CHATHA', N'Chặt hạ cây nguy hiểm tuyến Bạch Đằng', 
      N'Xử lý cây bằng lăng bị nứt thân', 'kh_ch_bd.pdf', 'denghi_ch_bd.pdf', 
-     'm3Lp8Qz1xK5vB9cJ2hF4', N'Đã gửi', 'BD'),
+     'm3Lp8Qz1xK5vB9cJ2hF4', N'Đã gửi', 'BD', '2026-05-14 14:00:00', NULL, NULL, NULL),
 
     ('KH015', 'XLSC', N'Xử lý sự cố cây đổ sau bão số 2 - Tuyến Lê Duẩn', 
      N'Dựng cây, dọn dẹp cành gãy, vệ sinh đường phố', 'kh_sc_ld_bso2.pdf', 'denghi_sc_ld_bso2.pdf', 
-     'aB3kL9pQx2mV8nZ1cY5t', N'Đã phê duyệt', 'LD');
+     'aB3kL9pQx2mV8nZ1cY5t', N'Đã phê duyệt', 'LD', '2026-05-14 07:30:00', '2026-05-15 09:00:00', NULL, 'm3Lp8Qz1xK5vB9cJ2hF4');
 GO
 
 INSERT INTO KeHoachPhanCong (MaKHPC, MaKHCV, TieuDe, FilePDF, NguoiTao, TrangThaiNghiemThu)
