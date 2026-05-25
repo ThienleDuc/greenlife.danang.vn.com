@@ -92,7 +92,7 @@ const updateKeHoach = async (req, res) => {
 
 const huyKeHoach = async (req, res) => {
   try {
-    const data = await keHoachService.huyKeHoach(req.params.maKeHoach, req.user, req.body.nguoiXuLy);
+    const data = await keHoachService.huyKeHoach(req.params.maKeHoach, req.user);
 
     res.status(200).json({
       success: true,

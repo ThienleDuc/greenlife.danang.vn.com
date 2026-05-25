@@ -1,6 +1,7 @@
 const keHoachRepo = require("../repositories/kehoach.repository");
 const crypto = require("crypto");
 const { deletePdfFile } = require("../utils/pdfUpload.utils");
+const { generateToken } = require("../utils/jwt.utils");
 
 const PLAN_STATUS = {
   DA_GUI: "Đã gửi",
@@ -210,12 +211,11 @@ const updateKeHoach = async (maKeHoach, payload, files, user) => {
   return updatedPlan;
 };
 
-const huyKeHoach = async (maKeHoach, user, requestNguoiXuLy) => {
+const huyKeHoach = async (maKeHoach, user) => {
   const nguoiLap = getCurrentUserId(user);
   await assertEditablePlan(maKeHoach, nguoiLap, "hủy");
 
-  const nguoiXuLy = requestNguoiXuLy || nguoiLap;
-  const canceledPlan = await keHoachRepo.huyKeHoach(maKeHoach, nguoiLap, nguoiXuLy);
+  const canceledPlan = await keHoachRepo.huyKeHoach(maKeHoach, nguoiLap);
 
   if (!canceledPlan) {
     throw createHttpError("Không thể hủy kế hoạch công việc", 400);

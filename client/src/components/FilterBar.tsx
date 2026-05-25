@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { FilterParams, XaPhuong, TuyenDuong } from '../types';
 import { LocationService } from '../services/locationService';
 import { TheoDoiKeHoachService } from '../services/kehoachService';
+import { getUserFromStorage, isKyThuat, isQuanLy } from '../utils/roleUtils';
 
 interface FilterBarProps {
   onSearch: (params: FilterParams) => void;
@@ -13,6 +14,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ onSearch, onReset }) => {
   const [xaPhuongList, setXaPhuongList] = useState<XaPhuong[]>([]);
   const [tuyenDuongList, setTuyenDuongList] = useState<TuyenDuong[]>([]);
   const [jobTypeList, setJobTypeList] = useState<any[]>([]);
+  const [isMineOnly, setIsMineOnly] = useState(false);
   
   const [filters, setFilters] = useState<FilterParams>({
     maKeHoach: '',
@@ -64,11 +66,24 @@ const FilterBar: React.FC<FilterBarProps> = ({ onSearch, onReset }) => {
   };
 
   const handleSearch = () => {
-    onSearch(filters);
+    const searchParams = { ...filters };
+    const user = getUserFromStorage();
+    if (isMineOnly && user) {
+      if (isKyThuat(user)) {
+        searchParams.nguoiLap = user.maNguoiDung;
+      } else if (isQuanLy(user)) {
+        searchParams.nguoiPheDuyet = user.maNguoiDung;
+      }
+    } else {
+      delete searchParams.nguoiLap;
+      delete searchParams.nguoiPheDuyet;
+    }
+    onSearch(searchParams);
     setShowModal(false);
   };
 
   const handleReset = () => {
+    setIsMineOnly(false);
     setFilters({
       maKeHoach: '',
       title: '',
@@ -248,6 +263,30 @@ const FilterBar: React.FC<FilterBarProps> = ({ onSearch, onReset }) => {
                       <option key={td.MaTuyenDuong} value={td.MaTuyenDuong}>{td.TenTuyenDuong}</option>
                     ))}
                   </select>
+                </div>
+
+                <div className="filter-field filter-field-full">
+                  <label className="filter-label">Phạm vi kế hoạch</label>
+                  <div className="filter-radio-group">
+                    <label className="filter-radio-label">
+                      <input
+                        type="radio"
+                        name="scope"
+                        checked={!isMineOnly}
+                        onChange={() => setIsMineOnly(false)}
+                      />
+                      <span>Tất cả</span>
+                    </label>
+                    <label className="filter-radio-label">
+                      <input
+                        type="radio"
+                        name="scope"
+                        checked={isMineOnly}
+                        onChange={() => setIsMineOnly(true)}
+                      />
+                      <span>Của tôi</span>
+                    </label>
+                  </div>
                 </div>
 
                 <div className="filter-field filter-field-full">

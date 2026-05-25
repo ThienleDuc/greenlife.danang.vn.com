@@ -31,7 +31,11 @@ const handleUploadPlanFiles = (req, res, next) => {
   });
 };
 
-router.get("/ke-hoach", keHoachController.searchKeHoach);
+router.get(
+  "/ke-hoach",
+  authorize([ROLE_CODES.KY_THUAT, ROLE_CODES.QUAN_LY]),
+  keHoachController.searchKeHoach
+);
 router.get("/ke-hoach/stats", keHoachController.getKeHoachStats);
 router.get(
   "/ke-hoach/cua-toi",
