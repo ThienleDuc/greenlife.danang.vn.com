@@ -131,6 +131,8 @@ export interface FilterParams {
   approver: string;
   xaPhuong: string;
   tuyenDuong: string;
+  nguoiLap?: string;
+  nguoiPheDuyet?: string;
 }
 
 export interface SummaryStats {

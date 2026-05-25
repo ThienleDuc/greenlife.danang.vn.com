@@ -176,20 +176,19 @@ const updateKeHoach = async (planData) => {
   return await findByMaKeHoach(planData.maKeHoach);
 };
 
-const huyKeHoach = async (maKeHoach, nguoiLap, nguoiXuLy) => {
+const huyKeHoach = async (maKeHoach, nguoiLap) => {
   const connection = await poolPromise;
 
   const result = await connection
     .request()
     .input("maKeHoach", sql.VarChar(20), maKeHoach)
     .input("nguoiLap", sql.VarChar(20), nguoiLap)
-    .input("nguoiXuLy", sql.VarChar(20), nguoiXuLy || nguoiLap)
     .input("trangThai", sql.NVarChar(50), "Đã hủy")
     .query(`
       UPDATE dbo.KeHoachCongViec
       SET
         TrangThai = @trangThai,
-        NguoiXuLy = @nguoiXuLy,
+        NguoiXuLy = @nguoiLap,
         NgayXuLy = GETDATE(),
         NgayCapNhat = GETDATE()
       WHERE MaKeHoach = @maKeHoach
@@ -215,6 +214,7 @@ const searchKeHoach = async (filters) => {
     creator,
     processor,
     approver,
+    nguoiLap,
     xaPhuong,
     tuyenDuong,
     startDate,
@@ -297,6 +297,16 @@ const searchKeHoach = async (filters) => {
   if (approver) {
     query += ` AND pd.HoTen LIKE @approver`;
     request.input("approver", sql.NVarChar, `%${approver}%`);
+  }
+
+  if (nguoiLap) {
+    query += ` AND nl.MaNguoiDung = @nguoiLap`;
+    request.input("nguoiLap", sql.VarChar(20), nguoiLap);
+  }
+
+  if (filters.nguoiPheDuyet) {
+    query += ` AND pd.MaNguoiDung = @nguoiPheDuyet`;
+    request.input("nguoiPheDuyet", sql.VarChar(20), filters.nguoiPheDuyet);
   }
 
   if (xaPhuong) {
