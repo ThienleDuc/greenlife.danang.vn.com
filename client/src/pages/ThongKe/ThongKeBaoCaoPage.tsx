@@ -47,6 +47,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
   const [tempLoaiNgay, setTempLoaiNgay] = useState<string>('Tất cả');
   const [tempTuNgay, setTempTuNgay] = useState<string>('');
   const [tempDenNgay, setTempDenNgay] = useState<string>('');
+  const [tempDateError, setTempDateError] = useState<string>('');
 
   const [errorMsg, setErrorMsg] = useState<string>('');
   
@@ -551,6 +552,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                 </div>
               </div>
 
+              {tempDateError && <div style={{ color: 'var(--color-error)', fontSize: '14px', marginBottom: '16px' }}>{tempDateError}</div>}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button type="button" className="tkbc-btn-secondary" onClick={() => setShowDateDialog(false)}>
                   Hủy
@@ -560,7 +562,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                   className="tkbc-btn-filter"
                   onClick={() => {
                     if (tempTuNgay && tempDenNgay && new Date(tempTuNgay) > new Date(tempDenNgay)) {
-                      alert("Thời gian lọc không hợp lệ: Ngày bắt đầu không thể sau ngày kết thúc.");
+                      setTempDateError("Thời gian lọc không hợp lệ: Ngày bắt đầu không thể sau ngày kết thúc.");
                       return;
                     }
                     setLoaiNgay(tempLoaiNgay);
@@ -568,6 +570,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                     setDenNgay(tempDenNgay);
                     setShowDateDialog(false);
                     setErrorMsg('');
+                    setTempDateError('');
                     loadData(tempTuNgay, tempDenNgay, maTuyenDuong, maXaPhuong, tempLoaiNgay, maLoaiCongViec, trangThai, 1);
                   }}
                 >

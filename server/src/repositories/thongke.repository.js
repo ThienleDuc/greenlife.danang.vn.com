@@ -36,8 +36,8 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
   
   if (denNgay) {
     const end = new Date(denNgay);
-    end.setHours(23, 59, 59, 999);
-    query += ` AND ${dateField} <= @denNgay`;
+    end.setDate(end.getDate() + 1);
+    query += ` AND ${dateField} < @denNgay`;
     request.input("denNgay", sql.DateTime, end);
   }
 

@@ -109,10 +109,10 @@ const searchKeHoachPheDuyet = async (filters) => {
 
   if (startDate && endDate) {
     const colName = dateType || "NgayTao";
-    query += ` AND kh.${colName} BETWEEN @startDate AND @endDate`;
+    query += ` AND kh.${colName} >= @startDate AND kh.${colName} < @endDate`;
     request.input("startDate", sql.DateTime, new Date(startDate));
     const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    end.setDate(end.getDate() + 1);
     request.input("endDate", sql.DateTime, end);
   }
 
