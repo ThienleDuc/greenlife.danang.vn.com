@@ -7,28 +7,6 @@ GO
 -- ==============================================================================
 
 -- -------------------------------------------------------------------------------
--- TRIGGER 1: Tự động hủy kế hoạch nếu quá 15 ngày chưa được phê duyệt hoặc từ chối
--- Khi UPDATE xảy ra, nếu trạng thái vẫn chưa là 'Đã phê duyệt'/'Bị từ chối'/'Đã hủy'
--- VÀ đã quá 15 ngày kể từ NgayTao → tự động chuyển sang 'Đã hủy'
--- -------------------------------------------------------------------------------
-CREATE OR ALTER TRIGGER TRG_KeHoachCongViec_AutoHuyQuaHan
-ON KeHoachCongViec
-AFTER UPDATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    UPDATE t
-    SET t.TrangThai   = N'Đã hủy',
-        t.NgayCapNhat = GETDATE()
-    FROM KeHoachCongViec t
-    INNER JOIN inserted i ON t.MaKeHoach = i.MaKeHoach
-    WHERE t.TrangThai NOT IN (N'Đã phê duyệt', N'Bị từ chối', N'Đã hủy')
-      AND DATEDIFF(DAY, t.NgayTao, GETDATE()) > 15;
-END
-GO
-
--- -------------------------------------------------------------------------------
 -- TRIGGER 2: Không cho phép chỉnh sửa bất kỳ dữ liệu nào khi TrangThai = 'Đã hủy'
 -- Dùng INSTEAD OF để chặn trước khi dữ liệu ghi xuống bảng
 -- -------------------------------------------------------------------------------
@@ -87,17 +65,31 @@ BEGIN
 
     IF UPDATE(TrangThai)
     BEGIN
-        -- Kiểm tra: nếu có bản ghi chuyển sang 'Đã hủy'
-        -- mà người lập (NguoiLap) không có MaVaiTro = 'NVKT' thì chặn
-        -- hoặc trạng thái trước đó không phải 'Đã gửi' / 'Bị từ chối' thì chặn
+        -- TH2: Kế hoạch bị từ chối (TrangThai = N'Bị từ chối') quá 15 ngày thì không cho phép hủy nữa
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            INNER JOIN deleted d ON i.MaKeHoach = d.MaKeHoach
+            WHERE i.TrangThai = N'Đã hủy'
+              AND d.TrangThai = N'Bị từ chối'
+              AND DATEDIFF(DAY, i.NgayTao, GETDATE()) > 15
+        )
+        BEGIN
+            RAISERROR(N'Kế hoạch bị từ chối đã quá 15 ngày không được phép hủy nữa.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- Kiểm tra hủy thủ công thông thường khi chưa quá hạn 15 ngày:
+        -- - Chỉ cho phép NVKT hủy
         IF EXISTS (
             SELECT 1
             FROM inserted i
             INNER JOIN deleted d    ON i.MaKeHoach = d.MaKeHoach
             INNER JOIN NguoiDung nd ON nd.MaNguoiDung = i.NguoiLap
             WHERE i.TrangThai = N'Đã hủy'
-              AND d.TrangThai IN (N'Đã gửi', N'Bị từ chối')  -- chỉ cho hủy từ 2 trạng thái này
-              AND nd.MaVaiTro <> 'NVKT'                       -- người lập không phải NVKT
+              AND nd.MaVaiTro <> 'NVKT'
+              AND DATEDIFF(DAY, i.NgayTao, GETDATE()) <= 15
         )
         BEGIN
             RAISERROR(N'Chỉ nhân viên kỹ thuật (NVKT) mới được phép hủy kế hoạch.', 16, 1);
@@ -105,13 +97,14 @@ BEGIN
             RETURN;
         END
 
-        -- Chặn hủy nếu trạng thái trước đó không phải 'Đã gửi' hoặc 'Bị từ chối'
+        -- - Chỉ được hủy khi trạng thái là 'Đã gửi' hoặc 'Bị từ chối'
         IF EXISTS (
             SELECT 1
             FROM inserted i
             INNER JOIN deleted d ON i.MaKeHoach = d.MaKeHoach
             WHERE i.TrangThai = N'Đã hủy'
               AND d.TrangThai NOT IN (N'Đã gửi', N'Bị từ chối')
+              AND DATEDIFF(DAY, i.NgayTao, GETDATE()) <= 15
         )
         BEGIN
             RAISERROR(N'Chỉ được hủy kế hoạch khi trạng thái là "Đã gửi" hoặc "Bị từ chối".', 16, 1);
@@ -135,7 +128,7 @@ BEGIN
 
     IF UPDATE(TrangThai)
     BEGIN
-        -- Kiểm tra: nếu gửi lại mà người lập (NguoiLap) không phải NVKT thì chặn
+        -- Kiểm tra: nếu gửi lại mà người lập (NguoiLap) không phải NVKT thì chặn (chỉ kiểm tra khi kế hoạch chưa quá hạn 15 ngày)
         IF EXISTS (
             SELECT 1
             FROM inserted i
@@ -144,6 +137,7 @@ BEGIN
             WHERE i.TrangThai = N'Đã gửi'        -- đang gửi lại
               AND d.TrangThai = N'Bị từ chối'     -- trước đó bị từ chối
               AND nd.MaVaiTro <> 'NVKT'           -- người lập không phải NVKT
+              AND DATEDIFF(DAY, i.NgayTao, GETDATE()) <= 15
         )
         BEGIN
             RAISERROR(N'Chỉ nhân viên kỹ thuật (NVKT) mới được phép gửi lại kế hoạch sau khi bị từ chối.', 16, 1);
@@ -167,7 +161,7 @@ BEGIN
 
     IF UPDATE(TrangThai)
     BEGIN
-        -- Kiểm tra: nếu hủy phê duyệt mà NguoiPheDuyet không phải CBQL thì chặn
+        -- Kiểm tra: nếu hủy phê duyệt mà NguoiPheDuyet không phải CBQL thì chặn (chỉ kiểm tra khi kế hoạch chưa quá hạn 15 ngày)
         IF EXISTS (
             SELECT 1
             FROM inserted i
@@ -176,6 +170,7 @@ BEGIN
             WHERE i.TrangThai = N'Đang thẩm định'  -- đang chuyển về thẩm định (hủy phê duyệt)
               AND d.TrangThai IN (N'Đã phê duyệt', N'Bị từ chối')     -- trước đó đã phê duyệt
               AND nd.MaVaiTro <> 'CBQL'             -- người phê duyệt không phải CBQL
+              AND DATEDIFF(DAY, i.NgayTao, GETDATE()) <= 15
         )
         BEGIN
             RAISERROR(N'Chỉ cán bộ quản lý (CBQL) mới được phép hủy phê duyệt kế hoạch.', 16, 1);
