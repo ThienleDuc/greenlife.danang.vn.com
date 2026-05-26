@@ -27,18 +27,21 @@ const getThongKeData = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNga
     WHERE 1=1
   `;
 
-  const dateField = 'kh.NgayTao';
+  let dateField = 'kh.NgayTao';
+  if (loaiNgay === 'Đã phê duyệt') {
+    dateField = 'kh.NgayPheDuyet';
+  } else if (loaiNgay === 'Bị từ chối' || loaiNgay === 'Đã hủy') {
+    dateField = 'kh.NgayXuLy';
+  }
 
   if (tuNgay) {
     query += ` AND ${dateField} >= @tuNgay`;
-    request.input("tuNgay", sql.DateTime, new Date(tuNgay));
+    request.input("tuNgay", sql.VarChar, `${tuNgay} 00:00:00`);
   }
   
   if (denNgay) {
-    const end = new Date(denNgay);
-    end.setHours(23, 59, 59, 999);
     query += ` AND ${dateField} <= @denNgay`;
-    request.input("denNgay", sql.DateTime, end);
+    request.input("denNgay", sql.VarChar, `${denNgay} 23:59:59.999`);
   }
 
   if (loaiNgay && loaiNgay !== 'Tất cả') {

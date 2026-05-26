@@ -24,8 +24,13 @@ const getTongQuan = async (tuNgay, denNgay, maTuyenDuong, maXaPhuong, loaiNgay, 
     // Mọi kế hoạch đều được tính vào "Tổng kế hoạch" (card đầu tiên)
     acc.tongTao++;
     
-    // Gom nhóm theo ngày Tạo
+    // Gom nhóm theo ngày tương ứng với loại ngày lọc
     let dateValue = row.NgayTao;
+    if (loaiNgay === 'Đã phê duyệt') {
+      dateValue = row.NgayPheDuyet;
+    } else if (loaiNgay === 'Bị từ chối' || loaiNgay === 'Đã hủy') {
+      dateValue = row.NgayXuLy;
+    }
 
     const dateStr = dateValue ? new Date(dateValue).toISOString().split('T')[0] : 'N/A';
     if (!acc.byDate[dateStr]) {

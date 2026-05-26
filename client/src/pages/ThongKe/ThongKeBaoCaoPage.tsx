@@ -3,8 +3,8 @@ import thongKeService, { type ThongKeTongQuanResponse } from '../../services/tho
 import locationService from '../../services/locationService';
 import { TheoDoiKeHoachService } from '../../services/kehoachService';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
-  LineChart, Line
+  ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
+  Line, PieChart, Pie, Cell
 } from 'recharts';
 import '../../styles/pages/ThongKeBaoCao.css';
 import Pagination from '../../components/Pagination';
@@ -47,6 +47,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
   const [tempLoaiNgay, setTempLoaiNgay] = useState<string>('Tất cả');
   const [tempTuNgay, setTempTuNgay] = useState<string>('');
   const [tempDenNgay, setTempDenNgay] = useState<string>('');
+  const [tempDateError, setTempDateError] = useState<string>('');
 
   const [errorMsg, setErrorMsg] = useState<string>('');
   
@@ -316,16 +317,23 @@ const ThongKeBaoCaoPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="tkbc-charts">
-            {/* Biểu đồ xu hướng (Line chart) */}
-            <div className="tkbc-chart-wrapper">
-              <h3 className="tkbc-chart-title">Xu hướng theo thời gian (Nhấp mốc để xem chi tiết)</h3>
-              <div style={{ height: 300 }}>
-                {data && data.chartData && data.chartData.length > 0 ? (
+          <div className="tkbc-charts" style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
+            {/* Biểu đồ hỗn hợp (Combo chart) */}
+            <div className="tkbc-chart-wrapper" style={{ flex: '1 1 60%', minWidth: '400px', maxWidth: '100%', overflow: 'hidden' }}>
+              <h3 className="tkbc-chart-title">Thống kê & Xu hướng trạng thái kế hoạch</h3>
+              <div style={{ width: '100%', overflowX: 'auto', overflowY: 'hidden' }}>
+                <div style={{ 
+                  height: 400, 
+                  minWidth: data?.chartData && data.chartData.length > 8 ? `${data.chartData.length * 60}px` : '100%' 
+                }}>
+                  {data && data.chartData && data.chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart 
-                      data={data.chartData} 
-                      margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                    <ComposedChart 
+                      data={data.chartData.map((item: any) => ({
+                        ...item,
+                        tongSo: (item.taoMoi || 0) + (item.dangThamDinh || 0) + (item.daDuyet || 0) + (item.tuChoi || 0) + (item.daHuy || 0)
+                      }))} 
+                      margin={{ top: 20, right: 20, left: 0, bottom: 5 }}
                       onClick={handleChartClick}
                       style={{ cursor: 'pointer' }}
                     >
@@ -334,48 +342,87 @@ const ThongKeBaoCaoPage: React.FC = () => {
                       <YAxis allowDecimals={false} tick={{ fill: 'var(--color-on-surface-variant)' }} axisLine={false} tickLine={false} />
                       <RechartsTooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--color-outline-variant)' }} />
                       <Legend wrapperStyle={{ paddingTop: 10 }} />
-                      <Line type="monotone" name="Tạo mới/Đã gửi" dataKey="taoMoi" stroke="var(--color-primary)" strokeWidth={2} activeDot={{ r: 8 }} />
-                      <Line type="monotone" name="Đang thẩm định" dataKey="dangThamDinh" stroke="#f59e0b" strokeWidth={2} />
-                      <Line type="monotone" name="Đã duyệt" dataKey="daDuyet" stroke="var(--color-primary-container)" strokeWidth={2} />
-                      <Line type="monotone" name="Từ chối" dataKey="tuChoi" stroke="var(--color-error)" strokeWidth={2} />
-                      <Line type="monotone" name="Đã hủy" dataKey="daHuy" stroke="#6b7280" strokeWidth={2} />
-                    </LineChart>
+                      
+                      {/* Stacked Bars cho các trạng thái */}
+                      <Bar name="Tạo mới/Đã gửi" dataKey="taoMoi" stackId="a" fill="var(--color-primary)" />
+                      <Bar name="Đang thẩm định" dataKey="dangThamDinh" stackId="a" fill="#f59e0b" />
+                      <Bar name="Đã duyệt" dataKey="daDuyet" stackId="a" fill="var(--color-primary-container)" />
+                      <Bar name="Từ chối" dataKey="tuChoi" stackId="a" fill="var(--color-error)" />
+                      <Bar name="Đã hủy" dataKey="daHuy" stackId="a" fill="#6b7280" />
+
+                      {/* Line cho Tổng số */}
+                      <Line type="monotone" name="Tổng số kế hoạch" dataKey="tongSo" stroke="#10b981" strokeWidth={3} activeDot={{ r: 8 }} />
+                    </ComposedChart>
                   </ResponsiveContainer>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-on-surface-variant)' }}>Không có dữ liệu trong khoảng thời gian này</div>
                 )}
+                </div>
               </div>
             </div>
 
-            {/* Biểu đồ so sánh (Bar chart) */}
-            <div className="tkbc-chart-wrapper">
-              <h3 className="tkbc-chart-title">Tương quan trạng thái (Nhấp cột để xem chi tiết)</h3>
-              <div style={{ height: 300 }}>
-                {data && data.chartData && data.chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={data.chartData} 
-                      margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-                      onClick={handleChartClick}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-outline-variant)" />
-                      <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--color-on-surface-variant)' }} axisLine={{ stroke: 'var(--color-outline-variant)' }} />
-                      <YAxis allowDecimals={false} tick={{ fill: 'var(--color-on-surface-variant)' }} axisLine={false} tickLine={false} />
-                      <RechartsTooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--color-outline-variant)' }} />
-                      <Legend wrapperStyle={{ paddingTop: 10 }} />
-                      <Bar name="Tạo mới/Đã gửi" dataKey="taoMoi" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
-                      <Bar name="Đang thẩm định" dataKey="dangThamDinh" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                      <Bar name="Đã duyệt" dataKey="daDuyet" fill="var(--color-primary-container)" radius={[4, 4, 0, 0]} />
-                      <Bar name="Từ chối" dataKey="tuChoi" fill="var(--color-error)" radius={[4, 4, 0, 0]} />
-                      <Bar name="Đã hủy" dataKey="daHuy" fill="#6b7280" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+            {/* Biểu đồ tròn (Donut chart) - Chỉ hiển thị khi xem Tất cả trạng thái */}
+            {loaiNgay === 'Tất cả' && (
+              <div className="tkbc-chart-wrapper" style={{ flex: '1 1 35%', minWidth: '300px' }}>
+                <h3 className="tkbc-chart-title">Tỷ trọng trạng thái tổng quan</h3>
+              <div style={{ height: 400 }}>
+                {data && data.tongQuan ? (
+                  (() => {
+                    const tongKhac = (data.tongQuan.tongThamDinh || 0) + (data.tongQuan.tongDuyet || 0) + (data.tongQuan.tongTuChoi || 0) + (data.tongQuan.tongHuy || 0);
+                    const actualTaoMoi = Math.max(0, (data.tongQuan.tongTao || 0) - tongKhac);
+                    
+                    const pieData = [
+                      { name: 'Tạo mới/Đã gửi', value: actualTaoMoi, color: 'var(--color-primary)' },
+                      { name: 'Đang thẩm định', value: data.tongQuan.tongThamDinh || 0, color: '#f59e0b' },
+                      { name: 'Đã duyệt', value: data.tongQuan.tongDuyet || 0, color: 'var(--color-primary-container)' },
+                      { name: 'Từ chối', value: data.tongQuan.tongTuChoi || 0, color: 'var(--color-error)' },
+                      { name: 'Đã hủy', value: data.tongQuan.tongHuy || 0, color: '#6b7280' }
+                    ].filter(item => item.value > 0);
+
+                    if (pieData.length === 0) {
+                      return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-on-surface-variant)' }}>Không có dữ liệu</div>;
+                    }
+
+                    return (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={110}
+                            paddingAngle={2}
+                            dataKey="value"
+                            labelLine={false}
+                            label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                              const RADIAN = Math.PI / 180;
+                              const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                              const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                              const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                              return (
+                                <text x={x} y={y} fill="#fff" textAnchor="middle" dominantBaseline="central" fontSize={13} fontWeight="bold" style={{ textShadow: '0px 1px 3px rgba(0,0,0,0.6)' }}>
+                                  {percent > 0.05 ? `${(percent * 100).toFixed(1)}%` : ''}
+                                </text>
+                              );
+                            }}
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip formatter={(value: number) => [value, 'Số lượng']} contentStyle={{ borderRadius: 8, border: '1px solid var(--color-outline-variant)' }} />
+                          <Legend wrapperStyle={{ paddingTop: 10 }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    );
+                  })()
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-on-surface-variant)' }}>Không có dữ liệu trong khoảng thời gian này</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-on-surface-variant)' }}>Không có dữ liệu</div>
                 )}
               </div>
             </div>
+            )}
           </div>
 
           <div className="tkbc-table-wrapper">
@@ -505,6 +552,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                 </div>
               </div>
 
+              {tempDateError && <div style={{ color: 'var(--color-error)', fontSize: '14px', marginBottom: '16px' }}>{tempDateError}</div>}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button type="button" className="tkbc-btn-secondary" onClick={() => setShowDateDialog(false)}>
                   Hủy
@@ -514,7 +562,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                   className="tkbc-btn-filter"
                   onClick={() => {
                     if (tempTuNgay && tempDenNgay && new Date(tempTuNgay) > new Date(tempDenNgay)) {
-                      alert("Thời gian lọc không hợp lệ: Ngày bắt đầu không thể sau ngày kết thúc.");
+                      setTempDateError("Thời gian lọc không hợp lệ: Ngày bắt đầu không thể sau ngày kết thúc.");
                       return;
                     }
                     setLoaiNgay(tempLoaiNgay);
@@ -522,6 +570,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
                     setDenNgay(tempDenNgay);
                     setShowDateDialog(false);
                     setErrorMsg('');
+                    setTempDateError('');
                     loadData(tempTuNgay, tempDenNgay, maTuyenDuong, maXaPhuong, tempLoaiNgay, maLoaiCongViec, trangThai, 1);
                   }}
                 >
