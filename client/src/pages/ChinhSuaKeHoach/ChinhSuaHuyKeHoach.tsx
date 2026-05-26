@@ -42,7 +42,6 @@ const EMPTY_FILES: PlanFileState = {
   fileDeNghiCapPhep: null,
 };
 
-const PERMIT_REQUIRED_TYPE_CODES = ['DDCH'];
 const MAX_PDF_SIZE = 10 * 1024 * 1024;
 
 const getApiErrorMessage = (error: ApiError | unknown, fallback: string) => {
@@ -73,8 +72,6 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
 
   const fileKeHoachRef = useRef<HTMLInputElement>(null);
   const fileDeNghiRef = useRef<HTMLInputElement>(null);
-
-  const requiresPermitFile = PERMIT_REQUIRED_TYPE_CODES.includes(form.maLoaiCongViec);
 
   const openLocalPdf = (file: File | null) => {
     if (!file) return;
@@ -217,13 +214,12 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
     if (!form.maTuyenDuong) return 'Vui lòng chọn tuyến đường';
     if (!form.tieuDe.trim()) return 'Vui lòng nhập tiêu đề kế hoạch';
     if (form.tieuDe.trim().length > 200) return 'Tiêu đề kế hoạch không được vượt quá 200 ký tự';
-    if (!form.moTa.trim()) return 'Vui lòng nhập mô tả ngắn';
     if (form.moTa.trim().length > 500) return 'Mô tả ngắn không được vượt quá 500 ký tự';
     if (!files.fileKeHoach && !plan?.FilePDFKeHoach) {
       return 'Vui lòng tải file PDF kế hoạch công việc';
     }
 
-    if (requiresPermitFile && !files.fileDeNghiCapPhep && !plan?.FilePDFDeNghiCapPhep) {
+    if (!files.fileDeNghiCapPhep && !plan?.FilePDFDeNghiCapPhep) {
       return 'Vui lòng tải file PDF đề nghị cấp phép';
     }
 
@@ -412,7 +408,6 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
                 onChange={handleInputChange}
                 maxLength={500}
                 rows={4}
-                required
               />
             </label>
 
@@ -454,7 +449,7 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
                   type="file"
                   accept="application/pdf,.pdf"
                   onChange={handleFileChange}
-                  required={requiresPermitFile && !plan?.FilePDFDeNghiCapPhep}
+                  required={!plan?.FilePDFDeNghiCapPhep}
                 />
                 <span className="material-symbols-outlined">upload_file</span>
                 <span className="upload-text">Chọn hoặc kéo thả file PDF</span>

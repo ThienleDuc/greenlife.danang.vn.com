@@ -180,3 +180,105 @@ BEGIN
     END
 END
 GO
+
+-- -------------------------------------------------------------------------------
+-- TRIGGER 6: Kiểm tra các trường dữ liệu bắt buộc (Validation)
+-- -------------------------------------------------------------------------------
+CREATE OR ALTER TRIGGER TRG_KeHoachCongViec_ValidateData
+ON KeHoachCongViec
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @IsInsert BIT = 0;
+    DECLARE @IsUpdate BIT = 0;
+
+    IF EXISTS (SELECT 1 FROM inserted) AND NOT EXISTS (SELECT 1 FROM deleted)
+        SET @IsInsert = 1;
+    ELSE IF EXISTS (SELECT 1 FROM inserted) AND EXISTS (SELECT 1 FROM deleted)
+        SET @IsUpdate = 1;
+
+    -- ==============================================================================
+    -- 1. LẬP KẾ HOẠCH MỚI (Sự kiện INSERT)
+    -- ==============================================================================
+    IF @IsInsert = 1
+    BEGIN
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            WHERE LTRIM(RTRIM(ISNULL(i.TieuDe, ''))) = ''
+               OR LTRIM(RTRIM(ISNULL(i.FilePDFKeHoach, ''))) = ''
+               OR LTRIM(RTRIM(ISNULL(i.FilePDFDeNghiCapPhep, ''))) = ''
+               OR LTRIM(RTRIM(ISNULL(i.MaLoaiCongViec, ''))) = ''
+               OR LTRIM(RTRIM(ISNULL(i.MaTuyenDuong, ''))) = ''
+        )
+        BEGIN
+            RAISERROR(N'LẬP KẾ HOẠCH MỚI: Các trường bắt buộc (Tiêu đề, Loại công việc, Tuyến đường, và các file PDF) không được để trống.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+    END
+
+    -- ==============================================================================
+    -- 2. CHỈNH SỬA, PHÊ DUYỆT (Sự kiện UPDATE)
+    -- ==============================================================================
+    IF @IsUpdate = 1
+    BEGIN
+        -- a) CHỈNH SỬA KẾ HOẠCH (áp dụng khi trạng thái là Đã gửi hoặc Đang thẩm định)
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            WHERE i.TrangThai IN (N'Đã gửi', N'Đang thẩm định')
+              AND (
+                   LTRIM(RTRIM(ISNULL(i.TieuDe, ''))) = ''
+                OR LTRIM(RTRIM(ISNULL(i.FilePDFKeHoach, ''))) = ''
+                OR LTRIM(RTRIM(ISNULL(i.FilePDFDeNghiCapPhep, ''))) = ''
+                OR LTRIM(RTRIM(ISNULL(i.MaLoaiCongViec, ''))) = ''
+                OR LTRIM(RTRIM(ISNULL(i.MaTuyenDuong, ''))) = ''
+              )
+        )
+        BEGIN
+            RAISERROR(N'CHỈNH SỬA KẾ HOẠCH: Các trường bắt buộc (Tiêu đề, Loại công việc, Tuyến đường, và các file PDF) không được để trống.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- b) PHÊ DUYỆT KẾ HOẠCH (Trạng thái chuyển sang 'Đã phê duyệt')
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            INNER JOIN deleted d ON i.MaKeHoach = d.MaKeHoach
+            WHERE i.TrangThai = N'Đã phê duyệt'
+              AND d.TrangThai <> N'Đã phê duyệt'
+              AND i.NguoiPheDuyet IS NULL
+        )
+        BEGIN
+            RAISERROR(N'PHÊ DUYỆT KẾ HOẠCH: Phải có thông tin người phê duyệt.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- c) TỪ CHỐI KẾ HOẠCH (Trạng thái chuyển sang 'Bị từ chối')
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            INNER JOIN deleted d ON i.MaKeHoach = d.MaKeHoach
+            WHERE i.TrangThai = N'Bị từ chối'
+              AND d.TrangThai <> N'Bị từ chối'
+              AND (
+                   i.NguoiPheDuyet IS NULL 
+                OR LTRIM(RTRIM(ISNULL(i.YKienPheDuyet, ''))) = ''
+              )
+        )
+        BEGIN
+            RAISERROR(N'TỪ CHỐI KẾ HOẠCH: Phải có thông tin người phê duyệt và ý kiến phê duyệt (lý do từ chối).', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- d) HỦY KẾ HOẠCH 
+        -- Đã được kiểm tra phân quyền và điều kiện ở Trigger 3, bỏ qua không cần validate dữ liệu ở đây.
+    END
+END
+GO
