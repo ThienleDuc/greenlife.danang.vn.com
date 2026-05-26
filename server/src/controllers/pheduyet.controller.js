@@ -1,4 +1,5 @@
 const pheDuyetService = require("../services/pheduyet.service");
+const { handleDbError } = require("../utils/dbError.utils");
 
 const getAllKeHoachPheDuyet = async (req, res) => {
   try {
@@ -7,8 +8,8 @@ const getAllKeHoachPheDuyet = async (req, res) => {
     const data = await pheDuyetService.getAllKeHoachPheDuyet(limit, offset, req.user);
     res.status(200).json(data);
   } catch (error) {
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: "Lỗi khi lấy danh sách kế hoạch phê duyệt", error: error.message });
+    const { statusCode, message } = handleDbError(error, "Lỗi khi lấy danh sách kế hoạch phê duyệt");
+    res.status(statusCode).json({ message });
   }
 };
 
@@ -18,8 +19,8 @@ const searchKeHoachPheDuyet = async (req, res) => {
     const data = await pheDuyetService.searchKeHoachPheDuyet(filters, req.user);
     res.status(200).json(data);
   } catch (error) {
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: "Lỗi khi tìm kiếm kế hoạch phê duyệt", error: error.message });
+    const { statusCode, message } = handleDbError(error, "Lỗi khi tìm kiếm kế hoạch phê duyệt");
+    res.status(statusCode).json({ message });
   }
 };
 
@@ -32,8 +33,8 @@ const getKeHoachChiTiet = async (req, res) => {
     }
     res.status(200).json(data);
   } catch (error) {
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: "Lỗi khi lấy chi tiết kế hoạch", error: error.message });
+    const { statusCode, message } = handleDbError(error, "Lỗi khi lấy chi tiết kế hoạch");
+    res.status(statusCode).json({ message });
   }
 };
 
@@ -72,8 +73,8 @@ const updateTrangThaiPheDuyet = async (req, res) => {
     );
     res.status(200).json(result);
   } catch (error) {
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: "Lỗi khi cập nhật trạng thái", error: error.message });
+    const { statusCode, message } = handleDbError(error, "Lỗi khi cập nhật trạng thái");
+    res.status(statusCode).json({ message });
   }
 };
 
@@ -84,8 +85,8 @@ const removeSpecificFile = async (req, res) => {
     const result = await pheDuyetService.removeSpecificFile(maKeHoach, fileKey, fileName, req.user);
     res.status(200).json(result);
   } catch (error) {
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: "Lỗi khi gỡ file", error: error.message });
+    const { statusCode, message } = handleDbError(error, "Lỗi khi gỡ file");
+    res.status(statusCode).json({ message });
   }
 };
 
