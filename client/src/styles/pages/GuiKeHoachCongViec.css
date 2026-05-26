@@ -247,33 +247,57 @@
   opacity: 0.72;
 }
 
-.send-plan-field input[type='file'] {
-  padding: 0.65rem 0.85rem;
-  background: var(--color-surface-container-low);
-  border-style: dashed;
+/* ---- Custom File Upload Area ---- */
+.custom-file-upload {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border: 2px dashed var(--color-outline-variant);
+  border-radius: 12px;
+  background: var(--color-surface-container-lowest);
+  transition: all 0.3s ease;
   cursor: pointer;
+  overflow: hidden;
 }
 
-.send-plan-field input[type='file']:hover {
-  background: var(--color-surface-container);
+.custom-file-upload:hover {
   border-color: var(--color-primary);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(52, 211, 153, 0.05));
 }
 
-.send-plan-field input[type='file']::file-selector-button {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #059669 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.45rem 0.85rem;
-  font-size: 0.8rem;
-  font-weight: var(--font-weight-semibold);
+.custom-file-upload input[type='file'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
   cursor: pointer;
-  margin-right: 0.75rem;
-  transition: opacity 0.2s ease;
+  z-index: 10;
 }
 
-.send-plan-field input[type='file']::file-selector-button:hover {
-  opacity: 0.9;
+.custom-file-upload .material-symbols-outlined {
+  font-size: 28px;
+  color: var(--color-outline);
+  transition: color 0.3s ease;
+}
+
+.custom-file-upload:hover .material-symbols-outlined {
+  color: var(--color-primary);
+  transform: scale(1.1);
+}
+
+.custom-file-upload .upload-text {
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-on-surface-variant);
+  transition: color 0.3s ease;
+}
+
+.custom-file-upload:hover .upload-text {
+  color: var(--color-primary);
 }
 
 /* ---- Di dời / Chặt hạ (DDCH subtype) ---- */

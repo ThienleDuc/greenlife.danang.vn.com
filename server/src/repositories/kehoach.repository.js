@@ -147,7 +147,8 @@ const updateKeHoach = async (planData) => {
     .input("moTa", sql.NVarChar(500), planData.moTa)
     .input("filePDFKeHoach", sql.VarChar, planData.filePDFKeHoach)
     .input("filePDFDeNghiCapPhep", sql.VarChar, planData.filePDFDeNghiCapPhep)
-    .input("filePDFBoSungKeHoach", sql.VarChar, planData.filePDFBoSungKeHoach)
+    .input("removeKeHoach", sql.Bit, planData.removeKeHoach ? 1 : 0)
+    .input("removeDeNghi", sql.Bit, planData.removeDeNghi ? 1 : 0)
     .input("maTuyenDuong", sql.VarChar(20), planData.maTuyenDuong)
     .input("trangThai", sql.NVarChar(50), "Đã gửi")
     .query(`
@@ -156,9 +157,16 @@ const updateKeHoach = async (planData) => {
         MaLoaiCongViec = @maLoaiCongViec,
         TieuDe = @tieuDe,
         MoTa = @moTa,
-        FilePDFKeHoach = COALESCE(@filePDFKeHoach, FilePDFKeHoach),
-        FilePDFDeNghiCapPhep = COALESCE(@filePDFDeNghiCapPhep, FilePDFDeNghiCapPhep),
-        FilePDFBoSungKeHoach = COALESCE(@filePDFBoSungKeHoach, FilePDFBoSungKeHoach),
+        FilePDFKeHoach = CASE 
+          WHEN @filePDFKeHoach IS NOT NULL THEN @filePDFKeHoach
+          WHEN @removeKeHoach = 1 THEN NULL
+          ELSE FilePDFKeHoach
+        END,
+        FilePDFDeNghiCapPhep = CASE 
+          WHEN @filePDFDeNghiCapPhep IS NOT NULL THEN @filePDFDeNghiCapPhep
+          WHEN @removeDeNghi = 1 THEN NULL
+          ELSE FilePDFDeNghiCapPhep
+        END,
         MaTuyenDuong = @maTuyenDuong,
         TrangThai = @trangThai,
         NguoiXuLy = @nguoiXuLy,

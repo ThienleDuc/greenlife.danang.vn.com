@@ -181,8 +181,8 @@ const PheDuyetKeHoachDetail: React.FC = () => {
       <div key={`${file.key}-${index || 0}`} className={`relative flex items-center transition-all duration-300 ${isRemoved ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
         <button
           onClick={() => openPdf(file.value)}
-          className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all hover:shadow-md cursor-pointer text-sm font-bold"
-          style={{ backgroundColor: colors.bg, color: colors.text, border: `1px solid ${colors.border}`, outline: 'none' }}
+          className="file-action-button"
+          style={{ backgroundColor: colors.bg, color: colors.text, border: `1px solid ${colors.border}` }}
         >
           <span className="material-symbols-outlined text-[20px]">{colors.icon}</span>
           {file.label} {index !== undefined ? `#${index + 1}` : ''}
@@ -487,7 +487,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                     <button
                       className="w-full flex items-center justify-center rounded-xl font-bold transition-all shadow-sm text-sm hover:opacity-90 py-3"
                       style={{ backgroundColor: '#f59e0b', color: '#ffffff', border: 'none', cursor: 'pointer' }}
-                      onClick={() => handleApprove('Đang thẩm định', '', undefined, [])}
+                      onClick={() => handleApprove('Đang thẩm định', feedback, selectedFile, removeFiles)}
                     >
                       <span className="material-symbols-outlined text-[18px] mr-2">analytics</span>
                       Đang thẩm định
@@ -515,6 +515,36 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                         <span className="material-symbols-outlined text-[20px] text-slate-500">upload_file</span> Đính kèm File Pdf Bổ sung:
                       </label>
                       <div className="flex flex-col gap-2.5">
+                        {keHoach.FilePDFBoSungKeHoach && keHoach.FilePDFBoSungKeHoach.split(',').map((fileName, idx) => {
+                          const fName = fileName.trim();
+                          if (!fName || removeFiles.includes(fName)) return null;
+                          return (
+                            <div key={`existing-bosung-${idx}`} className="flex items-center justify-between gap-3.5 w-full py-3 px-3.5 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 shadow-sm transition-all duration-300">
+                              <div
+                                onClick={() => openPdf(fName)}
+                                className="flex items-center gap-2.5 overflow-hidden cursor-pointer hover:underline group/file"
+                                title="Click để xem file PDF"
+                              >
+                                <span className="material-symbols-outlined text-indigo-500 group-hover/file:text-indigo-700 text-[20px] transition-colors">description</span>
+                                <span className="text-sm text-indigo-800 truncate font-bold group-hover/file:text-indigo-950 transition-colors">
+                                  {fName}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRemoveFiles(prev => [...prev, fName]);
+                                }}
+                                className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-all shadow-sm group"
+                                title="Gỡ file đính kèm này"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">close</span>
+                              </button>
+                            </div>
+                          );
+                        })}
+
                         {!selectedFile ? (
                           <div className="relative group">
                             <input
