@@ -5,6 +5,7 @@ import { LocationService } from '../../services/locationService';
 import type { DanhMucCongViec, TuyenDuong, XaPhuong } from '../../types';
 import { PATHS } from '../../utils/pathUtils';
 import { storage } from '../../utils/storageUtils';
+import TreeAlert from '../../components/TreeAlert';
 
 type PlanFormState = {
   maLoaiCongViec: string;
@@ -187,22 +188,6 @@ const GuiKeHoachCongViec: React.FC = () => {
     }));
   };
 
-  const validateForm = () => {
-    if (!form.maLoaiCongViec) return 'Vui lòng chọn loại kế hoạch';
-    if (!form.maXaPhuong) return 'Vui lòng chọn xã/phường trước khi chọn tuyến đường';
-    if (!form.maTuyenDuong) return 'Vui lòng chọn tuyến đường';
-    if (!form.tieuDe.trim()) return 'Vui lòng nhập tiêu đề kế hoạch';
-    if (form.tieuDe.trim().length > 200) return 'Tiêu đề kế hoạch không được vượt quá 200 ký tự';
-    if (form.moTa.trim().length > 500) return 'Mô tả ngắn không được vượt quá 500 ký tự';
-    if (!files.fileKeHoach) return 'Vui lòng tải file PDF kế hoạch';
-
-    if (!files.fileDeNghiCapPhep) {
-      return 'Vui lòng tải file PDF đề nghị cấp phép';
-    }
-
-    return '';
-  };
-
   const buildFormData = () => {
     const formData = new FormData();
 
@@ -225,20 +210,13 @@ const GuiKeHoachCongViec: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const validationMessage = validateForm();
-    if (validationMessage) {
-      setNotice({ type: 'error', text: validationMessage });
-      return;
-    }
-
     try {
       setSubmitting(true);
       setNotice(null);
 
       await GuiKeHoachService.createKeHoach(buildFormData());
-      setNotice({ type: 'success', text: 'Gửi kế hoạch thành công' });
+      setNotice({ type: 'success', text: 'Gửi kế hoạch thành công.' });
       resetForm();
-      window.setTimeout(() => navigate(PATHS.KY_THUAT.DASHBOARD), 900);
     } catch (error) {
       setNotice({
         type: 'error',
@@ -258,14 +236,26 @@ const GuiKeHoachCongViec: React.FC = () => {
         </div>
       </div>
 
-      {notice && (
-        <div className={`send-plan-notice ${notice.type}`}>
-          <span className="material-symbols-outlined">
-            {notice.type === 'success' ? 'check_circle' : 'error'}
-          </span>
-          {notice.text}
-        </div>
-      )}
+      <TreeAlert 
+        isOpen={!!notice}
+        type={notice?.type || 'info'}
+        message={notice?.text || ''}
+        title={notice?.type === 'success' ? 'Nhấn OK để chuyển hướng' : 'Lỗi'}
+        onClose={() => {
+          if (notice?.type === 'success') {
+            navigate(PATHS.KY_THUAT.DASHBOARD);
+          } else {
+            setNotice(null);
+          }
+        }}
+        onOk={() => {
+          if (notice?.type === 'success') {
+            navigate(PATHS.KY_THUAT.DASHBOARD);
+          } else {
+            setNotice(null);
+          }
+        }}
+      />
 
       <form className="send-plan-form" onSubmit={handleSubmit}>
         <div className="send-plan-form-title">
@@ -281,7 +271,6 @@ const GuiKeHoachCongViec: React.FC = () => {
               value={form.maLoaiCongViec}
               onChange={handleInputChange}
               disabled={loading}
-              required
             >
               <option value="">Chọn loại kế hoạch</option>
               {jobTypes.map((item) => (
@@ -299,7 +288,6 @@ const GuiKeHoachCongViec: React.FC = () => {
               value={form.maXaPhuong}
               onChange={handleXaPhuongChange}
               disabled={loading}
-              required
             >
               <option value="">Chọn xã/phường</option>
               {xaPhuongList.map((item) => (
@@ -317,7 +305,6 @@ const GuiKeHoachCongViec: React.FC = () => {
               value={form.maTuyenDuong}
               onChange={handleInputChange}
               disabled={!form.maXaPhuong || routeLoading}
-              required
             >
               <option value="">
                 {form.maXaPhuong
@@ -339,7 +326,6 @@ const GuiKeHoachCongViec: React.FC = () => {
               value={form.tieuDe}
               onChange={handleInputChange}
               maxLength={200}
-              required
             />
           </label>
 
@@ -363,7 +349,6 @@ const GuiKeHoachCongViec: React.FC = () => {
                 type="file"
                 accept="application/pdf,.pdf"
                 onChange={handleFileChange}
-                required
               />
               <span className="material-symbols-outlined">upload_file</span>
               <span className="upload-text">Chọn hoặc kéo thả file PDF</span>
@@ -392,7 +377,6 @@ const GuiKeHoachCongViec: React.FC = () => {
                 type="file"
                 accept="application/pdf,.pdf"
                 onChange={handleFileChange}
-                required
               />
               <span className="material-symbols-outlined">upload_file</span>
               <span className="upload-text">Chọn hoặc kéo thả file PDF</span>

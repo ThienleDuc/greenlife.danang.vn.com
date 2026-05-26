@@ -5,6 +5,11 @@ import { PLAN_STATUS } from '../constants/constants';
 import { PheDuyetService } from '../services/pheDuyetService';
 import { PATHS } from '../utils/pathUtils';
 import { storage } from '../utils/storageUtils';
+import TreeAlert from '../components/TreeAlert';
+
+const getApiErrorMessage = (error: any, fallback: string) => {
+  return error?.response?.data?.message || error?.message || fallback;
+};
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'không có';
@@ -31,6 +36,37 @@ const PheDuyetKeHoachDetail: React.FC = () => {
   const [removeFiles, setRemoveFiles] = useState<string[]>([]);
   const [confirmAction, setConfirmAction] = useState<{ type: 'approve' | 'reject' | 'cancel_approval' | null }>({ type: null });
   const [activeFileTab, setActiveFileTab] = useState<'all' | 'kehoach' | 'capphep' | 'bosung'>('all');
+  
+  const [treeAlert, setTreeAlert] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'error' | 'warning' | 'info';
+    title: string;
+    message: string;
+    onOk?: () => void;
+    onClose?: () => void;
+  }>({ isOpen: false, type: 'info', title: '', message: '' });
+
+  const showAlert = (
+    type: 'success' | 'error' | 'warning' | 'info',
+    title: string,
+    message: string,
+    callback?: () => void
+  ) => {
+    setTreeAlert({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onOk: () => {
+        setTreeAlert(prev => ({ ...prev, isOpen: false }));
+        if (callback) callback();
+      },
+      onClose: () => {
+        setTreeAlert(prev => ({ ...prev, isOpen: false }));
+        if (callback && type === 'success') callback();
+      }
+    });
+  };
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -44,12 +80,13 @@ const PheDuyetKeHoachDetail: React.FC = () => {
         setRemoveFiles([]);
         setActiveFileTab('all');
       } else {
-        alert('Không tìm thấy thông tin kế hoạch.');
-        navigate(PATHS.QUAN_LY.DASHBOARD);
+        showAlert('error', 'Lỗi', 'Không tìm thấy thông tin kế hoạch.', () => {
+          navigate(PATHS.QUAN_LY.DASHBOARD);
+        });
       }
     } catch (error) {
       console.error('Error fetching detail:', error);
-      alert('Có lỗi xảy ra khi tải chi tiết kế hoạch.');
+      showAlert('error', 'Lỗi', 'Có lỗi xảy ra khi tải chi tiết kế hoạch.');
     } finally {
       setLoading(false);
     }
@@ -95,7 +132,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const existingBoSung = data?.keHoach.FilePDFBoSungKeHoach;
     if (existingBoSung && existingBoSung.trim() !== '') {
-      alert('Kế hoạch bổ sung chỉ cho phép tối đa 1 file đính kèm. Vui lòng gỡ file hiện tại ở phần Tài liệu đính kèm trước khi đẩy lên file mới.');
+      showAlert('warning', 'Lưu ý', 'Kế hoạch bổ sung chỉ cho phép tối đa 1 file đính kèm. Vui lòng gỡ file hiện tại ở phần Tài liệu đính kèm trước khi đẩy lên file mới.');
       e.target.value = '';
       return;
     }
@@ -103,7 +140,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.type !== 'application/pdf') {
-        alert('Chỉ chấp nhận file PDF');
+        showAlert('error', 'Lỗi', 'Chỉ chấp nhận file PDF');
         e.target.value = '';
         return;
       }
@@ -167,9 +204,11 @@ const PheDuyetKeHoachDetail: React.FC = () => {
         file,
         removeFilesList
       );
-      navigate(PATHS.QUAN_LY.DASHBOARD);
+      showAlert('success', 'Thành công', 'Cập nhật trạng thái thành công', () => {
+        navigate(PATHS.QUAN_LY.DASHBOARD);
+      });
     } catch (error) {
-      alert('Có lỗi xảy ra khi cập nhật trạng thái.');
+      showAlert('error', 'Lỗi', getApiErrorMessage(error, 'Có lỗi xảy ra khi cập nhật trạng thái.'));
     }
   };
 
@@ -199,6 +238,14 @@ const PheDuyetKeHoachDetail: React.FC = () => {
 
   return (
     <div className="approval-page" style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+      <TreeAlert 
+        isOpen={treeAlert.isOpen}
+        type={treeAlert.type}
+        title={treeAlert.title}
+        message={treeAlert.message}
+        onClose={treeAlert.onClose}
+        onOk={treeAlert.onOk}
+      />
 
       {/* Navigation Header */}
       <div className="mb-6 flex items-center justify-between">
@@ -596,7 +643,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                           style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', cursor: 'pointer' }}
                           onClick={() => {
                             if (!feedback.trim()) {
-                              alert('Vui lòng nhập lý do từ chối vào ô "Ý kiến phê duyệt / Lý do từ chối".');
+                              showAlert('warning', 'Thiếu thông tin', 'Vui lòng nhập lý do từ chối vào ô "Ý kiến phê duyệt / Lý do từ chối".');
                               return;
                             }
                             setConfirmAction({ type: 'reject' });

@@ -174,7 +174,6 @@ const updateKeHoach = async (planData) => {
         NgayCapNhat = GETDATE()
       WHERE MaKeHoach = @maKeHoach
         AND NguoiLap = @nguoiLap
-        AND TrangThai IN (N'Đã gửi', N'Bị từ chối', N'Đã hủy')
     `);
 
   if (!result.rowsAffected[0]) {
@@ -201,7 +200,6 @@ const huyKeHoach = async (maKeHoach, nguoiLap) => {
         NgayCapNhat = GETDATE()
       WHERE MaKeHoach = @maKeHoach
         AND NguoiLap = @nguoiLap
-        AND TrangThai IN (N'Đã gửi', N'Bị từ chối')
     `);
 
   if (!result.rowsAffected[0]) {

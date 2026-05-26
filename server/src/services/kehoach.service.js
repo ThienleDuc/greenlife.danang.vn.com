@@ -40,32 +40,6 @@ const normalizePlanPayload = (payload = {}) => ({
   maTuyenDuong: String(payload.maTuyenDuong || "").trim(),
 });
 
-const validatePlanPayload = (payload) => {
-  if (!payload.maLoaiCongViec) {
-    throw createHttpError("Vui lòng chọn loại kế hoạch");
-  }
-
-  if (!payload.tieuDe) {
-    throw createHttpError("Vui lòng nhập tiêu đề kế hoạch");
-  }
-
-  if (payload.tieuDe.length > 200) {
-    throw createHttpError("Tiêu đề kế hoạch không được vượt quá 200 ký tự");
-  }
-
-  if (!payload.moTa) {
-    throw createHttpError("Vui lòng nhập mô tả ngắn");
-  }
-
-  if (payload.moTa.length > 500) {
-    throw createHttpError("Mô tả ngắn không được vượt quá 500 ký tự");
-  }
-
-  if (!payload.maTuyenDuong) {
-    throw createHttpError("Vui lòng chọn tuyến đường");
-  }
-};
-
 const generateMaKeHoach = async () => {
   let maKeHoach;
   let existed = true;
@@ -111,17 +85,15 @@ const createKeHoach = async (payload, files, user) => {
   const nguoiLap = payload.nguoiLap || getCurrentUserId(user);
   const planPayload = normalizePlanPayload(payload);
 
-  validatePlanPayload(planPayload);
-
   const filePDFKeHoach = getUploadedFileName(files, "fileKeHoach");
   const filePDFDeNghiCapPhep = getUploadedFileName(files, "fileDeNghiCapPhep");
 
-  if (!filePDFKeHoach) {
-    throw createHttpError("Vui lòng tải file PDF kế hoạch");
+  if (!planPayload.tieuDe || !planPayload.maLoaiCongViec || !planPayload.maTuyenDuong || !filePDFKeHoach || !filePDFDeNghiCapPhep) {
+    throw createHttpError("LẬP KẾ HOẠCH MỚI: Các trường bắt buộc (Tiêu đề, Loại công việc, Tuyến đường, và các file PDF) không được để trống.", 400);
   }
 
-  if (PERMIT_REQUIRED_TYPES.includes(planPayload.maLoaiCongViec) && !filePDFDeNghiCapPhep) {
-    throw createHttpError("Vui lòng tải file PDF đề nghị cấp phép cho kế hoạch di dời / chặt hạ");
+  if (planPayload.tieuDe.length > 200 || planPayload.moTa.length > 500) {
+    throw createHttpError("DỮ LIỆU KHÔNG HỢP LỆ: Tiêu đề không được vượt quá 200 ký tự, Mô tả không vượt quá 500 ký tự.", 400);
   }
 
   const maKeHoach = await generateMaKeHoach();
@@ -146,30 +118,27 @@ const assertEditablePlan = async (maKeHoach, nguoiLap, action = "chỉnh sửa")
     throw createHttpError("Không có quyền thao tác kế hoạch này", 403);
   }
 
-  if (plan.TrangThai === PLAN_STATUS.DA_PHE_DUYET) {
-    throw createHttpError(
-      `Kế hoạch đã phê duyệt, không thể ${action}`,
-      409
-    );
-  }
-
-  if (action === "hủy" && plan.TrangThai === PLAN_STATUS.DA_HUY) {
-    throw createHttpError("Kế hoạch đã ở trạng thái hủy", 409);
-  }
-
-  if (!EDITABLE_STATUSES.includes(plan.TrangThai)) {
-    throw createHttpError(`Kế hoạch ở trạng thái "${plan.TrangThai}" không thể ${action}`, 409);
-  }
-
   return plan;
 };
 
 const updateKeHoach = async (maKeHoach, payload, files, user) => {
   const nguoiLap = getCurrentUserId(user);
   const currentPlan = await assertEditablePlan(maKeHoach, nguoiLap);
-  const planPayload = normalizePlanPayload(payload);
+  
+  if (currentPlan.TrangThai === PLAN_STATUS.DA_HUY) {
+    throw createHttpError("Không thể chỉnh sửa kế hoạch đã ở trạng thái \"Đã hủy\".", 400);
+  }
 
-  validatePlanPayload(planPayload);
+  if (![PLAN_STATUS.DA_GUI, PLAN_STATUS.BI_TU_CHOI].includes(currentPlan.TrangThai)) {
+    throw createHttpError("Chỉ được chỉnh sửa kế hoạch khi trạng thái là \"Đã gửi\" hoặc \"Bị từ chối\".", 400);
+  }
+
+  const daysSinceCreation = (new Date() - new Date(currentPlan.NgayTao)) / (1000 * 60 * 60 * 24);
+  if (currentPlan.TrangThai === PLAN_STATUS.BI_TU_CHOI && user.role !== 'NVKT' && daysSinceCreation <= 15) {
+    throw createHttpError("Chỉ nhân viên kỹ thuật (NVKT) mới được phép gửi lại kế hoạch sau khi bị từ chối.", 403);
+  }
+
+  const planPayload = normalizePlanPayload(payload);
 
   const filePDFKeHoach = getUploadedFileName(files, "fileKeHoach");
   const filePDFDeNghiCapPhep = getUploadedFileName(files, "fileDeNghiCapPhep");
@@ -182,16 +151,17 @@ const updateKeHoach = async (maKeHoach, payload, files, user) => {
   const isKeHoachRemoved = removeFiles.includes("fileKeHoach");
   const isDeNghiRemoved = removeFiles.includes("fileDeNghiCapPhep");
 
-  if (!filePDFKeHoach && (!currentPlan.FilePDFKeHoach || isKeHoachRemoved)) {
-    throw createHttpError("Vui lòng tải file pdf kế hoạch công việc");
+  const hasKeHoach = !isKeHoachRemoved && (filePDFKeHoach || currentPlan.FilePDFKeHoach);
+  const hasDeNghi = !isDeNghiRemoved && (filePDFDeNghiCapPhep || currentPlan.FilePDFDeNghiCapPhep);
+
+  if (currentPlan.TrangThai === PLAN_STATUS.DA_GUI) {
+    if (!planPayload.tieuDe || !planPayload.maLoaiCongViec || !planPayload.maTuyenDuong || !hasKeHoach || !hasDeNghi) {
+      throw createHttpError("CHỈNH SỬA KẾ HOẠCH: Các trường bắt buộc (Tiêu đề, Loại công việc, Tuyến đường, và các file PDF) không được để trống.", 400);
+    }
   }
 
-  if (
-    PERMIT_REQUIRED_TYPES.includes(planPayload.maLoaiCongViec) &&
-    !filePDFDeNghiCapPhep &&
-    (!currentPlan.FilePDFDeNghiCapPhep || isDeNghiRemoved)
-  ) {
-    throw createHttpError("Vui lòng tải file đề nghị cấp phép");
+  if (planPayload.tieuDe.length > 200 || planPayload.moTa.length > 500) {
+    throw createHttpError("DỮ LIỆU KHÔNG HỢP LỆ: Ký tự vượt quá giới hạn cho phép (Tiêu đề <= 200, Mô tả <= 500, Ý kiến phê duyệt <= 200).", 400);
   }
 
   const updatedPlan = await keHoachRepo.updateKeHoach({
@@ -222,7 +192,21 @@ const updateKeHoach = async (maKeHoach, payload, files, user) => {
 
 const huyKeHoach = async (maKeHoach, user) => {
   const nguoiLap = getCurrentUserId(user);
-  await assertEditablePlan(maKeHoach, nguoiLap, "hủy");
+  const currentPlan = await assertEditablePlan(maKeHoach, nguoiLap, "hủy");
+
+  const daysSinceCreation = (new Date() - new Date(currentPlan.NgayTao)) / (1000 * 60 * 60 * 24);
+
+  if (currentPlan.TrangThai === PLAN_STATUS.BI_TU_CHOI && daysSinceCreation > 15) {
+    throw createHttpError("Kế hoạch bị từ chối đã quá 15 ngày không được phép hủy nữa.", 400);
+  }
+
+  if (user.role !== 'NVKT' && daysSinceCreation <= 15) {
+    throw createHttpError("Chỉ nhân viên kỹ thuật (NVKT) mới được phép hủy kế hoạch.", 403);
+  }
+
+  if (![PLAN_STATUS.DA_GUI, PLAN_STATUS.BI_TU_CHOI].includes(currentPlan.TrangThai) && daysSinceCreation <= 15) {
+    throw createHttpError("Chỉ được hủy kế hoạch khi trạng thái là \"Đã gửi\" hoặc \"Bị từ chối\".", 400);
+  }
 
   const canceledPlan = await keHoachRepo.huyKeHoach(maKeHoach, nguoiLap);
 
