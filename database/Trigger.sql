@@ -333,4 +333,3 @@ BEGIN
         -- Đã được kiểm tra phân quyền và điều kiện ở Trigger 3, bỏ qua không cần validate dữ liệu ở đây.
     END
 END
-GO

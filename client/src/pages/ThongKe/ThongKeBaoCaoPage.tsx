@@ -9,6 +9,170 @@ import {
 import '../../styles/pages/ThongKeBaoCao.css';
 import Pagination from '../../components/Pagination';
 
+interface SearchableSelectProps {
+  options: Array<{ value: string; label: string }>;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+
+const SearchableSelect: React.FC<SearchableSelectProps> = ({
+  options,
+  value,
+  onChange,
+  placeholder = '-- Tất cả --'
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Chuẩn hóa tiếng Việt có dấu thành không dấu để tìm kiếm chính xác
+  const normalize = (str: string) => {
+    return str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D')
+      .toLowerCase();
+  };
+
+  // Pre-normalize nhãn (label) của options một lần duy nhất khi danh sách thay đổi (đóng vai trò như index)
+  const indexedOptions = React.useMemo(() => {
+    return options.map(opt => ({
+      ...opt,
+      normalizedLabel: normalize(opt.label)
+    }));
+  }, [options]);
+
+  // Tìm option đang được chọn để hiển thị nhãn tương ứng
+  const selectedOption = options.find(opt => opt.value === value);
+
+  // Đồng bộ giá trị tìm kiếm khi không ở trạng thái focus gõ chữ
+  useEffect(() => {
+    if (!isFocused) {
+      setSearchTerm(selectedOption ? selectedOption.label : '');
+    }
+  }, [value, selectedOption, isFocused]);
+
+  // Bộ lọc danh sách dựa trên index nhãn đã chuẩn hóa
+  const filteredOptions = React.useMemo(() => {
+    const query = normalize(searchTerm);
+    if (!query) return indexedOptions;
+    return indexedOptions.filter(opt => opt.normalizedLabel.includes(query));
+  }, [searchTerm, indexedOptions]);
+
+  // Tối ưu hóa: Chỉ render tối đa 50 phần tử khớp đầu tiên nhằm tránh tạo quá nhiều DOM làm chậm trang khi gõ
+  const visibleOptions = React.useMemo(() => {
+    return filteredOptions.slice(0, 50);
+  }, [filteredOptions]);
+
+  return (
+    <div className="searchable-select-container" style={{ position: 'relative', width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
+        <input
+          type="text"
+          className="tkbc-select"
+          style={{ width: '100%', paddingRight: '30px', boxSizing: 'border-box' }}
+          placeholder={placeholder}
+          value={searchTerm}
+          onFocus={() => {
+            setIsOpen(true);
+            setIsFocused(true);
+            setSearchTerm(''); // Xóa text khi focus để người dùng có thể gõ ngay hoặc xem tất cả
+          }}
+          onBlur={() => {
+            // Delay nhẹ để sự kiện onMouseDown bên dưới kịp bắt lấy click
+            setTimeout(() => {
+              setIsOpen(false);
+              setIsFocused(false);
+              setSearchTerm(selectedOption ? selectedOption.label : '');
+            }, 250);
+          }}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <span 
+          className="material-symbols-outlined" 
+          style={{ 
+            position: 'absolute', 
+            right: '10px', 
+            pointerEvents: 'none', 
+            color: 'var(--color-on-surface-variant)',
+            fontSize: '18px',
+            transform: isOpen ? 'rotate(180deg)' : 'none',
+            transition: 'transform 0.2s ease'
+          }}
+        >
+          expand_more
+        </span>
+      </div>
+
+      {isOpen && (
+        <ul 
+          className="searchable-select-dropdown" 
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            zIndex: 999,
+            backgroundColor: 'var(--color-surface-container-lowest)',
+            border: '1px solid var(--color-outline-variant)',
+            borderRadius: '8px',
+            marginTop: '4px',
+            maxHeight: '200px',
+            overflowY: 'auto',
+            padding: '4px 0',
+            listStyle: 'none',
+            boxShadow: 'var(--shadow-md)',
+            boxSizing: 'border-box'
+          }}
+        >
+          <li 
+            style={{
+              padding: '8px 12px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: 'var(--color-on-surface-variant)',
+              backgroundColor: value === '' ? 'var(--color-surface-variant)' : 'transparent'
+            }}
+            onMouseDown={() => {
+              onChange('');
+              setSearchTerm('');
+              setIsOpen(false);
+            }}
+          >
+            {placeholder}
+          </li>
+          {visibleOptions.map((opt) => (
+            <li 
+              key={opt.value}
+              style={{
+                padding: '8px 12px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                color: 'var(--color-on-surface)',
+                backgroundColor: value === opt.value ? 'var(--color-primary-container)' : 'transparent'
+              }}
+              onMouseDown={() => {
+                onChange(opt.value);
+                setSearchTerm(opt.label);
+                setIsOpen(false);
+              }}
+            >
+              {opt.label}
+            </li>
+          ))}
+          {filteredOptions.length === 0 && (
+            <li style={{ padding: '8px 12px', fontSize: '14px', color: 'var(--color-on-surface-variant)', textAlign: 'center' }}>
+              Không tìm thấy kết quả
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+};
+
 const ThongKeBaoCaoPage: React.FC = () => {
   const [data, setData] = useState<ThongKeTongQuanResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -75,8 +239,7 @@ const ThongKeBaoCaoPage: React.FC = () => {
     }
   };
 
-  const handleXaPhuongChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
+  const handleXaPhuongChange = (val: string) => {
     setMaXaPhuong(val);
     setMaTuyenDuong(''); // reset tuyến đường khi đổi xã phường
 
@@ -240,21 +403,19 @@ const ThongKeBaoCaoPage: React.FC = () => {
           </div>
           <div className="tkbc-filter-group">
             <label>Xã phường</label>
-            <select className="tkbc-select" value={maXaPhuong} onChange={handleXaPhuongChange}>
-              <option value="">-- Tất cả --</option>
-              {xaPhuongs.map(xp => (
-                <option key={xp.MaXaPhuong} value={xp.MaXaPhuong}>{xp.TenXaPhuong}</option>
-              ))}
-            </select>
+            <SearchableSelect
+              options={xaPhuongs.map(xp => ({ value: xp.MaXaPhuong, label: xp.TenXaPhuong }))}
+              value={maXaPhuong}
+              onChange={handleXaPhuongChange}
+            />
           </div>
           <div className="tkbc-filter-group">
             <label>Tuyến đường</label>
-            <select className="tkbc-select" value={maTuyenDuong} onChange={e => setMaTuyenDuong(e.target.value)}>
-              <option value="">-- Tất cả --</option>
-              {tuyenDuongs.map(td => (
-                <option key={td.MaTuyenDuong} value={td.MaTuyenDuong}>{td.TenTuyenDuong}</option>
-              ))}
-            </select>
+            <SearchableSelect
+              options={tuyenDuongs.map(td => ({ value: td.MaTuyenDuong, label: td.TenTuyenDuong }))}
+              value={maTuyenDuong}
+              onChange={setMaTuyenDuong}
+            />
           </div>
           <div className="tkbc-filter-group">
             <label>Loại công việc</label>
