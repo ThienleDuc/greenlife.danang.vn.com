@@ -361,14 +361,18 @@ const GuiKeHoachCongViec: React.FC = () => {
 
           <div className="send-plan-field">
             <span>File PDF kế hoạch</span>
-            <input
-              ref={fileKeHoachRef}
-              name="fileKeHoach"
-              type="file"
-              accept="application/pdf,.pdf"
-              onChange={handleFileChange}
-              required
-            />
+            <div className="custom-file-upload">
+              <input
+                ref={fileKeHoachRef}
+                name="fileKeHoach"
+                type="file"
+                accept="application/pdf,.pdf"
+                onChange={handleFileChange}
+                required
+              />
+              <span className="material-symbols-outlined">upload_file</span>
+              <span className="upload-text">Chọn hoặc kéo thả file PDF</span>
+            </div>
             {files.fileKeHoach && (
               <div className="send-plan-file-preview">
                 <button
@@ -386,14 +390,18 @@ const GuiKeHoachCongViec: React.FC = () => {
 
           <div className="send-plan-field">
             <span>File PDF đề nghị cấp phép</span>
-            <input
-              ref={fileDeNghiRef}
-              name="fileDeNghiCapPhep"
-              type="file"
-              accept="application/pdf,.pdf"
-              onChange={handleFileChange}
-              required={requiresPermitFile}
-            />
+            <div className="custom-file-upload">
+              <input
+                ref={fileDeNghiRef}
+                name="fileDeNghiCapPhep"
+                type="file"
+                accept="application/pdf,.pdf"
+                onChange={handleFileChange}
+                required={requiresPermitFile}
+              />
+              <span className="material-symbols-outlined">upload_file</span>
+              <span className="upload-text">Chọn hoặc kéo thả file PDF</span>
+            </div>
             {files.fileDeNghiCapPhep && (
               <div className="send-plan-file-preview">
                 <button

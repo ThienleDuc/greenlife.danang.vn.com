@@ -173,14 +173,25 @@ const updateKeHoach = async (maKeHoach, payload, files, user) => {
 
   const filePDFKeHoach = getUploadedFileName(files, "fileKeHoach");
   const filePDFDeNghiCapPhep = getUploadedFileName(files, "fileDeNghiCapPhep");
-  const filePDFBoSungKeHoach = getUploadedFileName(files, "fileBoSungKeHoach");
+  
+  let removeFiles = [];
+  try {
+    removeFiles = payload.removeFiles ? JSON.parse(payload.removeFiles) : [];
+  } catch(e) {}
+  
+  const isKeHoachRemoved = removeFiles.includes("fileKeHoach");
+  const isDeNghiRemoved = removeFiles.includes("fileDeNghiCapPhep");
+
+  if (!filePDFKeHoach && (!currentPlan.FilePDFKeHoach || isKeHoachRemoved)) {
+    throw createHttpError("Vui lòng tải file pdf kế hoạch công việc");
+  }
 
   if (
     PERMIT_REQUIRED_TYPES.includes(planPayload.maLoaiCongViec) &&
     !filePDFDeNghiCapPhep &&
-    !currentPlan.FilePDFDeNghiCapPhep
+    (!currentPlan.FilePDFDeNghiCapPhep || isDeNghiRemoved)
   ) {
-    throw createHttpError("Vui lòng tải file PDF đề nghị cấp phép cho kế hoạch di dời / chặt hạ");
+    throw createHttpError("Vui lòng tải file đề nghị cấp phép");
   }
 
   const updatedPlan = await keHoachRepo.updateKeHoach({
@@ -190,22 +201,20 @@ const updateKeHoach = async (maKeHoach, payload, files, user) => {
     nguoiXuLy: payload.nguoiXuLy || nguoiLap,
     filePDFKeHoach,
     filePDFDeNghiCapPhep,
-    filePDFBoSungKeHoach,
+    removeKeHoach: isKeHoachRemoved,
+    removeDeNghi: isDeNghiRemoved,
   });
 
   if (!updatedPlan) {
     throw createHttpError("Không thể cập nhật kế hoạch công việc", 400);
   }
 
-  // Xóa các file cũ nếu có file mới được tải lên thay thế thành công
-  if (filePDFKeHoach && currentPlan.FilePDFKeHoach) {
+  // Xóa các file cũ nếu có file mới được tải lên thay thế thành công, hoặc người dùng yêu cầu xóa
+  if ((filePDFKeHoach || isKeHoachRemoved) && currentPlan.FilePDFKeHoach) {
     deletePdfFile(currentPlan.FilePDFKeHoach);
   }
-  if (filePDFDeNghiCapPhep && currentPlan.FilePDFDeNghiCapPhep) {
+  if ((filePDFDeNghiCapPhep || isDeNghiRemoved) && currentPlan.FilePDFDeNghiCapPhep) {
     deletePdfFile(currentPlan.FilePDFDeNghiCapPhep);
-  }
-  if (filePDFBoSungKeHoach && currentPlan.FilePDFBoSungKeHoach) {
-    deletePdfFile(currentPlan.FilePDFBoSungKeHoach);
   }
 
   return updatedPlan;

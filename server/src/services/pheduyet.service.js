@@ -74,34 +74,6 @@ const getKeHoachChiTiet = async (maKeHoach, user) => {
   }
   return result;
 };
-
-const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles, user, nguoiXuLy = null, isCancelApproval = false) => {
-  assertQuanLy(user);
-
-  if (removeFiles && removeFiles.length > 0) {
-    try {
-      const detail = await pheDuyetRepo.getKeHoachChiTiet(maKeHoach);
-      if (detail && detail.keHoach) {
-        const plan = detail.keHoach;
-        if (removeFiles.includes('FilePDFKeHoach') && plan.FilePDFKeHoach) {
-          deletePdfFile(plan.FilePDFKeHoach);
-        }
-        if (removeFiles.includes('FilePDFDeNghiCapPhep') && plan.FilePDFDeNghiCapPhep) {
-          deletePdfFile(plan.FilePDFDeNghiCapPhep);
-        }
-        if (removeFiles.includes('FilePDFBoSungKeHoach') && plan.FilePDFBoSungKeHoach) {
-          const files = plan.FilePDFBoSungKeHoach.split(",");
-          files.forEach(f => deletePdfFile(f.trim()));
-        }
-      }
-    } catch (err) {
-      console.error("Lỗi khi xóa file vật lý trong lúc cập nhật phê duyệt:", err);
-    }
-  }
-
-  return await pheDuyetRepo.updateTrangThaiPheDuyet(maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles, nguoiXuLy, isCancelApproval);
-};
-
 const removeSpecificFile = async (maKeHoach, fileKey, fileName, user) => {
   assertQuanLy(user);
 
@@ -111,6 +83,51 @@ const removeSpecificFile = async (maKeHoach, fileKey, fileName, user) => {
 
   return await pheDuyetRepo.removeSpecificFile(maKeHoach, fileKey, fileName);
 };
+
+const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles, user, nguoiXuLy = null, isCancelApproval = false) => {
+  assertQuanLy(user);
+
+  const filesToRemove = removeFiles ? [...removeFiles] : [];
+  if (isCancelApproval && !filesToRemove.includes('FilePDFBoSungKeHoach')) {
+    filesToRemove.push('FilePDFBoSungKeHoach');
+  }
+
+  if (filesToRemove.length > 0) {
+    try {
+      const detail = await pheDuyetRepo.getKeHoachChiTiet(maKeHoach);
+      if (detail && detail.keHoach) {
+        const plan = detail.keHoach;
+        if (filesToRemove.includes('FilePDFKeHoach') && plan.FilePDFKeHoach) {
+          deletePdfFile(plan.FilePDFKeHoach);
+        }
+        if (filesToRemove.includes('FilePDFDeNghiCapPhep') && plan.FilePDFDeNghiCapPhep) {
+          deletePdfFile(plan.FilePDFDeNghiCapPhep);
+        }
+        if (filesToRemove.includes('FilePDFBoSungKeHoach') && plan.FilePDFBoSungKeHoach) {
+          const files = plan.FilePDFBoSungKeHoach.split(",");
+          files.forEach(f => deletePdfFile(f.trim()));
+        }
+
+        // Handle specific file names removed by the user in the frontend UI
+        for (const fName of filesToRemove) {
+           if (fName !== 'FilePDFKeHoach' && fName !== 'FilePDFDeNghiCapPhep' && fName !== 'FilePDFBoSungKeHoach') {
+             // Treat it as a specific FilePDFBoSungKeHoach item
+             if (plan.FilePDFBoSungKeHoach && plan.FilePDFBoSungKeHoach.includes(fName)) {
+               await removeSpecificFile(maKeHoach, 'FilePDFBoSungKeHoach', fName, user);
+             }
+           }
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi khi xóa file vật lý trong lúc cập nhật phê duyệt:", err);
+    }
+  }
+
+  return await pheDuyetRepo.updateTrangThaiPheDuyet(maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, filesToRemove, nguoiXuLy, isCancelApproval);
+};
+
+
+
 
 module.exports = {
   getAllKeHoachPheDuyet,

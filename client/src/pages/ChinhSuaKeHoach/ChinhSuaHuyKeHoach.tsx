@@ -17,7 +17,6 @@ type PlanFormState = {
 type PlanFileState = {
   fileKeHoach: File | null;
   fileDeNghiCapPhep: File | null;
-  fileBoSungKeHoach: File | null;
 };
 
 type NoticeState = {
@@ -41,7 +40,6 @@ const EMPTY_FORM: PlanFormState = {
 const EMPTY_FILES: PlanFileState = {
   fileKeHoach: null,
   fileDeNghiCapPhep: null,
-  fileBoSungKeHoach: null,
 };
 
 const PERMIT_REQUIRED_TYPE_CODES = ['DDCH'];
@@ -75,10 +73,8 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
 
   const fileKeHoachRef = useRef<HTMLInputElement>(null);
   const fileDeNghiRef = useRef<HTMLInputElement>(null);
-  const fileBoSungRef = useRef<HTMLInputElement>(null);
 
   const requiresPermitFile = PERMIT_REQUIRED_TYPE_CODES.includes(form.maLoaiCongViec);
-  const isRejectedPlan = plan?.TrangThai === 'Bị từ chối';
 
   const openLocalPdf = (file: File | null) => {
     if (!file) return;
@@ -89,7 +85,6 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
   const resetFileInputs = () => {
     if (fileKeHoachRef.current) fileKeHoachRef.current.value = '';
     if (fileDeNghiRef.current) fileDeNghiRef.current.value = '';
-    if (fileBoSungRef.current) fileBoSungRef.current.value = '';
   };
 
   const applyPlanToForm = (data: KeHoachCongViec) => {
@@ -224,10 +219,12 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
     if (form.tieuDe.trim().length > 200) return 'Tiêu đề kế hoạch không được vượt quá 200 ký tự';
     if (!form.moTa.trim()) return 'Vui lòng nhập mô tả ngắn';
     if (form.moTa.trim().length > 500) return 'Mô tả ngắn không được vượt quá 500 ký tự';
-    if (!files.fileKeHoach && !plan?.FilePDFKeHoach) return 'Vui lòng tải file PDF kế hoạch';
+    if (!files.fileKeHoach && !plan?.FilePDFKeHoach) {
+      return 'Vui lòng tải file PDF kế hoạch công việc';
+    }
 
     if (requiresPermitFile && !files.fileDeNghiCapPhep && !plan?.FilePDFDeNghiCapPhep) {
-      return 'Vui lòng tải file PDF đề nghị cấp phép cho kế hoạch di dời / chặt hạ';
+      return 'Vui lòng tải file PDF đề nghị cấp phép';
     }
 
     return '';
@@ -248,7 +245,6 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
 
     if (files.fileKeHoach) formData.append('fileKeHoach', files.fileKeHoach);
     if (files.fileDeNghiCapPhep) formData.append('fileDeNghiCapPhep', files.fileDeNghiCapPhep);
-    if (files.fileBoSungKeHoach) formData.append('fileBoSungKeHoach', files.fileBoSungKeHoach);
 
     return formData;
   };
@@ -422,14 +418,18 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
 
             <div className="send-plan-field">
               <span>File PDF kế hoạch</span>
-              <input
-                ref={fileKeHoachRef}
-                name="fileKeHoach"
-                type="file"
-                accept="application/pdf,.pdf"
-                onChange={handleFileChange}
-                required={!plan?.FilePDFKeHoach}
-              />
+              <div className="custom-file-upload">
+                <input
+                  ref={fileKeHoachRef}
+                  name="fileKeHoach"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={handleFileChange}
+                  required={!plan?.FilePDFKeHoach}
+                />
+                <span className="material-symbols-outlined">upload_file</span>
+                <span className="upload-text">Chọn hoặc kéo thả file PDF</span>
+              </div>
               {files.fileKeHoach && (
                 <div className="send-plan-file-preview">
                   <button
@@ -447,14 +447,18 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
 
             <div className="send-plan-field">
               <span>File PDF đề nghị cấp phép</span>
-              <input
-                ref={fileDeNghiRef}
-                name="fileDeNghiCapPhep"
-                type="file"
-                accept="application/pdf,.pdf"
-                onChange={handleFileChange}
-                required={requiresPermitFile && !plan?.FilePDFDeNghiCapPhep}
-              />
+              <div className="custom-file-upload">
+                <input
+                  ref={fileDeNghiRef}
+                  name="fileDeNghiCapPhep"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={handleFileChange}
+                  required={requiresPermitFile && !plan?.FilePDFDeNghiCapPhep}
+                />
+                <span className="material-symbols-outlined">upload_file</span>
+                <span className="upload-text">Chọn hoặc kéo thả file PDF</span>
+              </div>
               {files.fileDeNghiCapPhep && (
                 <div className="send-plan-file-preview">
                   <button
@@ -470,31 +474,6 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
               )}
             </div>
 
-            {isRejectedPlan && (
-              <div className="send-plan-field">
-                <span>File PDF bổ sung kế hoạch</span>
-                <input
-                  ref={fileBoSungRef}
-                  name="fileBoSungKeHoach"
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  onChange={handleFileChange}
-                />
-                {files.fileBoSungKeHoach && (
-                  <div className="send-plan-file-preview">
-                    <button
-                      type="button"
-                      className="preview-pdf-btn"
-                      onClick={() => openLocalPdf(files.fileBoSungKeHoach)}
-                      title="Click để xem trước file PDF"
-                    >
-                      <span className="material-symbols-outlined">visibility</span>
-                      <span>Xem trước: {files.fileBoSungKeHoach.name}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {plan && (
@@ -511,17 +490,11 @@ const ChinhSuaHuyKeHoach: React.FC = () => {
                   Cấp phép hiện tại
                 </button>
               )}
-              {plan.FilePDFBoSungKeHoach && (
-                <button type="button" onClick={() => openPdf(plan.FilePDFBoSungKeHoach)}>
-                  <span className="material-symbols-outlined">note_add</span>
-                  Bổ sung hiện tại
-                </button>
-              )}
             </div>
           )}
 
           <div className="send-plan-actions send-plan-actions-inline">
-            {(plan?.TrangThai === 'Đã gửi' || plan?.TrangThai === 'Bị từ chối' || plan?.TrangThai === 'Đã hủy') && (
+            {(plan?.TrangThai === 'Đã gửi' || plan?.TrangThai === 'Bị từ chối') && (
               <button
                 type="submit"
                 className="send-plan-primary-btn"
