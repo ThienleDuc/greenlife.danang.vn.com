@@ -279,6 +279,14 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                       {keHoach.TenTuyenDuong}
                     </div>
                   </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Xã phường</span>
+                    <div className="font-medium text-slate-800 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-rose-500">location_city</span>
+                      {keHoach.TenXaPhuong}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Right Column */}
@@ -292,18 +300,18 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày cập nhật</span>
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Người phê duyệt</span>
                     <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-teal-500">update</span>
-                      {formatDate(keHoach.NgayCapNhat)}
+                      <span className="material-symbols-outlined text-[18px] text-violet-500">verified_user</span>
+                      {keHoach.TenNguoiPheDuyet || keHoach.NguoiPheDuyet || '---'}
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Xã phường</span>
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ngày cập nhật</span>
                     <div className="font-medium text-slate-800 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-rose-500">location_city</span>
-                      {keHoach.TenXaPhuong}
+                      <span className="material-symbols-outlined text-[18px] text-teal-500">update</span>
+                      {formatDate(keHoach.NgayCapNhat)}
                     </div>
                   </div>
                 </div>
