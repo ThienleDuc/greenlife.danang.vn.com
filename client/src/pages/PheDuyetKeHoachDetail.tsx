@@ -5,6 +5,11 @@ import { PLAN_STATUS } from '../constants/constants';
 import { PheDuyetService } from '../services/pheDuyetService';
 import { PATHS } from '../utils/pathUtils';
 import { storage } from '../utils/storageUtils';
+import TreeAlert from '../components/TreeAlert';
+
+const getApiErrorMessage = (error: any, fallback: string) => {
+  return error?.response?.data?.message || error?.message || fallback;
+};
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'không có';
@@ -32,6 +37,37 @@ const PheDuyetKeHoachDetail: React.FC = () => {
   const [confirmAction, setConfirmAction] = useState<{ type: 'approve' | 'reject' | 'cancel_approval' | null }>({ type: null });
   const [activeFileTab, setActiveFileTab] = useState<'all' | 'kehoach' | 'capphep' | 'bosung'>('all');
 
+  const [treeAlert, setTreeAlert] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'error' | 'warning' | 'info';
+    title: string;
+    message: string;
+    onOk?: () => void;
+    onClose?: () => void;
+  }>({ isOpen: false, type: 'info', title: '', message: '' });
+
+  const showAlert = (
+    type: 'success' | 'error' | 'warning' | 'info',
+    title: string,
+    message: string,
+    callback?: () => void
+  ) => {
+    setTreeAlert({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onOk: () => {
+        setTreeAlert(prev => ({ ...prev, isOpen: false }));
+        if (callback) callback();
+      },
+      onClose: () => {
+        setTreeAlert(prev => ({ ...prev, isOpen: false }));
+        if (callback && type === 'success') callback();
+      }
+    });
+  };
+
   const fetchDetail = useCallback(async () => {
     if (!id) return;
     try {
@@ -44,12 +80,13 @@ const PheDuyetKeHoachDetail: React.FC = () => {
         setRemoveFiles([]);
         setActiveFileTab('all');
       } else {
-        alert('Không tìm thấy thông tin kế hoạch.');
-        navigate(PATHS.QUAN_LY.DASHBOARD);
+        showAlert('error', 'Lỗi', 'Không tìm thấy thông tin kế hoạch.', () => {
+          navigate(PATHS.QUAN_LY.DASHBOARD);
+        });
       }
     } catch (error) {
       console.error('Error fetching detail:', error);
-      alert('Có lỗi xảy ra khi tải chi tiết kế hoạch.');
+      showAlert('error', 'Lỗi', 'Có lỗi xảy ra khi tải chi tiết kế hoạch.');
     } finally {
       setLoading(false);
     }
@@ -95,7 +132,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const existingBoSung = data?.keHoach.FilePDFBoSungKeHoach;
     if (existingBoSung && existingBoSung.trim() !== '') {
-      alert('Kế hoạch bổ sung chỉ cho phép tối đa 1 file đính kèm. Vui lòng gỡ file hiện tại ở phần Tài liệu đính kèm trước khi đẩy lên file mới.');
+      showAlert('warning', 'Lưu ý', 'Kế hoạch bổ sung chỉ cho phép tối đa 1 file đính kèm. Vui lòng gỡ file hiện tại ở phần Tài liệu đính kèm trước khi đẩy lên file mới.');
       e.target.value = '';
       return;
     }
@@ -103,7 +140,7 @@ const PheDuyetKeHoachDetail: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.type !== 'application/pdf') {
-        alert('Chỉ chấp nhận file PDF');
+        showAlert('error', 'Lỗi', 'Chỉ chấp nhận file PDF');
         e.target.value = '';
         return;
       }
@@ -168,8 +205,11 @@ const PheDuyetKeHoachDetail: React.FC = () => {
         removeFilesList
       );
       await fetchDetail();
+      showAlert('success', 'Thành công', 'Cập nhật trạng thái thành công', () => {
+        navigate(PATHS.QUAN_LY.DASHBOARD);
+      });
     } catch (error) {
-      alert('Có lỗi xảy ra khi cập nhật trạng thái.');
+      showAlert('error', 'Lỗi', getApiErrorMessage(error, 'Có lỗi xảy ra khi cập nhật trạng thái.'));
     }
   };
 
@@ -199,6 +239,14 @@ const PheDuyetKeHoachDetail: React.FC = () => {
 
   return (
     <div className="approval-page" style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+      <TreeAlert
+        isOpen={treeAlert.isOpen}
+        type={treeAlert.type}
+        title={treeAlert.title}
+        message={treeAlert.message}
+        onClose={treeAlert.onClose}
+        onOk={treeAlert.onOk}
+      />
 
       {/* Navigation Header */}
       <div className="mb-6 flex items-center justify-between">
@@ -214,12 +262,11 @@ const PheDuyetKeHoachDetail: React.FC = () => {
       <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 flex flex-col">
 
         {/* Header Block */}
-        <div 
-          className={`px-6 py-5 border-b border-slate-100 flex justify-between items-start rounded-t-2xl transition-all duration-300 ${
-            keHoach.TrangThai === 'Đã phê duyệt' ? 'bg-[#d1fae5]/30 border-b-emerald-100/60' 
-            : keHoach.TrangThai === 'Bị từ chối' ? 'bg-[#ffe4e6]/30 border-b-rose-100/60' 
-            : 'bg-slate-50/80'
-          }`} 
+        <div
+          className={`px-6 py-5 border-b border-slate-100 flex justify-between items-start rounded-t-2xl transition-all duration-300 ${keHoach.TrangThai === 'Đã phê duyệt' ? 'bg-[#d1fae5]/30 border-b-emerald-100/60'
+              : keHoach.TrangThai === 'Bị từ chối' ? 'bg-[#ffe4e6]/30 border-b-rose-100/60'
+                : 'bg-slate-50/80'
+            }`}
           style={{ padding: '24px 36px' }}
         >
           <div className="flex-1 pr-6">
@@ -446,17 +493,15 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                 {isAlreadyProcessed && (
                   <div className="flex flex-col gap-5 bg-slate-50 rounded-xl border border-slate-100" style={{ padding: '28px 20px' }}>
                     <div className="flex items-start gap-4">
-                      <span className={`material-symbols-outlined text-[32px] mt-0.5 ${
-                        keHoach.TrangThai === 'Đã phê duyệt' ? 'text-emerald-600' : 'text-rose-600'
-                      }`}>
+                      <span className={`material-symbols-outlined text-[32px] mt-0.5 ${keHoach.TrangThai === 'Đã phê duyệt' ? 'text-emerald-600' : 'text-rose-600'
+                        }`}>
                         {keHoach.TrangThai === 'Đã phê duyệt' ? 'check_circle' : 'cancel'}
                       </span>
                       <div>
                         <h4 className="font-bold text-slate-800 text-sm">Kế hoạch đã xử lý</h4>
                         <p className="text-xs text-slate-500 mt-1.5">
-                          Trạng thái hiện tại: <span className={`font-bold ${
-                            keHoach.TrangThai === 'Đã phê duyệt' ? 'text-emerald-600' : 'text-rose-600'
-                          }`}>{statusInfo.label}</span>
+                          Trạng thái hiện tại: <span className={`font-bold ${keHoach.TrangThai === 'Đã phê duyệt' ? 'text-emerald-600' : 'text-rose-600'
+                            }`}>{statusInfo.label}</span>
                         </p>
                       </div>
                     </div>
@@ -581,39 +626,39 @@ const PheDuyetKeHoachDetail: React.FC = () => {
                                 setSelectedFile(undefined);
                               }}
                               className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-all shadow-sm group"
-                                title="Gỡ file đính kèm"
-                              >
-                                <span className="material-symbols-outlined text-[18px]">close</span>
-                              </button>
-                            </div>
-                          )}
-                          <p className="text-xs text-slate-500 ml-1">Chỉ chấp nhận định dạng .pdf</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-4 mt-6">
-                        <button
-                          className="flex-1 flex items-center justify-center rounded-xl font-extrabold transition-all shadow-sm text-[15px] hover:opacity-90 py-4"
-                          style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', cursor: 'pointer' }}
-                          onClick={() => {
-                            if (!feedback.trim()) {
-                              alert('Vui lòng nhập lý do từ chối vào ô "Ý kiến phê duyệt / Lý do từ chối".');
-                              return;
-                            }
-                            setConfirmAction({ type: 'reject' });
-                          }}
-                        >
-                          Từ chối
-                        </button>
-                        <button
-                          className="flex-1 flex items-center justify-center rounded-xl font-extrabold transition-all shadow-md text-[15px] hover:opacity-90 py-4"
-                          style={{ backgroundColor: '#059669', color: '#ffffff', border: 'none', cursor: 'pointer' }}
-                          onClick={() => setConfirmAction({ type: 'approve' })}
-                        >
-                          Phê duyệt
-                        </button>
+                              title="Gỡ file đính kèm"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">close</span>
+                            </button>
+                          </div>
+                        )}
+                        <p className="text-xs text-slate-500 ml-1">Chỉ chấp nhận định dạng .pdf</p>
                       </div>
                     </div>
-                  )}
+                    <div className="flex gap-4 mt-6">
+                      <button
+                        className="flex-1 flex items-center justify-center rounded-xl font-extrabold transition-all shadow-sm text-[15px] hover:opacity-90 py-4"
+                        style={{ backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', cursor: 'pointer' }}
+                        onClick={() => {
+                          if (!feedback.trim()) {
+                            showAlert('warning', 'Thiếu thông tin', 'Vui lòng nhập lý do từ chối vào ô "Ý kiến phê duyệt / Lý do từ chối".');
+                            return;
+                          }
+                          setConfirmAction({ type: 'reject' });
+                        }}
+                      >
+                        Từ chối
+                      </button>
+                      <button
+                        className="flex-1 flex items-center justify-center rounded-xl font-extrabold transition-all shadow-md text-[15px] hover:opacity-90 py-4"
+                        style={{ backgroundColor: '#059669', color: '#ffffff', border: 'none', cursor: 'pointer' }}
+                        onClick={() => setConfirmAction({ type: 'approve' })}
+                      >
+                        Phê duyệt
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
             </div>

@@ -7,7 +7,7 @@ GO
 -- ==============================================================================
 
 -- -------------------------------------------------------------------------------
--- TRIGGER 2: Không cho phép chỉnh sửa bất kỳ dữ liệu nào khi TrangThai = 'Đã hủy'
+-- TRIGGER 2: Không cho phép chỉnh sửa kế hoạch khi trạng thái không hợp lệ
 -- Dùng INSTEAD OF để chặn trước khi dữ liệu ghi xuống bảng
 -- -------------------------------------------------------------------------------
 CREATE OR ALTER TRIGGER TRG_KeHoachCongViec_BlockEditDaHuy
@@ -24,6 +24,19 @@ BEGIN
     )
     BEGIN
         RAISERROR(N'Không thể chỉnh sửa kế hoạch đã ở trạng thái "Đã hủy".', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END
+
+    -- Chặn nếu cố tình chỉnh sửa (chuyển về Đã gửi) từ Đã phê duyệt hoặc Đang thẩm định
+    IF EXISTS (
+        SELECT 1 FROM inserted i
+        INNER JOIN deleted d ON i.MaKeHoach = d.MaKeHoach
+        WHERE i.TrangThai = N'Đã gửi'
+          AND d.TrangThai IN (N'Đã phê duyệt', N'Đang thẩm định')
+    )
+    BEGIN
+        RAISERROR(N'Chỉ được chỉnh sửa kế hoạch khi trạng thái là "Đã gửi" hoặc "Bị từ chối".', 16, 1);
         ROLLBACK TRANSACTION;
         RETURN;
     END
@@ -161,22 +174,162 @@ BEGIN
 
     IF UPDATE(TrangThai)
     BEGIN
-        -- Kiểm tra: nếu hủy phê duyệt mà NguoiPheDuyet không phải CBQL thì chặn (chỉ kiểm tra khi kế hoạch chưa quá hạn 15 ngày)
+        -- Kiểm tra 1: Chỉ người đã phê duyệt trước đó mới được quyền hủy phê duyệt
+        -- Người đang thực hiện hủy được truyền vào cột NguoiXuLy (i.NguoiXuLy)
         IF EXISTS (
             SELECT 1
             FROM inserted i
-            INNER JOIN deleted d    ON i.MaKeHoach = d.MaKeHoach
-            INNER JOIN NguoiDung nd ON nd.MaNguoiDung = i.NguoiPheDuyet
+            INNER JOIN deleted d ON i.MaKeHoach = d.MaKeHoach
             WHERE i.TrangThai = N'Đang thẩm định'  -- đang chuyển về thẩm định (hủy phê duyệt)
-              AND d.TrangThai IN (N'Đã phê duyệt', N'Bị từ chối')     -- trước đó đã phê duyệt
-              AND nd.MaVaiTro <> 'CBQL'             -- người phê duyệt không phải CBQL
-              AND DATEDIFF(DAY, i.NgayTao, GETDATE()) <= 15
+              AND d.TrangThai IN (N'Đã phê duyệt', N'Bị từ chối')     -- trước đó đã có kết quả
+              AND i.NguoiXuLy <> d.NguoiPheDuyet -- Người đang thao tác KHÁC với người đã ra quyết định
         )
         BEGIN
-            RAISERROR(N'Chỉ cán bộ quản lý (CBQL) mới được phép hủy phê duyệt kế hoạch.', 16, 1);
+            RAISERROR(N'HỦY PHÊ DUYỆT: Chỉ tài khoản đã ra quyết định phê duyệt/từ chối trước đó mới có quyền hủy.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+        
+        -- Kiểm tra 2: Không được hủy nếu đã quá hạn 15 ngày
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            INNER JOIN deleted d ON i.MaKeHoach = d.MaKeHoach
+            WHERE i.TrangThai = N'Đang thẩm định'  
+              AND d.TrangThai IN (N'Đã phê duyệt', N'Bị từ chối')     
+              AND DATEDIFF(DAY, i.NgayTao, GETDATE()) > 15
+        )
+        BEGIN
+            RAISERROR(N'HỦY PHÊ DUYỆT: Không thể hủy kết quả vì kế hoạch đã được tạo quá 15 ngày.', 16, 1);
             ROLLBACK TRANSACTION;
             RETURN;
         END
     END
 END
 GO
+
+-- -------------------------------------------------------------------------------
+-- TRIGGER 6: Kiểm tra các trường dữ liệu bắt buộc (Validation)
+-- -------------------------------------------------------------------------------
+CREATE OR ALTER TRIGGER TRG_KeHoachCongViec_ValidateData
+ON KeHoachCongViec
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @IsInsert BIT = 0;
+    DECLARE @IsUpdate BIT = 0;
+
+    IF EXISTS (SELECT 1 FROM inserted) AND NOT EXISTS (SELECT 1 FROM deleted)
+        SET @IsInsert = 1;
+    ELSE IF EXISTS (SELECT 1 FROM inserted) AND EXISTS (SELECT 1 FROM deleted)
+        SET @IsUpdate = 1;
+
+    -- ==============================================================================
+    -- 1. LẬP KẾ HOẠCH MỚI (Sự kiện INSERT)
+    -- ==============================================================================
+    IF @IsInsert = 1
+    BEGIN
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            WHERE LTRIM(RTRIM(ISNULL(i.TieuDe, ''))) = ''
+               OR LTRIM(RTRIM(ISNULL(i.FilePDFKeHoach, ''))) = ''
+               OR LTRIM(RTRIM(ISNULL(i.FilePDFDeNghiCapPhep, ''))) = ''
+               OR LTRIM(RTRIM(ISNULL(i.MaLoaiCongViec, ''))) = ''
+               OR LTRIM(RTRIM(ISNULL(i.MaTuyenDuong, ''))) = ''
+        )
+        BEGIN
+            RAISERROR(N'LẬP KẾ HOẠCH MỚI: Các trường bắt buộc (Tiêu đề, Loại công việc, Tuyến đường, và các file PDF) không được để trống.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            WHERE LEN(i.TieuDe) > 200
+               OR LEN(i.MoTa) > 500
+        )
+        BEGIN
+            RAISERROR(N'DỮ LIỆU KHÔNG HỢP LỆ: Tiêu đề không được vượt quá 200 ký tự, Mô tả không vượt quá 500 ký tự.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+    END
+
+    -- ==============================================================================
+    -- 2. CHỈNH SỬA, PHÊ DUYỆT (Sự kiện UPDATE)
+    -- ==============================================================================
+    IF @IsUpdate = 1
+    BEGIN
+        -- a) CHỈNH SỬA KẾ HOẠCH (áp dụng khi trạng thái là Đã gửi hoặc Đang thẩm định)
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            WHERE i.TrangThai IN (N'Đã gửi', N'Đang thẩm định')
+              AND (
+                   LTRIM(RTRIM(ISNULL(i.TieuDe, ''))) = ''
+                OR LTRIM(RTRIM(ISNULL(i.FilePDFKeHoach, ''))) = ''
+                OR LTRIM(RTRIM(ISNULL(i.FilePDFDeNghiCapPhep, ''))) = ''
+                OR LTRIM(RTRIM(ISNULL(i.MaLoaiCongViec, ''))) = ''
+                OR LTRIM(RTRIM(ISNULL(i.MaTuyenDuong, ''))) = ''
+              )
+        )
+        BEGIN
+            RAISERROR(N'CHỈNH SỬA KẾ HOẠCH: Các trường bắt buộc (Tiêu đề, Loại công việc, Tuyến đường, và các file PDF) không được để trống.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            WHERE LEN(i.TieuDe) > 200
+               OR LEN(i.MoTa) > 500
+               OR LEN(i.YKienPheDuyet) > 200
+        )
+        BEGIN
+            RAISERROR(N'DỮ LIỆU KHÔNG HỢP LỆ: Ký tự vượt quá giới hạn cho phép (Tiêu đề <= 200, Mô tả <= 500, Ý kiến phê duyệt <= 200).', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- b) PHÊ DUYỆT KẾ HOẠCH (Trạng thái chuyển sang 'Đã phê duyệt')
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            INNER JOIN deleted d ON i.MaKeHoach = d.MaKeHoach
+            WHERE i.TrangThai = N'Đã phê duyệt'
+              AND d.TrangThai <> N'Đã phê duyệt'
+              AND i.NguoiPheDuyet IS NULL
+        )
+        BEGIN
+            RAISERROR(N'PHÊ DUYỆT KẾ HOẠCH: Phải có thông tin người phê duyệt.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- c) TỪ CHỐI KẾ HOẠCH (Trạng thái chuyển sang 'Bị từ chối')
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            INNER JOIN deleted d ON i.MaKeHoach = d.MaKeHoach
+            WHERE i.TrangThai = N'Bị từ chối'
+              AND d.TrangThai <> N'Bị từ chối'
+              AND (
+                   i.NguoiPheDuyet IS NULL 
+                OR LTRIM(RTRIM(ISNULL(i.YKienPheDuyet, ''))) = ''
+              )
+        )
+        BEGIN
+            RAISERROR(N'TỪ CHỐI KẾ HOẠCH: Phải có thông tin người phê duyệt và ý kiến phê duyệt (lý do từ chối).', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- d) HỦY KẾ HOẠCH 
+        -- Đã được kiểm tra phân quyền và điều kiện ở Trigger 3, bỏ qua không cần validate dữ liệu ở đây.
+    END
+END

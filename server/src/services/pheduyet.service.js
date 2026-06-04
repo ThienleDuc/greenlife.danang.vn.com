@@ -87,6 +87,35 @@ const removeSpecificFile = async (maKeHoach, fileKey, fileName, user) => {
 const updateTrangThaiPheDuyet = async (maKeHoach, trangThai, yKienPheDuyet, nguoiPheDuyet, filePDFBoSungKeHoach, removeFiles, user, nguoiXuLy = null, isCancelApproval = false) => {
   assertQuanLy(user);
 
+  const detail = await pheDuyetRepo.getKeHoachChiTiet(maKeHoach);
+  if (!detail || !detail.keHoach) {
+    throw createHttpError("Không tìm thấy kế hoạch", 404);
+  }
+  const currentPlan = detail.keHoach;
+
+  if (isCancelApproval) {
+    if (nguoiXuLy !== currentPlan.NguoiPheDuyet) {
+      throw createHttpError("HỦY PHÊ DUYỆT: Chỉ tài khoản đã ra quyết định phê duyệt/từ chối trước đó mới có quyền hủy.", 403);
+    }
+    
+    const daysSinceCreation = (new Date() - new Date(currentPlan.NgayTao)) / (1000 * 60 * 60 * 24);
+    if (daysSinceCreation > 15) {
+      throw createHttpError("HỦY PHÊ DUYỆT: Không thể hủy kết quả vì kế hoạch đã được tạo quá 15 ngày.", 400);
+    }
+  } else {
+    if (trangThai === 'Đã phê duyệt' && !nguoiPheDuyet) {
+      throw createHttpError("PHÊ DUYỆT KẾ HOẠCH: Phải có thông tin người phê duyệt.", 400);
+    }
+    
+    if (trangThai === 'Bị từ chối' && (!nguoiPheDuyet || !yKienPheDuyet || yKienPheDuyet.trim() === '')) {
+      throw createHttpError("TỪ CHỐI KẾ HOẠCH: Phải có thông tin người phê duyệt và ý kiến phê duyệt (lý do từ chối).", 400);
+    }
+
+    if (yKienPheDuyet && yKienPheDuyet.length > 200) {
+      throw createHttpError("DỮ LIỆU KHÔNG HỢP LỆ: Ký tự vượt quá giới hạn cho phép (Tiêu đề <= 200, Mô tả <= 500, Ý kiến phê duyệt <= 200).", 400);
+    }
+  }
+
   const filesToRemove = removeFiles ? [...removeFiles] : [];
   if (isCancelApproval && !filesToRemove.includes('FilePDFBoSungKeHoach')) {
     filesToRemove.push('FilePDFBoSungKeHoach');

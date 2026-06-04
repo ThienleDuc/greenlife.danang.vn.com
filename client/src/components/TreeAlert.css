@@ -1,0 +1,217 @@
+.tree-alert-board {
+  position: relative;
+  width: 350px;
+  min-height: 100px;
+  background-color: var(--color-surface-container-lowest, #ffffff);
+  border: 3px solid var(--color-primary);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  display: flex;
+  padding: 15px 15px 15px 50px;
+  margin-left: 60px;
+  margin-top: 40px;
+  transition: border-color 0.3s;
+}
+
+.tree-alert-overlay {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateX(50px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.tree-alert-overlay.show {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+/* The Coconut Tree */
+.coconut-tree-wrapper {
+  position: absolute;
+  left: -80px;
+  top: -60px;
+  width: 140px;
+  height: 200px;
+  z-index: 10;
+  pointer-events: none;
+  filter: drop-shadow(3px 5px 4px rgba(0,0,0,0.4));
+}
+
+.coconut-tree-svg {
+  width: 100%;
+  height: 100%;
+  animation: sway 4s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+}
+
+@keyframes sway {
+  0% { transform: rotate(-2deg); }
+  100% { transform: rotate(3deg); }
+}
+
+/* Content */
+.tree-alert-content {
+  flex: 1;
+  color: var(--color-on-surface, #0b1c30);
+  font-family: var(--font-family, 'Segoe UI', sans-serif);
+}
+
+.tree-alert-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed var(--color-outline-variant, #bbcabf);
+  padding-bottom: 5px;
+}
+
+.alert-icon {
+  font-size: 24px;
+  margin-right: 8px;
+}
+
+.tree-alert-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  flex: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tree-alert-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-outline, #6c7a71);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.tree-alert-close:hover {
+  background-color: var(--color-surface-dim, #cbdbf5);
+  color: var(--color-error, #ba1a1a);
+}
+
+.tree-alert-body {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.tree-alert-body p {
+  margin: 0;
+}
+
+.tree-alert-actions {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tree-alert-ok-btn {
+  background-color: var(--color-error);
+  color: var(--color-on-error, #fff);
+  border: none;
+  border-radius: var(--radius-default, 4px);
+  padding: 6px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.tree-alert-ok-btn:hover {
+  opacity: 0.9;
+}
+
+/* Wood nails */
+.wooden-nail {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #4a2e1b;
+  border-radius: 50%;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.8), 0.5px 0.5px 1px rgba(255,255,255,0.3);
+}
+
+.wooden-nail.top-left { top: 6px; left: 6px; }
+.wooden-nail.top-right { top: 6px; right: 6px; }
+.wooden-nail.bottom-left { bottom: 6px; left: 6px; }
+.wooden-nail.bottom-right { bottom: 6px; right: 6px; }
+
+/* Alert Types Colors & Borders */
+.tree-alert-board.success {
+  border-color: var(--color-primary);
+}
+.tree-alert-board.success .alert-icon,
+.tree-alert-board.success .tree-alert-title { 
+  color: var(--color-primary); 
+}
+
+.tree-alert-board.error {
+  border-color: var(--color-error);
+}
+.tree-alert-board.error .alert-icon,
+.tree-alert-board.error .tree-alert-title { 
+  color: var(--color-error); 
+}
+
+.tree-alert-board.warning {
+  border-color: var(--color-tertiary-container);
+}
+.tree-alert-board.warning .alert-icon,
+.tree-alert-board.warning .tree-alert-title { 
+  color: var(--color-tertiary-container); 
+}
+
+.tree-alert-board.info {
+  border-color: var(--color-secondary);
+}
+.tree-alert-board.info .alert-icon,
+.tree-alert-board.info .tree-alert-title { 
+  color: var(--color-secondary); 
+}
+
+/* Dynamic Leaf Colors */
+/* Default / Success */
+.tree-alert-board .leaf-light { fill: #3cb371; transition: fill 0.3s; }
+.tree-alert-board .leaf-mid { fill: #2e8b57; transition: fill 0.3s; }
+.tree-alert-board .leaf-dark { fill: #006400; transition: fill 0.3s; }
+.tree-alert-board .leaf-stroke { stroke: #006400; transition: stroke 0.3s; }
+
+/* Error */
+.tree-alert-board.error .leaf-light { fill: #ef5350; }
+.tree-alert-board.error .leaf-mid { fill: #d32f2f; }
+.tree-alert-board.error .leaf-dark { fill: #b71c1c; }
+.tree-alert-board.error .leaf-stroke { stroke: #b71c1c; }
+
+/* Warning */
+.tree-alert-board.warning .leaf-light { fill: #ffa726; }
+.tree-alert-board.warning .leaf-mid { fill: #f57c00; }
+.tree-alert-board.warning .leaf-dark { fill: #e65100; }
+.tree-alert-board.warning .leaf-stroke { stroke: #e65100; }
+
+/* Info */
+.tree-alert-board.info .leaf-light { fill: #42a5f5; }
+.tree-alert-board.info .leaf-mid { fill: #1976d2; }
+.tree-alert-board.info .leaf-dark { fill: #0d47a1; }
+.tree-alert-board.info .leaf-stroke { stroke: #0d47a1; }
+
+/* Question */
+.tree-alert-board.question { border-color: var(--color-error); }
+.tree-alert-board.question .alert-icon, .tree-alert-board.question .tree-alert-title { color: var(--color-error); }
+.tree-alert-board.question .leaf-light { fill: #ef5350; }
+.tree-alert-board.question .leaf-mid { fill: #d32f2f; }
+.tree-alert-board.question .leaf-dark { fill: #b71c1c; }
+.tree-alert-board.question .leaf-stroke { stroke: #b71c1c; }
+.tree-alert-cancel-btn { background-color: var(--color-surface-dim, #e2e8f0); color: var(--color-on-surface, #1e293b); border: none; border-radius: var(--radius-default, 4px); padding: 6px 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;}
+.tree-alert-confirm-btn { background-color: var(--color-error); color: var(--color-on-error, #fff); border: none; border-radius: var(--radius-default, 4px); padding: 6px 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;}
+.tree-alert-cancel-btn:hover, .tree-alert-confirm-btn:hover { opacity: 0.9; }

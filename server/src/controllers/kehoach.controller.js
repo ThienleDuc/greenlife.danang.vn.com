@@ -1,12 +1,13 @@
 const keHoachService = require("../services/kehoach.service");
 const { deleteUploadedFiles } = require("../utils/pdfUpload.utils");
+const { handleDbError } = require("../utils/dbError.utils");
 
 const sendError = (res, error, fallbackMessage = "Lỗi xử lý kế hoạch công việc") => {
-  const statusCode = error.statusCode || 500;
+  const { statusCode, message } = handleDbError(error, fallbackMessage);
 
   res.status(statusCode).json({
     success: false,
-    message: error.message || fallbackMessage,
+    message: message,
   });
 };
 
