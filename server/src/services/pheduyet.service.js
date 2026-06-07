@@ -20,31 +20,6 @@ const assertQuanLy = (user) => {
 };
 
 const checkAndCleanPlanFiles = (keHoach) => {
-  if (!keHoach) return keHoach;
-  
-  const checkFileExists = (fileName) => {
-    if (!fileName) return false;
-    const filePath = path.join(PDF_DIR, fileName);
-    return fs.existsSync(filePath);
-  };
-
-  // Check FilePDFKeHoach
-  if (keHoach.FilePDFKeHoach && !checkFileExists(keHoach.FilePDFKeHoach)) {
-    keHoach.FilePDFKeHoach = null;
-  }
-
-  // Check FilePDFDeNghiCapPhep
-  if (keHoach.FilePDFDeNghiCapPhep && !checkFileExists(keHoach.FilePDFDeNghiCapPhep)) {
-    keHoach.FilePDFDeNghiCapPhep = null;
-  }
-
-  // Check FilePDFBoSungKeHoach (which could be comma-separated)
-  if (keHoach.FilePDFBoSungKeHoach) {
-    const files = keHoach.FilePDFBoSungKeHoach.split(",");
-    const existingFiles = files.filter(f => checkFileExists(f.trim()));
-    keHoach.FilePDFBoSungKeHoach = existingFiles.length > 0 ? existingFiles.join(",") : null;
-  }
-
   return keHoach;
 };
 
